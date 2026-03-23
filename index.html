@@ -25,7 +25,10 @@ tailwind.config = {
 </script>
 <style>
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; }
+body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
+/* Count-up animation for stats */
+@keyframes countPulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+.count-up { animation: countPulse 0.1s ease-out; }
 :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* Ring animation */
@@ -58,6 +61,10 @@ body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color:
 /* Celebration modal */
 @keyframes celebrateIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 .celebrate-modal { animation: celebrateIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Confetti particles */
+@keyframes confettiFall { 0% { opacity: 1; transform: translateY(-20px) rotate(0deg) scale(1); } 100% { opacity: 0; transform: translateY(300px) rotate(720deg) scale(0.3); } }
+.confetti-particle { position: absolute; width: 8px; height: 8px; border-radius: 2px; animation: confettiFall 2.5s ease-out forwards; pointer-events: none; }
 
 /* Pop in — bouncy scale entrance */
 @keyframes popIn { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
@@ -92,9 +99,6 @@ body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color:
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; animation: livePulse 1.5s ease-in-out infinite; }
 @keyframes timerGlow { 0%,100% { text-shadow: 0 0 0 transparent; } 50% { text-shadow: 0 0 20px rgba(107,158,214,0.3); } }
 .timer-glow { animation: timerGlow 3s ease-in-out infinite; }
-
-@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
-.shimmer-bar { background-size: 200% 100%; animation: shimmer 3s linear infinite; }
 
 /* Smooth height collapse/expand */
 .smooth-expand { overflow: hidden; transition: max-height 0.35s ease-out, opacity 0.25s ease-out; }
@@ -201,7 +205,8 @@ import {
   Trophy, CheckCircle, Timer, Note, Heart,
   PlayCircle, YoutubeLogo,
   House, ListChecks, TrendUp, Mountains,
-  Checks, ClockCountdown, ArrowUp, ArrowDown, SkipForward
+  Checks, ClockCountdown, ArrowUp, ArrowDown, SkipForward,
+  GearSix
 } from 'https://esm.sh/@phosphor-icons/react@2.1.7?deps=react@18.3.1';
 const html = htm.bind(React.createElement);
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
@@ -271,10 +276,36 @@ applyThemeCSS(getInitialTheme());
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 const DAY_LABELS = { sunday:'Domingo', monday:'Lunes', tuesday:'Martes', wednesday:'Miércoles', thursday:'Jueves', friday:'Viernes', saturday:'Sábado' };
 
-const PROTEIN_GOAL = 150;
-const CALORIES_GOAL = 2200;
-const WATER_GOAL_ML = 2250; // 9 glasses × 250ml
+// Editable goals — persisted in localStorage, fallback to defaults
+function getGoal(key, def) { try { const v = localStorage.getItem('ds_goal_' + key); return v ? Number(v) : def; } catch { return def; } }
+function setGoal(key, val) { try { localStorage.setItem('ds_goal_' + key, String(val)); } catch {} }
+const PROTEIN_GOAL = getGoal('protein', 150);
+const CALORIES_GOAL = getGoal('calories', 2200);
+const WATER_GOAL_ML = getGoal('water_ml', 2250); // 9 glasses × 250ml
 const WATER_GLASS_ML = 250;
+
+// ── useCountUp hook — numbers animate from 0 to target ──
+function useCountUp(target, duration = 600) {
+  const [val, setVal] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    if (target === prev.current) { setVal(target); return; }
+    const start = prev.current;
+    const diff = target - start;
+    const startTime = performance.now();
+    let raf;
+    function tick(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      setVal(Math.round(start + diff * ease));
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else prev.current = target;
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
 
 // Muscle group SVG icons for exercise placeholders
 const MUSCLE_ICONS = {
@@ -937,8 +968,17 @@ function WeekStrip() {
 
 function RestTimer({ duration = 90, onDone }) {
   const [left, setLeft] = useState(duration);
+  const notified = useRef(false);
   useEffect(() => {
-    if (left <= 0) { onDone && onDone(); return; }
+    if (left <= 0) {
+      if (!notified.current) {
+        notified.current = true;
+        haptic([30, 100, 30, 100, 30]);
+        try { if (Notification.permission === 'granted') new Notification('DontSkip', { body: '¡Descanso terminado! Siguiente set', icon: 'icon-192.png' }); } catch {}
+      }
+      onDone && onDone();
+      return;
+    }
     const t = setTimeout(() => setLeft(l => l - 1), 1000);
     return () => clearTimeout(t);
   }, [left]);
@@ -973,10 +1013,24 @@ function RestTimer({ duration = 90, onDone }) {
 
 // ── Stat Card ─────────────────────────────────────────────────────────
 
-function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay, compact }) {
+function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay, compact, sparkData }) {
+  const animVal = useCountUp(value, 700);
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const goalReached = value >= max && max > 0;
   const ringColor = goalReached ? T.green : color;
+
+  // Sparkline — mini 7-day trend line
+  const sparkline = sparkData && sparkData.length > 1 ? (() => {
+    const pts = sparkData;
+    const maxV = Math.max(...pts, 1);
+    const h = 20, w = 50;
+    const path = pts.map((v, i) => {
+      const x = (i / (pts.length - 1)) * w;
+      const y = h - (v / maxV) * h;
+      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    return html`<svg width=${w} height=${h} style=${{ opacity: 0.5, flexShrink: 0 }}><path d=${path} fill="none" stroke=${ringColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>`;
+  })() : null;
 
   if (compact) {
     const csz = 44, csw = 4, cr = (csz - csw) / 2, ccirc = 2 * Math.PI * cr;
@@ -998,7 +1052,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
           <div className="flex-1 min-w-0">
             <div style=${{ fontSize: 10, fontWeight: 600, color: ringColor, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>${label}</div>
             <div className="flex items-baseline gap-1">
-              <span key=${'v' + value} className="bounce-num" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>${value}</span>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>${animVal}</span>
               <span style=${{ fontSize: 10, fontWeight: 500, color: T.muted }}>/ ${max}${unit}</span>
             </div>
           </div>
@@ -1012,7 +1066,10 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
 
   return html`
     <div style=${{ padding: '18px 16px', borderRadius: 20, background: colorDim, position: 'relative', overflow: 'hidden' }}>
-      <div style=${{ fontSize: 11, fontWeight: 600, color: ringColor, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>${label}</div>
+      <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
+        <div style=${{ fontSize: 11, fontWeight: 600, color: ringColor, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
+        ${sparkline}
+      </div>
       <div className="flex items-center gap-4">
         <div className="relative flex-shrink-0" style=${{ width: sz, height: sz }}>
           <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
@@ -1027,7 +1084,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
         </div>
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span key=${'v' + value} className="bounce-num" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 36, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1, letterSpacing: '-1.5px', display: 'inline-block' }}>${value}</span>
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 36, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1.1, letterSpacing: '-1.5px', display: 'inline-block' }}>${animVal}</span>
             <span style=${{ fontSize: 13, fontWeight: 500, color: T.muted }}>/ ${max}${unit}</span>
           </div>
           ${context && html`
@@ -1105,6 +1162,25 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
   const waterGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
 
+  // Sparkline data — last 7 days
+  const sparklines = useMemo(() => {
+    const days = [];
+    for (let i = 6; i >= 0; i--) days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+    const prot = [], cal = [], wat = [];
+    days.forEach(d => {
+      try {
+        const m = JSON.parse(localStorage.getItem('ds_meals_' + d) || '[]');
+        const confirmed = m.filter(x => x.confirmed);
+        prot.push(confirmed.reduce((s, x) => s + x.items.reduce((a, i) => a + (i.protein || 0), 0), 0));
+        cal.push(confirmed.reduce((s, x) => s + x.items.reduce((a, i) => a + (i.cal || 0), 0), 0));
+      } catch { prot.push(0); cal.push(0); }
+      try { wat.push(Math.floor((Number(localStorage.getItem('ds_water_' + d)) || 0) / WATER_GLASS_ML)); } catch { wat.push(0); }
+    });
+    // Today's values override last element
+    prot[6] = protein; cal[6] = calories; wat[6] = waterGlasses;
+    return { prot, cal, wat };
+  }, [protein, calories, waterGlasses]);
+
   // Context: compare with yesterday
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
@@ -1155,9 +1231,9 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
 
   return html`
     <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-      <${StatCard} icon=${html`<${Barbell} size=${20} weight="fill" color=${T.copper} />`} label="Proteína" value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} colorDim=${T.copperDim} context=${proteinCtx} delay=${0} />
-      <${StatCard} icon=${html`<${FireSimple} size=${20} weight="fill" color=${T.amber} />`} label="Calorías" value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} colorDim=${T.amberDim} context=${caloriesCtx} delay=${150} />
-      <${StatCard} icon=${html`<${Drop} size=${20} weight="fill" color=${T.water} />`} label="Agua" value=${waterGlasses} max=${waterGoalGlasses} unit=" vasos" color=${T.water} colorDim=${T.waterDim} context=${waterCtx} delay=${300} />
+      <${StatCard} icon=${html`<${Barbell} size=${20} weight="fill" color=${T.copper} />`} label="Proteína" value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} colorDim=${T.copperDim} context=${proteinCtx} delay=${0} sparkData=${sparklines.prot} />
+      <${StatCard} icon=${html`<${FireSimple} size=${20} weight="fill" color=${T.amber} />`} label="Calorías" value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} colorDim=${T.amberDim} context=${caloriesCtx} delay=${150} sparkData=${sparklines.cal} />
+      <${StatCard} icon=${html`<${Drop} size=${20} weight="fill" color=${T.water} />`} label="Agua" value=${waterGlasses} max=${waterGoalGlasses} unit=" vasos" color=${T.water} colorDim=${T.waterDim} context=${waterCtx} delay=${300} sparkData=${sparklines.wat} />
       <${StatCard} icon=${html`<${Lightning} size=${20} weight="fill" color=${T.accent} />`} label="Gym" value=${gymDone} max=${gymTotal || 1} unit=" ejer." color=${T.accent} colorDim=${T.accentDim} context=${gymCtx} delay=${450} />
     </div>
   `;
@@ -1408,6 +1484,44 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
                     <div style=${{ fontSize: 13, fontWeight: 800, color: T.accent }}>${work}</div>
                     <div style=${{ fontSize: 9, color: T.accent, marginTop: 1 }}>Work</div>
                   </div>
+                </div>
+              </details>
+            `;
+          })()}
+
+          ${(() => {
+            if (isPlank || !sets[0] || !sets[0].weight || sets[0].weight <= 0) return '';
+            const barWeight = unitPref === 'lbs' ? 45 : 20;
+            const totalW = sets[0].weight;
+            if (totalW <= barWeight) return '';
+            const perSide = (totalW - barWeight) / 2;
+            const plates = unitPref === 'lbs' ? [45, 35, 25, 10, 5, 2.5] : [20, 15, 10, 5, 2.5, 1.25];
+            const result = [];
+            let remaining = perSide;
+            plates.forEach(p => {
+              const count = Math.floor(remaining / p);
+              if (count > 0) { result.push({ w: p, n: count }); remaining -= count * p; }
+            });
+            if (result.length === 0) return '';
+            return html`
+              <details className="mb-3" style=${{ fontSize: 11 }}>
+                <summary className="flex items-center gap-1.5 cursor-pointer py-1.5 px-2 rounded-lg" style=${{ color: T.water, fontWeight: 700, background: T.waterDim }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+                  Discos por lado
+                </summary>
+                <div className="flex items-center gap-2 mt-2 px-1">
+                  <div className="text-center py-1.5 px-3 rounded-lg" style=${{ background: T.elevated }}>
+                    <div style=${{ fontSize: 12, fontWeight: 700, color: T.muted }}>Barra</div>
+                    <div style=${{ fontSize: 11, fontWeight: 800, color: T.text }}>${barWeight}</div>
+                  </div>
+                  <span style=${{ color: T.muted, fontSize: 10 }}>+</span>
+                  ${result.map((r, ri) => html`
+                    <div key=${ri} className="text-center py-1.5 px-3 rounded-lg" style=${{ background: T.waterDim }}>
+                      <div style=${{ fontSize: 12, fontWeight: 800, color: T.water }}>${r.w}${unitPref === 'lbs' ? '' : 'kg'}</div>
+                      <div style=${{ fontSize: 9, color: T.muted }}>×${r.n}</div>
+                    </div>
+                  `)}
+                  <span style=${{ fontSize: 10, color: T.sub, marginLeft: 'auto' }}>por lado</span>
                 </div>
               </details>
             `;
@@ -2156,10 +2270,8 @@ function TabBar({ active, onChange }) {
   const tabs = [
     { id: 'live', label: 'Live', icon: (a) => html`<${Play} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
     { id: 'hoy', label: 'Hoy', icon: (a) => html`<${House} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
-    { id: 'semana', label: 'Semana', icon: (a) => html`<${CalendarBlank} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
     { id: 'comidas', label: 'Comidas', icon: (a) => html`<${ForkKnife} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
     { id: 'progreso', label: 'Progreso', icon: (a) => html`<${TrendUp} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
-    { id: 'perfil', label: 'Perfil', icon: (a) => html`<${UserCircle} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
     { id: 'jarvis', label: 'Jarvis', icon: (a) => html`<${Sparkle} size=${22} weight=${a ? 'fill' : 'duotone'} />` },
   ];
 
@@ -3072,6 +3184,93 @@ function Achievements() {
   `;
 }
 
+function WeeklyShareCard() {
+  const data = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    const dow = today.getDay() || 7; // 1=Mon, 7=Sun
+    for (let i = dow - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const ds = d.toISOString().slice(0, 10);
+      const dk = DAYS[d.getDay()];
+      let workouts = 0, prot = 0, cal = 0, water = 0;
+      try {
+        const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+        if (ws) workouts = JSON.parse(ws).filter(e => e.sets.every(s => s.done)).length;
+      } catch {}
+      try {
+        const m = JSON.parse(localStorage.getItem('ds_meals_' + ds) || '[]');
+        const conf = m.filter(x => x.confirmed);
+        prot = conf.reduce((s, x) => s + x.items.reduce((a, item) => a + (item.protein || 0), 0), 0);
+        cal = conf.reduce((s, x) => s + x.items.reduce((a, item) => a + (item.cal || 0), 0), 0);
+      } catch {}
+      try { water = Number(localStorage.getItem('ds_water_' + ds)) || 0; } catch {}
+      days.push({ date: ds, dk, workouts, prot, cal, water });
+    }
+    return {
+      days,
+      totalWorkouts: days.reduce((s, d) => s + (d.workouts > 0 ? 1 : 0), 0),
+      avgProtein: Math.round(days.reduce((s, d) => s + d.prot, 0) / (days.length || 1)),
+      avgCalories: Math.round(days.reduce((s, d) => s + d.cal, 0) / (days.length || 1)),
+      totalWater: Math.round(days.reduce((s, d) => s + d.water, 0) / 1000 * 10) / 10,
+    };
+  }, []);
+
+  return html`
+    <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20, position: 'relative', overflow: 'hidden' }}>
+      <div className="flex items-center justify-between" style=${{ marginBottom: 14 }}>
+        <${SectionHeader} title="Resumen semanal" />
+        <button onClick=${() => {
+          const lines = [
+            '📊 Mi semana en DontSkip',
+            '🏋️ ' + data.totalWorkouts + ' entrenamientos',
+            '🥩 ' + data.avgProtein + 'g proteína promedio',
+            '🔥 ' + data.avgCalories + ' kcal promedio',
+            '💧 ' + data.totalWater + 'L de agua total',
+            '', '#DontSkip #Fitness'
+          ].join('\n');
+          if (navigator.share) navigator.share({ text: lines }).catch(() => {});
+          else navigator.clipboard.writeText(lines).then(() => alert('Copiado'));
+        }} className="press-scale" style=${{ padding: '4px 10px', borderRadius: 8, background: T.accentDim }}>
+          <${ShareFat} size=${14} weight="bold" color=${T.accent} />
+        </button>
+      </div>
+      <div className="flex gap-1.5 mb-4">
+        ${data.days.map((d, i) => {
+          const isToday = i === data.days.length - 1;
+          const trained = d.workouts > 0;
+          return html`
+            <div key=${i} className="flex-1 text-center">
+              <div style=${{ fontSize: 9, fontWeight: 600, color: isToday ? T.accent : T.muted, marginBottom: 4 }}>
+                ${DAY_LABELS[d.dk] ? DAY_LABELS[d.dk].slice(0, 2) : ''}
+              </div>
+              <div style=${{ height: 4, borderRadius: 2, background: trained ? T.green : T.input }} />
+            </div>
+          `;
+        })}
+      </div>
+      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div className="text-center py-3 rounded-xl" style=${{ background: T.accentDim }}>
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.accent }}>${data.totalWorkouts}</div>
+          <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>Entrenamientos</div>
+        </div>
+        <div className="text-center py-3 rounded-xl" style=${{ background: T.copperDim }}>
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.copper }}>${data.avgProtein}g</div>
+          <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>Proteína prom.</div>
+        </div>
+        <div className="text-center py-3 rounded-xl" style=${{ background: T.amberDim }}>
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.amber }}>${data.avgCalories}</div>
+          <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>Calorías prom.</div>
+        </div>
+        <div className="text-center py-3 rounded-xl" style=${{ background: T.waterDim }}>
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.water }}>${data.totalWater}L</div>
+          <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>Agua total</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function GeneralStats() {
   const stats = getFullStats();
   const streak = getStreak();
@@ -3198,9 +3397,24 @@ function ProgressPhotos() {
 function ProgresoTab({ dark, onThemeToggle, unitPref }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const handleSaved = useCallback(() => setRefreshKey(k => k + 1), []);
+  const [subTab, setSubTab] = useState('progreso'); // 'progreso' | 'semana'
+
+  // Semana data
+  const days = useMemo(() => getWeekDays(), []);
+  const todayIdx = days.findIndex(d => d.isToday);
+  const [selectedIdx, setSelectedIdx] = useState(todayIdx >= 0 ? todayIdx : 0);
+  const selected = days[selectedIdx];
+
+  const segBtn = (id, label) => html`
+    <button onClick=${() => setSubTab(id)}
+      className="flex-1 py-2 rounded-xl font-bold transition-all"
+      style=${{ fontSize: 13, color: subTab === id ? '#fff' : T.muted, background: subTab === id ? T.accent : 'transparent' }}>
+      ${label}
+    </button>
+  `;
 
   return html`
-    <div className="stagger">
+    <div>
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
@@ -3209,12 +3423,40 @@ function ProgresoTab({ dark, onThemeToggle, unitPref }) {
         <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
       </div>
 
-      <${MetricsCard} key=${'m' + refreshKey} unitPref=${unitPref} onSaved=${handleSaved} />
-      <${ProgressPhotos} key=${'p' + refreshKey} />
-      <${WeightChart} key=${'w' + refreshKey} />
-      <${RecordsCard} key=${'r' + refreshKey} unitPref=${unitPref} />
-      <${Achievements} key=${'a' + refreshKey} />
-      <${GeneralStats} key=${'s' + refreshKey} />
+      <div className="px-5 mb-3">
+        <div className="flex gap-1 p-1 rounded-2xl" style=${{ background: T.input }}>
+          ${segBtn('progreso', 'Progreso')}
+          ${segBtn('semana', 'Semana')}
+        </div>
+      </div>
+
+      ${subTab === 'progreso' ? html`
+        <div className="stagger" key="progreso">
+          <${WeeklyShareCard} key=${'ws' + refreshKey} />
+          <${MetricsCard} key=${'m' + refreshKey} unitPref=${unitPref} onSaved=${handleSaved} />
+          <${ProgressPhotos} key=${'p' + refreshKey} />
+          <${WeightChart} key=${'w' + refreshKey} />
+          <${RecordsCard} key=${'r' + refreshKey} unitPref=${unitPref} />
+          <${Achievements} key=${'a' + refreshKey} />
+          <${GeneralStats} key=${'s' + refreshKey} />
+        </div>
+      ` : html`
+        <div className="stagger" key="semana">
+          <${WeekCalendar} days=${days} selectedIdx=${selectedIdx} onSelect=${setSelectedIdx} />
+          <div className="px-0">
+            <div className="px-5 mb-2">
+              <${SectionHeader} title="${DAY_LABELS[selected.dayKey]} \u00B7 ${selected.routine.name}" />
+            </div>
+            <${RoutineCard} routine=${selected.routine} dayLabel=${DAY_LABELS[selected.dayKey]} />
+          </div>
+          <${WeeklyVolumeReport} />
+          <${WeekSummary} />
+          <${MuscleMap} />
+          <${StreakCalendar} />
+          <${ExerciseCatalog} />
+          <${NextWeekPreview} />
+        </div>
+      `}
 
       <div className="bottom-spacer" />
     </div>
@@ -3266,6 +3508,16 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
     const next = waterUnit === 'ml' ? 'floz' : 'ml';
     setWaterUnit(next);
     try { localStorage.setItem('ds_unit_water', next); } catch {}
+  }
+
+  // Editable goals
+  const [goalProtein, setGoalProtein] = useState(PROTEIN_GOAL);
+  const [goalCalories, setGoalCalories] = useState(CALORIES_GOAL);
+  const [goalWater, setGoalWater] = useState(WATER_GOAL_ML);
+  const [editingGoals, setEditingGoals] = useState(false);
+  function saveGoals() {
+    setGoal('protein', goalProtein); setGoal('calories', goalCalories); setGoal('water_ml', goalWater);
+    setEditingGoals(false);
   }
 
   const chipStyle = (active) => ({
@@ -3343,29 +3595,57 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
 
         <!-- Card 2: Mis metas diarias -->
         <div className="ds-card" style=${{ padding: 20 }}>
-          ${sectionTitle('🎯 Mis metas diarias')}
+          <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
+            ${sectionTitle('🎯 Mis metas diarias')}
+            <button onClick=${() => editingGoals ? saveGoals() : setEditingGoals(true)}
+              className="px-3 py-1 rounded-lg press-scale"
+              style=${{ fontSize: 11, fontWeight: 700, background: editingGoals ? T.green : T.accentDim, color: editingGoals ? '#fff' : T.accent }}>
+              ${editingGoals ? 'Guardar' : 'Editar'}
+            </button>
+          </div>
           <div style=${rowStyle(false)}>
             <div className="flex items-center gap-2">
               <span style=${{ fontSize: 16 }}>🥩</span>
               <span style=${{ fontSize: 13, fontWeight: 600, color: T.sub }}>Proteína</span>
             </div>
-            <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>150g</span>
+            ${editingGoals ? html`
+              <div className="flex items-center gap-1">
+                <input type="number" value=${goalProtein} onChange=${e => setGoalProtein(Number(e.target.value))}
+                  className="w-16 text-right text-sm font-bold rounded-lg py-1 px-2"
+                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                <span style=${{ fontSize: 12, color: T.muted }}>g</span>
+              </div>
+            ` : html`<span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${goalProtein}g</span>`}
           </div>
           <div style=${rowStyle(false)}>
             <div className="flex items-center gap-2">
               <span style=${{ fontSize: 16 }}>🔥</span>
               <span style=${{ fontSize: 13, fontWeight: 600, color: T.sub }}>Calorías</span>
             </div>
-            <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>2,200 kcal</span>
+            ${editingGoals ? html`
+              <div className="flex items-center gap-1">
+                <input type="number" value=${goalCalories} onChange=${e => setGoalCalories(Number(e.target.value))}
+                  className="w-20 text-right text-sm font-bold rounded-lg py-1 px-2"
+                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                <span style=${{ fontSize: 12, color: T.muted }}>kcal</span>
+              </div>
+            ` : html`<span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${goalCalories.toLocaleString()} kcal</span>`}
           </div>
           <div style=${rowStyle(true)}>
             <div className="flex items-center gap-2">
               <span style=${{ fontSize: 16 }}>💧</span>
               <span style=${{ fontSize: 13, fontWeight: 600, color: T.sub }}>Agua</span>
             </div>
-            <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>9 vasos (2,250 ml)</span>
+            ${editingGoals ? html`
+              <div className="flex items-center gap-1">
+                <input type="number" value=${goalWater} onChange=${e => setGoalWater(Number(e.target.value))}
+                  className="w-20 text-right text-sm font-bold rounded-lg py-1 px-2"
+                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                <span style=${{ fontSize: 12, color: T.muted }}>ml</span>
+              </div>
+            ` : html`<span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${Math.floor(goalWater / 250)} vasos (${goalWater.toLocaleString()} ml)</span>`}
           </div>
-          <div style=${{ fontSize: 11, color: T.muted, marginTop: 8, textAlign: 'center' }}>Estas metas se configurarán en una futura actualización</div>
+          ${editingGoals && html`<div style=${{ fontSize: 11, color: T.amber, marginTop: 8, textAlign: 'center' }}>Los cambios se aplican al recargar la app</div>`}
         </div>
 
         <!-- Card 3: Unidades y preferencias -->
@@ -3433,7 +3713,38 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
           </div>
         </div>
 
-        <!-- Card 7: Notas de mejora -->
+        <!-- Card 7: Exportar datos -->
+        <div className="ds-card" style=${{ padding: 20 }}>
+          ${sectionTitle('📤 Exportar datos')}
+          <button onClick=${() => {
+            const rows = ['Fecha,Proteína (g),Calorías,Agua (ml),Ejercicios completados'];
+            for (let i = 30; i >= 0; i--) {
+              const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+              try {
+                const m = JSON.parse(localStorage.getItem('ds_meals_' + d) || '[]');
+                const conf = m.filter(x => x.confirmed);
+                const prot = conf.reduce((s, x) => s + x.items.reduce((a, item) => a + (item.protein || 0), 0), 0);
+                const cal = conf.reduce((s, x) => s + x.items.reduce((a, item) => a + (item.cal || 0), 0), 0);
+                const wat = Number(localStorage.getItem('ds_water_' + d)) || 0;
+                const dk = DAYS[new Date(d + 'T12:00:00').getDay()];
+                const ws = localStorage.getItem('ds_workout_' + dk + '_' + d);
+                const done = ws ? JSON.parse(ws).filter(e => e.sets.every(s => s.done)).length : 0;
+                if (prot || cal || wat || done) rows.push(d + ',' + prot + ',' + cal + ',' + wat + ',' + done);
+              } catch {}
+            }
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'dontskip_export_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+          }}
+            className="w-full py-3 rounded-xl font-bold press-scale"
+            style=${{ background: T.accentDim, color: T.accent, fontSize: 13, border: '1px solid ' + T.accent + '20' }}>
+            Descargar CSV (últimos 30 días)
+          </button>
+        </div>
+
+        <!-- Card 8: Notas de mejora -->
         <div className="ds-card" style=${{ padding: 20 }}>
           ${sectionTitle('📝 Notas de mejora')}
           <div style=${{ fontSize: 12, color: T.muted, marginBottom: 10 }}>Ideas, bugs o mejoras para la siguiente versión</div>
@@ -4017,26 +4328,92 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, dark, onThemeToggle }) {
 
       ${section === 'hoy' ? html`
         <div className="px-4 stagger">
-          <!-- Progress bars -->
+          <!-- Macro donut + progress bars -->
           <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold" style=${{ color: T.sub }}>Proteína</span>
-                <span className="text-xs font-bold" style=${{ color: barColor(protPct) }}>${consumedProtein}g / ${PROTEIN_GOAL}g</span>
+            ${(() => {
+              // Compute macros from confirmed meals
+              const confirmed = meals.filter(m => m.confirmed);
+              const totalProt = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.protein || 0), 0), 0);
+              const totalCarbs = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.carbs || 0), 0), 0);
+              const totalFat = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.fat || 0), 0), 0);
+              const total = totalProt + totalCarbs + totalFat;
+              const dsz = 90, dsw = 10, dr = (dsz - dsw) / 2, dcirc = 2 * Math.PI * dr;
+
+              const protFrac = total > 0 ? totalProt / total : 0;
+              const carbFrac = total > 0 ? totalCarbs / total : 0;
+              const fatFrac = total > 0 ? totalFat / total : 0;
+              const seg1 = dcirc * protFrac;
+              const seg2 = dcirc * carbFrac;
+              const seg3 = dcirc * fatFrac;
+              const off1 = 0;
+              const off2 = seg1;
+              const off3 = seg1 + seg2;
+
+              return html`
+                <div className="flex items-center gap-5 mb-4">
+                  <div className="relative flex-shrink-0" style=${{ width: dsz, height: dsz }}>
+                    <svg width=${dsz} height=${dsz} style=${{ transform: 'rotate(-90deg)' }}>
+                      <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.input} strokeWidth=${dsw} />
+                      ${total > 0 ? html`
+                        <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.copper} strokeWidth=${dsw}
+                          strokeDasharray="${seg1} ${dcirc - seg1}" strokeDashoffset=${-off1} strokeLinecap="butt" className="ring-circle" />
+                        <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.amber} strokeWidth=${dsw}
+                          strokeDasharray="${seg2} ${dcirc - seg2}" strokeDashoffset=${-off2} strokeLinecap="butt" className="ring-circle" />
+                        <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke="#e879a0" strokeWidth=${dsw}
+                          strokeDasharray="${seg3} ${dcirc - seg3}" strokeDashoffset=${-off3} strokeLinecap="butt" className="ring-circle" />
+                      ` : ''}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, lineHeight: 1 }}>${consumedCal}</span>
+                      <span style=${{ fontSize: 9, color: T.muted }}>kcal</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div style=${{ width: 8, height: 8, borderRadius: 2, background: T.copper }} />
+                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>Proteína</span>
+                      </div>
+                      <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>${totalProt}g</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div style=${{ width: 8, height: 8, borderRadius: 2, background: T.amber }} />
+                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>Carbs</span>
+                      </div>
+                      <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>${totalCarbs}g</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div style=${{ width: 8, height: 8, borderRadius: 2, background: '#e879a0' }} />
+                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>Grasa</span>
+                      </div>
+                      <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>${totalFat}g</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            })()}
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>Proteína</span>
+                  <span className="text-xs font-bold" style=${{ color: barColor(protPct) }}>${consumedProtein}g / ${PROTEIN_GOAL}g</span>
+                </div>
+                <div className="h-2 rounded-full" style=${{ background: T.input }}>
+                  <div className="h-full rounded-full transition-all duration-500"
+                    style=${{ width: Math.min(protPct, 100) + '%', background: barColor(protPct) }} />
+                </div>
               </div>
-              <div className="h-2.5 rounded-full" style=${{ background: T.input }}>
-                <div className="h-full rounded-full transition-all duration-500"
-                  style=${{ width: Math.min(protPct, 100) + '%', background: barColor(protPct) }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold" style=${{ color: T.sub }}>Calorías</span>
-                <span className="text-xs font-bold" style=${{ color: barColor(calPct) }}>${consumedCal} / ${CALORIES_GOAL} kcal</span>
-              </div>
-              <div className="h-2.5 rounded-full" style=${{ background: T.input }}>
-                <div className="h-full rounded-full transition-all duration-500"
-                  style=${{ width: Math.min(calPct, 100) + '%', background: barColor(calPct) }} />
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>Calorías</span>
+                  <span className="text-xs font-bold" style=${{ color: barColor(calPct) }}>${consumedCal} / ${CALORIES_GOAL} kcal</span>
+                </div>
+                <div className="h-2 rounded-full" style=${{ background: T.input }}>
+                  <div className="h-full rounded-full transition-all duration-500"
+                    style=${{ width: Math.min(calPct, 100) + '%', background: barColor(calPct) }} />
+                </div>
               </div>
             </div>
           </div>
@@ -4185,6 +4562,24 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   const [confirmStop, setConfirmStop] = useState(false);
   const [expandedNext, setExpandedNext] = useState(false);
 
+  // Mood/energy check-in
+  const moodKey = 'ds_mood_' + new Date().toISOString().slice(0, 10);
+  const [mood, setMood] = useState(() => {
+    try { return Number(localStorage.getItem(moodKey)) || 0; } catch { return 0; }
+  });
+  const moods = [
+    { emoji: '😫', label: 'Agotado' },
+    { emoji: '😐', label: 'Normal' },
+    { emoji: '😊', label: 'Bien' },
+    { emoji: '💪', label: 'Fuerte' },
+    { emoji: '🔥', label: 'Imparable' },
+  ];
+  function pickMood(idx) {
+    setMood(idx);
+    try { localStorage.setItem(moodKey, String(idx)); } catch {}
+    haptic([10]);
+  }
+
   const totalSec = elapsed;
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
@@ -4259,7 +4654,22 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           <div style=${{ marginTop: 16, marginBottom: 4 }}>
             <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${routine.name}</span>
           </div>
-          <div style=${{ fontSize: 13, color: T.muted, marginBottom: 28 }}>${routine.focus} \u2014 ${exercises.length} ejercicios</div>
+          <div style=${{ fontSize: 13, color: T.muted, marginBottom: 20 }}>${routine.focus} \u2014 ${exercises.length} ejercicios</div>
+
+          <div style=${{ marginBottom: 24 }}>
+            <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>¿Cómo te sientes hoy?</div>
+            <div className="flex justify-center gap-3">
+              ${moods.map((m, i) => html`
+                <button key=${i} onClick=${() => pickMood(i + 1)}
+                  className="flex flex-col items-center gap-1 press-scale"
+                  style=${{ opacity: mood === i + 1 ? 1 : mood === 0 ? 0.6 : 0.3, transform: mood === i + 1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>
+                  <span style=${{ fontSize: 28 }}>${m.emoji}</span>
+                  <span style=${{ fontSize: 9, fontWeight: 600, color: mood === i + 1 ? T.accent : T.muted }}>${m.label}</span>
+                </button>
+              `)}
+            </div>
+          </div>
+
           <button onClick=${onStartTimer}
             className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl press-scale"
             style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
@@ -4537,7 +4947,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   `;
 }
 
-function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddWater, onUndoWater, waterLog, unitPref, onUnitToggle, exerciseStates, onExerciseUpdate, workoutStartTime, onStartTimer, dark, onThemeToggle }) {
+function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddWater, onUndoWater, waterLog, unitPref, onUnitToggle, exerciseStates, onExerciseUpdate, workoutStartTime, onStartTimer, dark, onThemeToggle, onOpenPerfil }) {
   const todayKey = getTodayKey();
   const routine = ROUTINES[todayKey];
   const dayLabel = DAY_LABELS[todayKey];
@@ -4624,6 +5034,9 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
+            <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 36, height: 36, borderRadius: 10, background: T.input }}>
+              <${GearSix} size=${18} weight="bold" color=${T.muted} />
+            </button>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
             <${FireSimple} size=${14} weight="fill" color=${T.amber} />
@@ -4702,8 +5115,19 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
     ${showCelebration && html`
       <div className="fixed inset-0 z-50 flex items-center justify-center"
-        style=${{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+        style=${{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', overflow: 'hidden' }}
         onClick=${() => setShowCelebration(false)}>
+        ${Array.from({ length: 30 }, (_, i) => html`
+          <div key=${i} className="confetti-particle"
+            style=${{
+              left: Math.random() * 100 + '%', top: -10,
+              background: ['#16a34a', '#d97706', '#2563eb', '#dc2626', '#9333ea', '#0ea5e9'][i % 6],
+              animationDelay: (Math.random() * 1.2) + 's',
+              animationDuration: (1.8 + Math.random() * 1.5) + 's',
+              width: (6 + Math.random() * 6) + 'px',
+              height: (6 + Math.random() * 6) + 'px',
+            }} />
+        `)}
         <div className="celebrate-modal" onClick=${e => e.stopPropagation()}
           style=${{ background: T.card, borderRadius: 24, padding: 32, margin: 24,
             maxWidth: 340, width: '100%', textAlign: 'center', border: '1px solid ' + T.border,
@@ -4829,7 +5253,7 @@ function App() {
   const handleTabChange = useCallback((t) => { setTab(t); setTabKey(k => k + 1); }, []);
 
   // Swipe between tabs (#16)
-  const tabOrder = ['live', 'hoy', 'semana', 'comidas', 'progreso', 'perfil', 'jarvis'];
+  const tabOrder = ['live', 'hoy', 'comidas', 'progreso', 'jarvis'];
   const swipeRef = useRef({ startX: 0, startY: 0 });
   const handleTouchStart = useCallback((e) => {
     swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY };
@@ -4859,7 +5283,9 @@ function App() {
   const todayKey = getTodayKey();
   const routine = ROUTINES[todayKey];
 
-  const [unitPref, setUnitPref] = useState('lbs');
+  const [unitPref, setUnitPref] = useState(() => {
+    try { return localStorage.getItem('ds_unit_pref') || 'lbs'; } catch { return 'lbs'; }
+  });
   const waterKey = 'ds_water_' + new Date().toISOString().slice(0, 10);
   const waterLogKey = waterKey + '_log';
   const [waterMl, setWaterMl] = useState(() => {
@@ -5019,7 +5445,16 @@ function App() {
   }, [waterKey, waterLogKey]);
 
   const handleUnitToggle = useCallback(() => {
-    setUnitPref(u => u === 'kg' ? 'lbs' : 'kg');
+    setUnitPref(u => {
+      const next = u === 'kg' ? 'lbs' : 'kg';
+      try { localStorage.setItem('ds_unit_pref', next); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Request notification permission
+  useEffect(() => {
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
   }, []);
 
   // Splash screen
@@ -5053,6 +5488,7 @@ function App() {
         exerciseStates=${exerciseStates} onExerciseUpdate=${handleExerciseUpdate}
         workoutStartTime=${workoutStartTime} onStartTimer=${startTimer}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle}
+        onOpenPerfil=${() => handleTabChange('perfil')}
       />`}
       ${tab === 'live' && html`<${LiveTab}
         routine=${routine}
@@ -5062,7 +5498,6 @@ function App() {
         onStartTimer=${startTimer} onPauseTimer=${pauseTimer} onStopTimer=${stopTimer}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle}
       />`}
-      ${tab === 'semana' && html`<${SemanaTab} dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} />`}
       ${tab === 'comidas' && html`<${ComidasTab}
         meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle}
