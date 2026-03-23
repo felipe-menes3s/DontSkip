@@ -273,6 +273,8 @@ applyThemeCSS(getInitialTheme());
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════
 
+function haptic(ms) { try { navigator.vibrate && navigator.vibrate(ms || 10); } catch {} }
+
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 const DAY_LABELS = { sunday:'Domingo', monday:'Lunes', tuesday:'Martes', wednesday:'Miércoles', thursday:'Jueves', friday:'Viernes', saturday:'Sábado' };
 
@@ -324,52 +326,50 @@ const MUSCLE_ICONS = {
   'Posterior': '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12v40M40 12v40"/><path d="M20 22h8M36 22h8"/><ellipse cx="32" cy="34" rx="12" ry="10"/></svg>',
 };
 
-const GIF_BASE = 'https://static.exercisedb.dev/media';
-
 const ROUTINES = {
   monday: {
     name: 'Upper A', focus: 'Pecho + Hombros + Bíceps', color: '#e74c3c',
     exercises: [
-      { id: 'bench_press', name: 'Press Pecho', nameEn: 'Barbell Bench Press', desc: 'Acostado en banco plano, baja la barra al pecho y empuja', sets: 4, reps: '8-10', muscle: 'Pecho', gif: `${GIF_BASE}/0025` },
-      { id: 'incline_press', name: 'Press Inclinado', nameEn: 'Incline Dumbbell Press', desc: 'Banco inclinado 30-45°, press con mancuernas', sets: 4, reps: '10', muscle: 'Pecho sup.', gif: `${GIF_BASE}/0291` },
-      { id: 'ohp', name: 'Press Militar', nameEn: 'Overhead Press', desc: 'De pie, empuja la barra sobre la cabeza', sets: 3, reps: '10', muscle: 'Hombros', gif: `${GIF_BASE}/0226` },
-      { id: 'lateral_raise', name: 'Elevaciones Laterales', nameEn: 'Dumbbell Lateral Raise', desc: 'Eleva mancuernas a los lados hasta la altura de los hombros', sets: 3, reps: '12', muscle: 'Hombros', gif: `${GIF_BASE}/0334` },
-      { id: 'bicep_curl', name: 'Curl Bíceps', nameEn: 'Dumbbell Bicep Curl', desc: 'Flexiona los brazos con mancuernas, codos fijos', sets: 3, reps: '12', muscle: 'Bíceps', gif: `${GIF_BASE}/0294` },
-      { id: 'hammer_curl', name: 'Curl Martillo', nameEn: 'Hammer Curl', desc: 'Curl con agarre neutro (palmas enfrentadas)', sets: 3, reps: '12', muscle: 'Bíceps', gif: `${GIF_BASE}/0313` },
+      { id: 'bench_press', name: 'Press Pecho', nameEn: 'Barbell Bench Press', desc: 'Acostado en banco plano, baja la barra al pecho y empuja', sets: 4, reps: '8-10', muscle: 'Pecho', gif: 'gifs/bench_press.gif' },
+      { id: 'incline_press', name: 'Press Inclinado', nameEn: 'Incline Dumbbell Press', desc: 'Banco inclinado 30-45°, press con mancuernas', sets: 4, reps: '10', muscle: 'Pecho sup.', gif: 'gifs/incline_press.gif' },
+      { id: 'ohp', name: 'Press Militar', nameEn: 'Overhead Press', desc: 'De pie, empuja la barra sobre la cabeza', sets: 3, reps: '10', muscle: 'Hombros', gif: 'gifs/ohp.gif' },
+      { id: 'lateral_raise', name: 'Elevaciones Laterales', nameEn: 'Dumbbell Lateral Raise', desc: 'Eleva mancuernas a los lados hasta la altura de los hombros', sets: 3, reps: '12', muscle: 'Hombros', gif: 'gifs/lateral_raise.gif' },
+      { id: 'bicep_curl', name: 'Curl Bíceps', nameEn: 'Dumbbell Bicep Curl', desc: 'Flexiona los brazos con mancuernas, codos fijos', sets: 3, reps: '12', muscle: 'Bíceps', gif: 'gifs/bicep_curl.gif' },
+      { id: 'hammer_curl', name: 'Curl Martillo', nameEn: 'Hammer Curl', desc: 'Curl con agarre neutro (palmas enfrentadas)', sets: 3, reps: '12', muscle: 'Bíceps', gif: 'gifs/hammer_curl.gif' },
     ]
   },
   tuesday: {
     name: 'Lower A', focus: 'Cuádriceps + Glúteos + Core', color: '#2ecc71',
     exercises: [
-      { id: 'squat', name: 'Sentadilla', nameEn: 'Barbell Squat', desc: 'Barra en espalda, baja hasta paralelo o más', sets: 4, reps: '8', muscle: 'Cuádriceps', gif: `${GIF_BASE}/0043` },
-      { id: 'leg_press', name: 'Prensa Piernas', nameEn: 'Leg Press', desc: 'Empuja la plataforma con ambas piernas', sets: 4, reps: '10', muscle: 'Cuádriceps', gif: `${GIF_BASE}/0573` },
-      { id: 'leg_ext', name: 'Extensión Cuádriceps', nameEn: 'Leg Extension', desc: 'Extiende las piernas en la máquina', sets: 3, reps: '12', muscle: 'Cuádriceps', gif: `${GIF_BASE}/0585` },
-      { id: 'leg_curl', name: 'Curl Femoral', nameEn: 'Leg Curl', desc: 'Flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: `${GIF_BASE}/0576` },
-      { id: 'calf_raise_a', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: `${GIF_BASE}/1386` },
-      { id: 'plank', name: 'Plancha', nameEn: 'Plank', desc: 'Mantén posición de plancha con core activado', sets: 3, reps: '45s', muscle: 'Core', gif: `${GIF_BASE}/0266` },
+      { id: 'squat', name: 'Sentadilla', nameEn: 'Barbell Squat', desc: 'Barra en espalda, baja hasta paralelo o más', sets: 4, reps: '8', muscle: 'Cuádriceps', gif: 'gifs/squat.gif' },
+      { id: 'leg_press', name: 'Prensa Piernas', nameEn: 'Leg Press', desc: 'Empuja la plataforma con ambas piernas', sets: 4, reps: '10', muscle: 'Cuádriceps', gif: 'gifs/leg_press.gif' },
+      { id: 'leg_ext', name: 'Extensión Cuádriceps', nameEn: 'Leg Extension', desc: 'Extiende las piernas en la máquina', sets: 3, reps: '12', muscle: 'Cuádriceps', gif: 'gifs/leg_ext.gif' },
+      { id: 'leg_curl', name: 'Curl Femoral', nameEn: 'Leg Curl', desc: 'Flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/leg_curl.gif' },
+      { id: 'calf_raise_a', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif' },
+      { id: 'plank', name: 'Plancha', nameEn: 'Plank', desc: 'Mantén posición de plancha con core activado', sets: 3, reps: '45s', muscle: 'Core', gif: 'gifs/plank.gif' },
     ]
   },
   wednesday: { name: 'Descanso', focus: 'Recuperación activa', rest: true },
   thursday: {
     name: 'Upper B', focus: 'Espalda + Tríceps', color: '#3498db',
     exercises: [
-      { id: 'lat_pulldown', name: 'Jalón al Pecho', nameEn: 'Lat Pulldown', desc: 'Tira la barra hacia el pecho con agarre ancho', sets: 4, reps: '10', muscle: 'Espalda', gif: `${GIF_BASE}/0198` },
-      { id: 'cable_row', name: 'Remo Polea', nameEn: 'Seated Cable Row', desc: 'Tira el cable hacia el abdomen, aprieta escápulas', sets: 4, reps: '10', muscle: 'Espalda', gif: `${GIF_BASE}/0861` },
-      { id: 'db_row', name: 'Remo Mancuerna', nameEn: 'Dumbbell Row', desc: 'Apoyado en banco, tira mancuerna hacia la cadera', sets: 3, reps: '10 c/l', muscle: 'Espalda', gif: `${GIF_BASE}/0293` },
-      { id: 'rear_delt', name: 'Vuelos Posteriores', nameEn: 'Rear Delt Fly', desc: 'Inclinado, eleva mancuernas hacia atrás', sets: 3, reps: '15', muscle: 'Deltoides post.', gif: `${GIF_BASE}/0361` },
-      { id: 'tricep_push', name: 'Extensión Tríceps', nameEn: 'Tricep Pushdown', desc: 'Empuja el cable hacia abajo, codos fijos', sets: 3, reps: '12', muscle: 'Tríceps', gif: `${GIF_BASE}/0860` },
-      { id: 'skull_crush', name: 'Press Francés', nameEn: 'Skull Crushers', desc: 'Acostado, baja la barra hacia la frente y extiende', sets: 3, reps: '10', muscle: 'Tríceps', gif: `${GIF_BASE}/0035` },
+      { id: 'lat_pulldown', name: 'Jalón al Pecho', nameEn: 'Lat Pulldown', desc: 'Tira la barra hacia el pecho con agarre ancho', sets: 4, reps: '10', muscle: 'Espalda', gif: 'gifs/lat_pulldown.gif' },
+      { id: 'cable_row', name: 'Remo Polea', nameEn: 'Seated Cable Row', desc: 'Tira el cable hacia el abdomen, aprieta escápulas', sets: 4, reps: '10', muscle: 'Espalda', gif: 'gifs/cable_row.gif' },
+      { id: 'db_row', name: 'Remo Mancuerna', nameEn: 'Dumbbell Row', desc: 'Apoyado en banco, tira mancuerna hacia la cadera', sets: 3, reps: '10 c/l', muscle: 'Espalda', gif: 'gifs/db_row.gif' },
+      { id: 'rear_delt', name: 'Vuelos Posteriores', nameEn: 'Rear Delt Fly', desc: 'Inclinado, eleva mancuernas hacia atrás', sets: 3, reps: '15', muscle: 'Deltoides post.', gif: 'gifs/rear_delt.gif' },
+      { id: 'tricep_push', name: 'Extensión Tríceps', nameEn: 'Tricep Pushdown', desc: 'Empuja el cable hacia abajo, codos fijos', sets: 3, reps: '12', muscle: 'Tríceps', gif: 'gifs/tricep_push.gif' },
+      { id: 'skull_crush', name: 'Press Francés', nameEn: 'Skull Crushers', desc: 'Acostado, baja la barra hacia la frente y extiende', sets: 3, reps: '10', muscle: 'Tríceps', gif: 'gifs/skull_crush.gif' },
     ]
   },
   friday: {
     name: 'Lower B', focus: 'Posterior + Glúteos + Core', color: '#e67e22',
     exercises: [
-      { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: `${GIF_BASE}/0032` },
-      { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: `${GIF_BASE}/0278` },
-      { id: 'seated_curl', name: 'Curl Femoral Sentado', nameEn: 'Seated Leg Curl', desc: 'Sentado, flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: `${GIF_BASE}/0587` },
-      { id: 'hip_thrust', name: 'Hip Thrust', nameEn: 'Barbell Hip Thrust', desc: 'Espalda en banco, empuja cadera hacia arriba', sets: 3, reps: '10', muscle: 'Glúteos', gif: `${GIF_BASE}/1511` },
-      { id: 'calf_raise_b', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: `${GIF_BASE}/1386` },
-      { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales', sets: 3, reps: '20', muscle: 'Core', gif: `${GIF_BASE}/0274` },
+      { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: 'gifs/deadlift.gif' },
+      { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif' },
+      { id: 'seated_curl', name: 'Curl Femoral Sentado', nameEn: 'Seated Leg Curl', desc: 'Sentado, flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/seated_curl.gif' },
+      { id: 'hip_thrust', name: 'Hip Thrust', nameEn: 'Barbell Hip Thrust', desc: 'Espalda en banco, empuja cadera hacia arriba', sets: 3, reps: '10', muscle: 'Glúteos', gif: 'gifs/hip_thrust.gif' },
+      { id: 'calf_raise_b', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif' },
+      { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif' },
     ]
   },
   saturday: { name: 'Cardio', focus: 'LISS o HIIT (opcional)', rest: true, cardio: true },
@@ -448,6 +448,27 @@ function getMealsForDay(dayName) {
   if (dayName === 'saturday' || dayName === 'sunday') return MEALS_REST;
   if (dayName === 'tuesday' || dayName === 'thursday') return MEALS_PACKED;
   return MEALS_OFFICE;
+}
+
+const FOOD_ICONS = [
+  [/whey|prote[ií]na?\b.*scoop|scoop/i, '🥤'], [/protein bar|built/i, '🍫'],
+  [/pollo|pechuga|chicken/i, '🍗'], [/bistec|res|carne|steak/i, '🥩'], [/chuleta|cerdo|pork/i, '🥩'],
+  [/at[uú]n|tuna/i, '🐟'], [/salm[oó]n|pescado|fish/i, '🐟'], [/jam[oó]n|turkey/i, '🥓'],
+  [/huevo|egg/i, '🥚'], [/leche|milk|nurri/i, '🥛'], [/yogurt/i, '🥛'],
+  [/arroz|rice/i, '🍚'], [/pasta|spaghetti/i, '🍝'], [/pan\b.*jam|sandwich|s[aá]ndwich/i, '🥪'],
+  [/pan\b|bread|integral/i, '🍞'], [/tortilla/i, '🫓'], [/papa|potato|patata/i, '🥔'],
+  [/avena|oat/i, '🥣'], [/ensalada|salad/i, '🥗'], [/lechuga|lettuce/i, '🥬'],
+  [/tomate|tomato/i, '🍅'], [/aguacate|avocado/i, '🥑'],
+  [/aderezo|aceite|oliva|oil|vinagre/i, '🫒'], [/fruta|fruit/i, '🍎'],
+  [/pl[aá]tano|banana/i, '🍌'], [/manzana|apple/i, '🍎'], [/naranja|orange|jugo/i, '🍊'],
+  [/pizza/i, '🍕'], [/hamburguesa|burger/i, '🍔'], [/taco/i, '🌮'],
+  [/agua|water/i, '💧'], [/carbohidrato|acompa[nñ]amiento/i, '🍚'],
+  [/vegetal|vegetales|verdura/i, '🥦'],
+];
+function foodIcon(name) {
+  const n = name.toLowerCase();
+  for (const [re, icon] of FOOD_ICONS) if (re.test(n)) return icon;
+  return '🍽️';
 }
 
 // ── Jarvis Data ──────────────────────────────────────────────────────
@@ -1337,7 +1358,6 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
     onUpdate({ ...exerciseState, sets: newSets });
   }
 
-  function haptic(ms) { try { navigator.vibrate && navigator.vibrate(ms || 10); } catch {} }
 
   function toggleSet(si) {
     const wasDone = sets[si].done;
@@ -1395,10 +1415,10 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
 
       ${expanded && html`
         <div className="slide-down" style=${{ padding: '12px 2px 0' }}>
-          ${exercise.imageUrl ? html`
+          ${exercise.gif ? html`
             <div className="mb-3 flex justify-center" style=${{ position: 'relative' }}>
               <div className="skeleton-gif" style=${{ width: 200, height: 200, position: 'absolute' }} />
-              <img src=${exercise.imageUrl} alt=${exercise.name} loading="lazy"
+              <img src=${exercise.gif} alt=${exercise.name} loading="lazy"
                 style=${{ height: 200, width: 200, objectFit: 'contain', display: 'block', position: 'relative', zIndex: 1 }}
                 onLoad=${(e) => { const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }}
                 onError=${(e) => { e.target.style.display = 'none'; const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }} />
@@ -1615,7 +1635,7 @@ function WorkoutCard({ routine, dayLabel, unitPref, onUnitToggle, exercises, onE
           <div className="text-sm mt-1" style=${{ color: T.sub }}>${routine.focus}</div>
           ${routine.cardio && html`
             <div className="mt-4 flex justify-center">
-              <img src="https://static.exercisedb.dev/media/rjiM4L3.gif" alt="Cardio"
+              <img src="gifs/cardio.gif" alt="Cardio"
                 loading="lazy"
                 style=${{ width: 200, height: 200, objectFit: 'contain', display: 'block' }}
                 onError=${(e) => { e.target.style.display = 'none'; }} />
@@ -1732,7 +1752,7 @@ function MealItem({ meal, index, onConfirm, onEdit }) {
             <div className="space-y-1.5 mb-3">
               ${meal.items.map((item, i) => html`
                 <div key=${i} className="flex justify-between">
-                  <span style=${{ fontSize: 13, color: T.sub }}>${item.name}</span>
+                  <span style=${{ fontSize: 13, color: T.sub }}><span style=${{ fontSize: 14, marginRight: 6 }}>${foodIcon(item.name)}</span>${item.name}</span>
                   <span className="font-mono" style=${{ fontSize: 12, color: T.muted }}>${item.cal} cal</span>
                 </div>
               `)}
@@ -1759,6 +1779,7 @@ function MealItem({ meal, index, onConfirm, onEdit }) {
             <div className="space-y-2 mb-3">
               ${editItems.map((item, i) => html`
                 <div key=${i} className="flex items-center gap-2 text-xs">
+                  <span style=${{ fontSize: 14, flexShrink: 0 }}>${foodIcon(item.name)}</span>
                   <span className="flex-1" style=${{ color: T.sub }}>${item.name}</span>
                   <div className="flex items-center gap-1">
                     <input type="number" value=${item.cal} onChange=${e => updateItem(i, 'cal', e.target.value)}
@@ -2777,7 +2798,7 @@ function ExerciseCatalog() {
   const [openExercise, setOpenExercise] = useState(null); // 'monday-0' format
   const dayOrder = ['monday', 'tuesday', 'thursday', 'friday'];
   const dayNames = { monday: 'Lunes \u2014 Upper A', tuesday: 'Martes \u2014 Lower A', thursday: 'Jueves \u2014 Upper B', friday: 'Viernes \u2014 Lower B' };
-  const dayEmojis = { monday: '\uD83D\uDCAA\uD83C\uDFFC', tuesday: '\uD83E\uDDB5', thursday: '\uD83D\uDCAA\uD83C\uDFFC', friday: '\uD83E\uDDB5' };
+  const dayEmojis = { monday: '\uD83D\uDCAA\uD83C\uDFFC', tuesday: '\uD83E\uDDB5\uD83C\uDFFB', thursday: '\uD83D\uDCAA\uD83C\uDFFC', friday: '\uD83E\uDDB5\uD83C\uDFFB' };
 
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
@@ -2820,9 +2841,9 @@ function ExerciseCatalog() {
                         </div>
                         ${exOpen && html`
                           <div className="slide-down px-3 pb-3">
-                            ${ex.imageUrl ? html`
+                            ${ex.gif ? html`
                               <div className="flex justify-center mb-3">
-                                <img src=${ex.imageUrl} alt=${ex.name} loading="lazy"
+                                <img src=${ex.gif} alt=${ex.name} loading="lazy"
                                   style=${{ height: 180, width: 180, objectFit: 'contain' }}
                                   onError=${(e) => { e.target.style.display = 'none'; }} />
                               </div>
@@ -4130,7 +4151,7 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
             ${selected.map((item, i) => html`
               <div key=${i} className="flex items-center py-2 px-3"
                 style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none' }}>
-                <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.text }}>${item.name}</span>
+                <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${foodIcon(item.name)}</span>${item.name}</span>
                 <span className="w-12 text-center text-xs font-mono font-semibold" style=${{ color: T.accent }}>${item.protein}g</span>
                 <span className="w-14 text-center text-xs font-mono font-semibold" style=${{ color: T.amber }}>${item.cal}</span>
                 <button onClick=${() => removeItem(i)} className="ml-1 p-1 rounded-lg" style=${{ color: T.red }}>
@@ -4151,7 +4172,7 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
       <!-- Quantity picker overlay -->
       ${qtyPick && html`
         <div className="mb-3 rounded-xl fade-up" style=${{ padding: 14, background: T.elevated, border: '1px solid ' + T.border }}>
-          <div className="text-xs font-bold mb-1" style=${{ color: T.text }}>${qtyPick.name}</div>
+          <div className="text-xs font-bold mb-1" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${qtyPick.icon || foodIcon(qtyPick.name)}</span>${qtyPick.name}</div>
           <div className="text-xs mb-3" style=${{ color: T.muted }}>${qtyPick.portion} \u00B7 ${qtyPick.cal} cal \u00B7 ${qtyPick.protein}g P</div>
           <div className="text-xs font-semibold mb-2" style=${{ color: T.sub }}>Cantidad</div>
           <div className="flex gap-1.5 flex-wrap">
@@ -4192,7 +4213,7 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
               className="flex items-center w-full py-2.5 px-3 text-left transition-all active:scale-[0.98]"
               style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none', background: 'transparent' }}>
               <div className="flex-1 min-w-0 mr-2">
-                <div className="text-xs font-semibold truncate" style=${{ color: T.text }}>${food.name}</div>
+                <div className="text-xs font-semibold truncate" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${food.icon || foodIcon(food.name)}</span>${food.name}</div>
                 <div className="text-xs" style=${{ color: T.muted }}>${food.portion}</div>
               </div>
               <span className="text-xs font-mono font-semibold flex-shrink-0" style=${{ color: T.accent }}>${food.protein}g P</span>
@@ -4448,7 +4469,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, dark, onThemeToggle }) {
                   ${meal.items.map((item, j) => html`
                     <div key=${j} className="flex items-center py-2 px-3"
                       style=${{ borderTop: '1px solid ' + T.border }}>
-                      <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.sub }}>${item.name}</span>
+                      <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.sub }}><span style=${{ fontSize: 13, marginRight: 5 }}>${foodIcon(item.name)}</span>${item.name}</span>
                       <span className="w-16 text-center text-xs font-mono font-semibold" style=${{ color: T.accent }}>${item.protein}g</span>
                       <span className="w-16 text-center text-xs font-mono font-semibold" style=${{ color: T.amber }}>${item.cal}</span>
                     </div>
@@ -4803,9 +4824,9 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                 <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${currentEx.name}</div>
                 <div style=${{ fontSize: 12, color: T.muted, marginTop: 2 }}>${currentEx.muscle} \u00B7 ${currentEx.sets}\u00D7${currentEx.reps}</div>
               </div>
-              ${currentEx.imageUrl ? html`
+              ${currentEx.gif ? html`
                 <div className="flex justify-center" style=${{ padding: '12px 0', background: T.bg }}>
-                  <img src=${currentEx.imageUrl} alt=${currentEx.name} loading="lazy"
+                  <img src=${currentEx.gif} alt=${currentEx.name} loading="lazy"
                     style=${{ height: 200, width: 200, objectFit: 'contain' }}
                     onError=${(e) => { e.target.style.display = 'none'; }} />
                 </div>
@@ -4855,8 +4876,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             <div className="ds-card press-scale" style=${{ padding: 0, overflow: 'hidden', cursor: 'pointer' }}
               onClick=${() => setExpandedNext(!expandedNext)}>
               <div className="flex items-center gap-4" style=${{ padding: 14 }}>
-                ${nextEx.imageUrl && !expandedNext ? html`
-                  <img src=${nextEx.imageUrl} alt=${nextEx.name} loading="lazy"
+                ${nextEx.gif && !expandedNext ? html`
+                  <img src=${nextEx.gif} alt=${nextEx.name} loading="lazy"
                     style=${{ height: 72, width: 72, objectFit: 'contain', borderRadius: 12, flexShrink: 0, background: T.bg }}
                     onError=${(e) => { e.target.style.display = 'none'; }} />
                 ` : ''}
@@ -4869,9 +4890,9 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               </div>
               ${expandedNext && html`
                 <div className="slide-down" onClick=${(e) => e.stopPropagation()}>
-                  ${nextEx.imageUrl ? html`
+                  ${nextEx.gif ? html`
                     <div className="flex justify-center" style=${{ padding: '8px 0 12px', background: T.bg }}>
-                      <img src=${nextEx.imageUrl} alt=${nextEx.name} loading="lazy"
+                      <img src=${nextEx.gif} alt=${nextEx.name} loading="lazy"
                         style=${{ height: 200, width: 200, objectFit: 'contain' }}
                         onError=${(e) => { e.target.style.display = 'none'; }} />
                     </div>
