@@ -3237,6 +3237,19 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
     try { return localStorage.getItem('ds_unit_water') || 'ml'; } catch { return 'ml'; }
   });
 
+  const [notes, setNotes] = useState(() => {
+    try { return localStorage.getItem('ds_notes') || ''; } catch { return ''; }
+  });
+  const notesTimer = useRef(null);
+  function handleNotesChange(e) {
+    const v = e.target.value;
+    setNotes(v);
+    clearTimeout(notesTimer.current);
+    notesTimer.current = setTimeout(() => {
+      try { localStorage.setItem('ds_notes', v); } catch {}
+    }, 400);
+  }
+
   const lastWeight = (() => {
     const log = getWeightLog();
     return log.length ? log[log.length - 1].kg : 72;
@@ -3417,6 +3430,29 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
               </div>
               <div style=${{ fontSize: 12, color: T.sub, paddingLeft: 28 }}>Todos los días, incluso descanso. Con el desayuno.</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Card 7: Notas de mejora -->
+        <div className="ds-card" style=${{ padding: 20 }}>
+          ${sectionTitle('📝 Notas de mejora')}
+          <div style=${{ fontSize: 12, color: T.muted, marginBottom: 10 }}>Ideas, bugs o mejoras para la siguiente versión</div>
+          <textarea
+            value=${notes}
+            onInput=${handleNotesChange}
+            placeholder="Escribe tus notas aquí..."
+            rows="8"
+            style=${{
+              width: '100%', fontSize: 14, fontWeight: 500, color: T.text, lineHeight: 1.6,
+              background: T.input, border: '1px solid ' + T.border, borderRadius: 12,
+              padding: '12px 14px', resize: 'vertical', fontFamily: 'Outfit, sans-serif',
+              outline: 'none', transition: 'border-color 0.2s',
+            }}
+            onFocus=${e => e.target.style.borderColor = T.accent}
+            onBlur=${e => e.target.style.borderColor = T.border}
+          />
+          <div style=${{ fontSize: 11, color: T.muted, marginTop: 6, textAlign: 'right' }}>
+            ${notes.length > 0 ? notes.split('\n').filter(l => l.trim()).length + ' líneas' : 'Vacío'}
           </div>
         </div>
 
