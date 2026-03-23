@@ -524,8 +524,8 @@ const MOTIVATION_MSGS = [
 
 const JARVIS_BUTTONS = [
   { emoji: '\uD83C\uDF55', label: '\u00BFPuedo comer algo?', action: 'food_prompt' },
-  { emoji: '\uD83D\uDCAA', label: '\u00BFQu\u00E9 peso uso hoy?', action: 'weight_suggest' },
-  { emoji: '\uD83C\uDFC3', label: 'No pude ir al gym', action: 'missed_gym' },
+  { emoji: '\uD83D\uDCAA\uD83C\uDFFC', label: '\u00BFQu\u00E9 peso uso hoy?', action: 'weight_suggest' },
+  { emoji: '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'No pude ir al gym', action: 'missed_gym' },
   { emoji: '\uD83D\uDCD6', label: 'Expl\u00EDcame un ejercicio', action: 'exercise_prompt' },
   { emoji: '\uD83D\uDC8A', label: 'Suplementos de hoy', action: 'supplements' },
   { emoji: '\uD83D\uDCCA', label: '\u00BFC\u00F3mo voy hoy?', action: 'summary' },
@@ -1259,7 +1259,7 @@ function DaySummary({ protein, calories, waterMl, gymDone, gymTotal }) {
     '¡Buen inicio! Sigue así',
     '¡Vas por la mitad! No pares',
     '¡Casi lo logras! Un esfuerzo más',
-    '¡Día perfecto! Lo diste todo \uD83D\uDCAA',
+    '¡Día perfecto! Lo diste todo \uD83D\uDCAA\uD83C\uDFFC',
   ];
 
   return html`
@@ -2316,13 +2316,13 @@ function WeekCalendar({ days, selectedIdx, onSelect }) {
         if (d.isPast) {
           emoji = d.routine.rest ? '\uD83D\uDE34' : '\u2705';
         } else if (d.isFuture) {
-          if (d.routine.cardio) emoji = '\uD83C\uDFC3';
-          else if (d.routine.rest) emoji = '\uD83D\uDEB6';
-          else emoji = '\uD83C\uDFCB\uFE0F';
+          if (d.routine.cardio) emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F';
+          else if (d.routine.rest) emoji = '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F';
+          else emoji = '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F';
         } else {
-          if (d.routine.cardio) emoji = '\uD83C\uDFC3';
-          else if (d.routine.rest) emoji = '\uD83D\uDEB6';
-          else emoji = '\uD83C\uDFCB\uFE0F';
+          if (d.routine.cardio) emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F';
+          else if (d.routine.rest) emoji = '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F';
+          else emoji = '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F';
         }
         return html`
           <button key=${i} onClick=${() => onSelect(i)}
@@ -2363,9 +2363,9 @@ function RoutineCard({ routine, dayLabel }) {
         </div>
         <div className="mt-4 space-y-2">
           ${[
-            { emoji: '\uD83D\uDEB6', label: 'LISS', desc: '30 min caminata inclinada o bicicleta' },
+            { emoji: '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'LISS', desc: '30 min caminata inclinada o bicicleta' },
             { emoji: '\u26A1', label: 'HIIT', desc: '20 min intervalos de alta intensidad' },
-            { emoji: '\uD83E\uDDD8', label: 'Recovery', desc: 'Stretching y movilidad activa' },
+            { emoji: '\uD83E\uDDD8\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'Recovery', desc: 'Stretching y movilidad activa' },
           ].map((opt, i) => html`
             <div key=${i} className="flex items-center gap-3 px-4 py-3 rounded-xl" style=${{ background: T.elevated }}>
               <span style=${{ fontSize: 18 }}>${opt.emoji}</span>
@@ -2535,7 +2535,7 @@ function WeekSummary() {
 
   const stats = [
     { emoji: '\uD83D\uDD25', label: 'Racha', value: streak + ' d\u00EDas' },
-    { emoji: '\uD83C\uDFCB\uFE0F', label: 'Entrenados', value: trainedThisWeek + ' / ' + totalTrainDays },
+    { emoji: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'Entrenados', value: trainedThisWeek + ' / ' + totalTrainDays },
     { emoji: '\uD83D\uDCC5', label: 'Semana', value: '#' + planWeek },
     { emoji: '\uD83C\uDFAF', label: 'Split', value: 'Upper/Lower' },
   ];
@@ -2691,9 +2691,9 @@ function NextWeekPreview() {
       <div>
         ${dayOrder.map((dayKey, i) => {
           const r = ROUTINES[dayKey];
-          let emoji = '\uD83C\uDFCB\uFE0F';
-          if (r.cardio) emoji = '\uD83C\uDFC3';
-          else if (r.rest) emoji = '\uD83D\uDEB6';
+          let emoji = '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F';
+          if (r.cardio) emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F';
+          else if (r.rest) emoji = '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F';
           return html`
             <div key=${i} className="flex items-center gap-3 py-2.5"
               style=${{ borderBottom: i < 6 ? '1px solid ' + T.border : 'none' }}>
@@ -2777,7 +2777,7 @@ function ExerciseCatalog() {
   const [openExercise, setOpenExercise] = useState(null); // 'monday-0' format
   const dayOrder = ['monday', 'tuesday', 'thursday', 'friday'];
   const dayNames = { monday: 'Lunes \u2014 Upper A', tuesday: 'Martes \u2014 Lower A', thursday: 'Jueves \u2014 Upper B', friday: 'Viernes \u2014 Lower B' };
-  const dayEmojis = { monday: '\uD83D\uDCAA', tuesday: '\uD83E\uDDB5', thursday: '\uD83D\uDCAA', friday: '\uD83E\uDDB5' };
+  const dayEmojis = { monday: '\uD83D\uDCAA\uD83C\uDFFC', tuesday: '\uD83E\uDDB5', thursday: '\uD83D\uDCAA\uD83C\uDFFC', friday: '\uD83E\uDDB5' };
 
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
@@ -3136,14 +3136,14 @@ function Achievements() {
     const totalDays = stats.totalDays || 0;
 
     const all = [
-      { id: 'first', icon: '\uD83C\uDFCB\uFE0F', name: 'Primera sesi\u00F3n', desc: 'Completar tu primer entrenamiento', unlocked: totalDays >= 1 },
+      { id: 'first', icon: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', name: 'Primera sesi\u00F3n', desc: 'Completar tu primer entrenamiento', unlocked: totalDays >= 1 },
       { id: 'week1', icon: '\uD83D\uDCC5', name: 'Primera semana', desc: '5 d\u00EDas de entrenamiento', unlocked: totalDays >= 5 },
       { id: 'streak3', icon: '\uD83D\uDD25', name: 'En racha', desc: '3 d\u00EDas seguidos', unlocked: streak >= 3 || (stats.maxStreak && stats.maxStreak >= 3) },
       { id: 'streak7', icon: '\u26A1', name: 'Imparable', desc: '7 d\u00EDas seguidos', unlocked: streak >= 7 || (stats.maxStreak && stats.maxStreak >= 7) },
       { id: 'streak30', icon: '\uD83D\uDC8E', name: 'Disciplina de hierro', desc: '30 d\u00EDas seguidos', unlocked: streak >= 30 || (stats.maxStreak && stats.maxStreak >= 30) },
       { id: 'pr1', icon: '\uD83C\uDFC6', name: 'Primer PR', desc: 'Registrar tu primer r\u00E9cord personal', unlocked: prCount >= 1 },
       { id: 'pr5', icon: '\uD83E\uDD47', name: 'Caza-r\u00E9cords', desc: '5 r\u00E9cords personales', unlocked: prCount >= 5 },
-      { id: 'pr10', icon: '\uD83D\uDCAA', name: 'M\u00E1quina de PRs', desc: '10 r\u00E9cords personales', unlocked: prCount >= 10 },
+      { id: 'pr10', icon: '\uD83D\uDCAA\uD83C\uDFFC', name: 'M\u00E1quina de PRs', desc: '10 r\u00E9cords personales', unlocked: prCount >= 10 },
       { id: 'days10', icon: '\uD83C\uDF1F', name: 'Comprometido', desc: '10 entrenamientos', unlocked: totalDays >= 10 },
       { id: 'days25', icon: '\uD83C\uDF96\uFE0F', name: 'Veterano', desc: '25 entrenamientos', unlocked: totalDays >= 25 },
       { id: 'days50', icon: '\uD83D\uDE80', name: 'Leyenda', desc: '50 entrenamientos', unlocked: totalDays >= 50 },
@@ -3223,7 +3223,7 @@ function WeeklyShareCard() {
         <button onClick=${() => {
           const lines = [
             '📊 Mi semana en DontSkip',
-            '🏋️ ' + data.totalWorkouts + ' entrenamientos',
+            '🏋🏻‍♂️ ' + data.totalWorkouts + ' entrenamientos',
             '🥩 ' + data.avgProtein + 'g proteína promedio',
             '🔥 ' + data.avgCalories + ' kcal promedio',
             '💧 ' + data.totalWater + 'L de agua total',
@@ -3282,7 +3282,7 @@ function GeneralStats() {
   else if (weeksUntilDeload <= 3) deloadBadge = '\u26A1 Descarga en ' + weeksUntilDeload + ' semanas';
 
   const items = [
-    { emoji: '\uD83C\uDFCB\uFE0F', label: 'D\u00EDas entrenados', value: stats.totalDays },
+    { emoji: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'D\u00EDas entrenados', value: stats.totalDays },
     { emoji: '\uD83D\uDD25', label: 'Racha actual', value: streak + ' d\u00EDas' },
     { emoji: '\u2B50', label: 'Racha m\u00E1xima', value: stats.maxStreak + ' d\u00EDas' },
     { emoji: '\uD83D\uDCC5', label: 'Semana del plan', value: '#' + planWeek },
@@ -3696,7 +3696,7 @@ function PerfilTab({ dark, onThemeToggle, unitPref, onUnitToggle }) {
           <div style=${rowStyle(false)}>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span style=${{ fontSize: 16 }}>💪</span>
+                <span style=${{ fontSize: 16 }}>💪🏼</span>
                 <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>Whey — Post-gym</span>
               </div>
               <div style=${{ fontSize: 12, color: T.sub, paddingLeft: 28 }}>27g proteína por scoop. Días de entrenamiento.</div>
@@ -4571,7 +4571,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
     { emoji: '😫', label: 'Agotado' },
     { emoji: '😐', label: 'Normal' },
     { emoji: '😊', label: 'Bien' },
-    { emoji: '💪', label: 'Fuerte' },
+    { emoji: '💪🏼', label: 'Fuerte' },
     { emoji: '🔥', label: 'Imparable' },
   ];
   function pickMood(idx) {
@@ -5194,7 +5194,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             <button onClick=${() => {
               const stats = [
                 '\uD83C\uDFCB\uFE0F ' + gymTotal + ' ejercicios \u00B7 ' + completedSets + ' sets',
-                totalVolume > 0 ? '\uD83D\uDCAA ' + formatVolume(totalVolume) + ' ' + unitPref + ' de volumen' : '',
+                totalVolume > 0 ? '\uD83D\uDCAA\uD83C\uDFFC ' + formatVolume(totalVolume) + ' ' + unitPref + ' de volumen' : '',
                 elapsedMin > 0 ? '\u23F1\uFE0F ' + elapsedMin + ' minutos' : '',
               ].filter(Boolean);
               const fb = microFeedback.map(f => f.text).filter(Boolean);
@@ -5245,6 +5245,61 @@ function ThemeToggle({ dark, onToggle }) {
     </button>
   `;
 }
+
+// ── Floating Timer (visible across all tabs) ─────────────────────────
+
+function FloatingTimer({ workoutStartTime, isPaused, pausedElapsed, routine, exerciseStates, onPlay, onPause, onStop, onGoLive }) {
+  const [elapsed, setElapsed] = useState(isPaused ? pausedElapsed : 0);
+  useEffect(() => {
+    if (!workoutStartTime || isPaused) {
+      if (isPaused) setElapsed(pausedElapsed);
+      return;
+    }
+    setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [workoutStartTime, isPaused, pausedElapsed]);
+
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  const timerStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  const gymDone = exerciseStates.filter(e => e.sets.every(s => s.done)).length;
+  const gymTotal = (routine.exercises || []).length;
+
+  return html`
+    <div className="fade-up" style=${{ padding: '0 16px', marginBottom: 4 }}>
+      <div className="flex items-center gap-3" onClick=${onGoLive}
+        style=${{ background: T.accent, borderRadius: 16, padding: '10px 14px', cursor: 'pointer' }}>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          ${isPaused
+            ? html`<div style=${{ width: 8, height: 8, borderRadius: '50%', background: '#fbbf24' }} />`
+            : html`<div className="live-dot" style=${{ width: 8, height: 8, background: '#fff' }} />`
+          }
+          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>${timerStr}</span>
+          <span style=${{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>${routine.name} \u00B7 ${gymDone}/${gymTotal}</span>
+        </div>
+        <div className="flex items-center gap-1.5" onClick=${e => e.stopPropagation()}>
+          ${isPaused ? html`
+            <button onClick=${onPlay} className="flex items-center justify-center press-scale"
+              style=${{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.2)' }}>
+              <${Play} size=${16} weight="fill" color="#fff" />
+            </button>
+          ` : html`
+            <button onClick=${onPause} className="flex items-center justify-center press-scale"
+              style=${{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.2)' }}>
+              <${Pause} size=${16} weight="fill" color="#fff" />
+            </button>
+          `}
+          <button onClick=${onStop} className="flex items-center justify-center press-scale"
+            style=${{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.15)' }}>
+            <${Stop} size=${16} weight="fill" color="#fff" />
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 
 function App() {
   const [theme, setTheme] = useState(getInitialTheme);
@@ -5480,6 +5535,17 @@ function App() {
     `}
     <div className="max-w-lg mx-auto min-h-screen" style=${{ paddingTop: 'var(--safe-top)' }}
       onTouchStart=${handleTouchStart} onTouchEnd=${handleTouchEnd}>
+
+      ${workoutStartTime && tab !== 'live' && !routine.rest ? (() => {
+        const isPaused = pausedElapsed !== null;
+        return html`<${FloatingTimer}
+          workoutStartTime=${workoutStartTime} isPaused=${isPaused} pausedElapsed=${pausedElapsed}
+          routine=${routine} exerciseStates=${exerciseStates}
+          onPlay=${startTimer} onPause=${pauseTimer} onStop=${stopTimer}
+          onGoLive=${() => handleTabChange('live')}
+        />`;
+      })() : ''}
+
       <div key=${tabKey} className="tab-enter">
       ${tab === 'hoy' && html`<${TodayTab}
         meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal}
