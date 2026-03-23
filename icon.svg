@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a3a5c"/>
+      <stop offset="100%" stop-color="#0f2338"/>
+    </linearGradient>
+    <linearGradient id="leftBar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4a9ade"/>
+      <stop offset="100%" stop-color="#2d7cc4"/>
+    </linearGradient>
+    <linearGradient id="rightBar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#274472"/>
+      <stop offset="100%" stop-color="#1a3058"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#7ec8f0"/>
+      <stop offset="100%" stop-color="#4a9ade"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Subtle inner border -->
+  <rect x="2" y="2" width="508" height="508" rx="110" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+
+  <g transform="translate(256, 240)" filter="url(#shadow)">
+    <!-- Left side dumbbell -->
+    <!-- Outer left plate -->
+    <rect x="-168" y="-52" width="32" height="104" rx="6" fill="url(#leftBar)" opacity="0.7"/>
+    <!-- Inner left plate -->
+    <rect x="-128" y="-72" width="40" height="144" rx="8" fill="url(#leftBar)"/>
+    <!-- Center left plate -->
+    <rect x="-80" y="-88" width="44" height="176" rx="8" fill="#3388cc"/>
+
+    <!-- Right side dumbbell -->
+    <!-- Center right plate -->
+    <rect x="36" y="-88" width="44" height="176" rx="8" fill="url(#rightBar)"/>
+    <!-- Inner right plate -->
+    <rect x="88" y="-72" width="40" height="144" rx="8" fill="url(#rightBar)"/>
+    <!-- Outer right plate -->
+    <rect x="136" y="-52" width="32" height="104" rx="6" fill="url(#rightBar)" opacity="0.8"/>
+
+    <!-- Lightning bolt -->
+    <g filter="url(#glow)">
+      <polygon points="-16,-100 -40,10 -4,10 16,100 40,-10 4,-10" fill="url(#bolt)"/>
+      <!-- Bolt highlight -->
+      <polygon points="-12,-90 -34,6 -2,6 10,70 28,-6 2,-6" fill="rgba(255,255,255,0.15)"/>
+    </g>
+  </g>
+
+  <!-- App name -->
+  <text x="256" y="420" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="42" font-weight="900" letter-spacing="3" fill="rgba(255,255,255,0.9)">DON'TSKIP</text>
+</svg>
