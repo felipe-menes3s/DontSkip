@@ -484,6 +484,13 @@ const EN = {
   // ── Additional ──
   'comidas': 'meals', 'Hidratación': 'Hydration',
   'Compartir': 'Share', 'Entrenamiento': 'Workout', 'Nutrición': 'Nutrition',
+  // ── 1RM estimator ──
+  '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
+  // ── Jarvis buttons ──
+  '¿Puedo comer algo?': 'Can I eat something?', '¿Qué peso uso hoy?': 'What weight should I use?',
+  'Mi 1RM': 'My 1RM', 'No pude ir al gym': "Couldn't make it to gym",
+  'Explícame un ejercicio': 'Explain an exercise', 'Suplementos de hoy': "Today's supplements",
+  '¿Cómo voy hoy?': 'How am I doing today?', 'Mi racha': 'My streak',
 };
 
 function t(key) { return LANG === 'en' ? (EN[key] || key) : key; }
@@ -775,10 +782,12 @@ const MOTIVATION_MSGS = [
 const JARVIS_BUTTONS = [
   { emoji: '\uD83C\uDF55', label: '\u00BFPuedo comer algo?', action: 'food_prompt' },
   { emoji: '\uD83D\uDCAA\uD83C\uDFFC', label: '\u00BFQu\u00E9 peso uso hoy?', action: 'weight_suggest' },
+  { emoji: '\uD83C\uDFC6', label: 'Mi 1RM', action: '1rm' },
   { emoji: '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'No pude ir al gym', action: 'missed_gym' },
   { emoji: '\uD83D\uDCD6', label: 'Expl\u00EDcame un ejercicio', action: 'exercise_prompt' },
   { emoji: '\uD83D\uDC8A', label: 'Suplementos de hoy', action: 'supplements' },
   { emoji: '\uD83D\uDCCA', label: '\u00BFC\u00F3mo voy hoy?', action: 'summary' },
+  { emoji: '\uD83D\uDD25', label: 'Mi racha', action: 'streak' },
 ];
 
 
@@ -877,6 +886,13 @@ function saveWeightEntry(entry) {
   const log = getWeightLog();
   log.push(entry);
   localStorage.setItem('ds_weight_log', JSON.stringify(log));
+}
+
+// 1RM estimator (Epley formula)
+function estimate1RM(weight, reps) {
+  if (!weight || weight <= 0 || !reps || reps <= 0) return 0;
+  if (reps === 1) return weight;
+  return Math.round(weight * (1 + reps / 30));
 }
 
 function getRecords() {
@@ -987,25 +1003,31 @@ function getTomorrowRoutine() {
 
 function detectIntent(text) {
   const n = normalize(text);
+  // 1RM query
+  const rmWords = ['1rm', 'one rep', 'rep max', 'mi maximo', 'mi max', 'cuanto levanto', 'my max', 'how much can i lift', 'maximos'];
+  if (rmWords.some(w => n.includes(w))) return '1rm';
+  // Streak query
+  const streakWords = ['racha', 'streak', 'consistencia', 'consistency', 'cuantos dias', 'how many days'];
+  if (streakWords.some(w => n.includes(w))) return 'streak';
   // Food check
   if (findFood(text)) return 'food';
   // Missed gym
-  const missedWords = ['no pude', 'no fui', 'no voy', 'salte', 'no entre', 'no entrene', 'parque', 'camine', 'ninos', 'no puedo ir'];
+  const missedWords = ['no pude', 'no fui', 'no voy', 'salte', 'no entre', 'no entrene', 'parque', 'camine', 'ninos', 'no puedo ir', 'missed', 'skipped', "couldn't go", "can't go"];
   if (missedWords.some(w => n.includes(w))) return 'missed_gym';
   // Exercise form
-  const formWords = ['como hago', 'como se hace', 'explicame', 'tecnica de', 'forma de', 'como hacer'];
+  const formWords = ['como hago', 'como se hace', 'explicame', 'tecnica de', 'forma de', 'como hacer', 'how to do', 'how do i', 'explain', 'technique', 'form for'];
   if (formWords.some(w => n.includes(w))) return 'exercise_form';
   // Weight suggestion
-  const weightWords = ['que peso', 'cuanto peso', 'peso inicio', 'empezar con', 'peso inicial', 'que carga'];
+  const weightWords = ['que peso', 'cuanto peso', 'peso inicio', 'empezar con', 'peso inicial', 'que carga', 'what weight', 'how much weight', 'starting weight'];
   if (weightWords.some(w => n.includes(w))) return 'weight_suggest';
   // Pain
-  const painWords = ['me duele', 'dolor', 'lesion', 'molestia', 'lastim'];
+  const painWords = ['me duele', 'dolor', 'lesion', 'molestia', 'lastim', 'hurts', 'pain', 'injury', 'sore'];
   if (painWords.some(w => n.includes(w))) return 'pain';
   // Supplements
-  const suppWords = ['creatina', 'whey', 'proteina', 'suplemento'];
+  const suppWords = ['creatina', 'whey', 'proteina', 'suplemento', 'creatine', 'protein', 'supplement'];
   if (suppWords.some(w => n.includes(w))) return 'supplements';
   // Motivation
-  const motiWords = ['cansado', 'no tengo ganas', 'desmotivado', 'para que', 'flojera', 'no quiero', 'aburrido'];
+  const motiWords = ['cansado', 'no tengo ganas', 'desmotivado', 'para que', 'flojera', 'no quiero', 'aburrido', 'tired', 'unmotivated', 'lazy', "don't want", 'bored'];
   if (motiWords.some(w => n.includes(w))) return 'motivation';
   // Default
   return 'summary';
@@ -1013,7 +1035,54 @@ function detectIntent(text) {
 
 function jarvisRespond(intent, text, ctx) {
   const L = LANG === 'en';
+  const unitPref = (() => { try { return localStorage.getItem('ds_unit_pref') || 'lbs'; } catch { return 'lbs'; } })();
   switch (intent) {
+    case '1rm': {
+      const records = getRecords();
+      const entries = Object.entries(records);
+      if (entries.length === 0) return L ? 'No records yet. Complete some exercises to see your estimated 1RM.' : 'Aún no hay récords. Completa algunos ejercicios para ver tu 1RM estimado.';
+      let resp = '\uD83C\uDFC6 ' + (L ? 'Your estimated 1RM (Epley formula)' : 'Tu 1RM estimado (fórmula Epley)') + ':\n\n';
+      const allExercises = {};
+      Object.values(ROUTINES).forEach(r => { if (r.exercises) r.exercises.forEach(ex => { allExercises[ex.id] = ex; }); });
+      const sorted = entries.sort((a, b) => {
+        const wa = a[1].unit === 'kg' ? a[1].weight * 2.20462 : a[1].weight;
+        const wb = b[1].unit === 'kg' ? b[1].weight * 2.20462 : b[1].weight;
+        return wb - wa;
+      });
+      sorted.forEach(([id, rec]) => {
+        const ex = allExercises[id];
+        if (!ex) return;
+        const w = unitPref === rec.unit ? rec.weight : rec.unit === 'kg' ? Math.round(rec.weight * 2.20462) : Math.round(rec.weight / 2.20462);
+        const orm = estimate1RM(w, rec.reps);
+        resp += '\u2022 ' + exName(ex) + ': ' + orm + ' ' + unitPref + ' (PR: ' + w + ' ' + unitPref + ' x' + rec.reps + ')\n';
+      });
+      resp += '\n' + (L ? '\uD83D\uDCA1 To improve your 1RM: progressive overload — add 2.5kg when you hit all reps with good form.' : '\uD83D\uDCA1 Para mejorar tu 1RM: sobrecarga progresiva — sube 2.5kg cuando completes todas las reps con buena forma.');
+      return resp;
+    }
+    case 'streak': {
+      const streak = getStreak();
+      const stats = getFullStats();
+      let resp = '\uD83D\uDD25 ' + (L ? 'Your streak & consistency' : 'Tu racha y consistencia') + ':\n\n';
+      resp += (L ? '\uD83D\uDCC5 Current streak: ' : '\uD83D\uDCC5 Racha actual: ') + streak + ' ' + (L ? 'days' : 'días') + '\n';
+      if (stats.maxStreak) resp += (L ? '\uD83C\uDFC6 Best streak: ' : '\uD83C\uDFC6 Mejor racha: ') + stats.maxStreak + ' ' + (L ? 'days' : 'días') + '\n';
+      if (stats.totalDays) resp += (L ? '\uD83D\uDCAA\uD83C\uDFFC Total training days: ' : '\uD83D\uDCAA\uD83C\uDFFC Días totales de entreno: ') + stats.totalDays + '\n';
+      if (stats.startDate) {
+        const start = new Date(stats.startDate + 'T00:00:00');
+        const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
+        const pct = diff > 0 ? Math.round((stats.totalDays / diff) * 100) : 0;
+        resp += (L ? '\uD83D\uDCCA Consistency: ' : '\uD83D\uDCCA Consistencia: ') + pct + '% (' + stats.totalDays + '/' + diff + ' ' + (L ? 'days' : 'días') + ')\n';
+      }
+      // Records count
+      const records = getRecords();
+      const prCount = Object.keys(records).length;
+      if (prCount > 0) resp += (L ? '\uD83C\uDFC5 Personal records: ' : '\uD83C\uDFC5 Récords personales: ') + prCount + ' ' + (L ? 'exercises' : 'ejercicios') + '\n';
+      resp += '\n';
+      if (streak >= 5) resp += L ? '\uD83D\uDE80 Incredible consistency! Keep the momentum going.' : '\uD83D\uDE80 ¡Consistencia increíble! No pierdas el impulso.';
+      else if (streak >= 3) resp += L ? '\uD83D\uDCAA\uD83C\uDFFC Great streak going! Consistency beats intensity.' : '\uD83D\uDCAA\uD83C\uDFFC ¡Buena racha! La consistencia le gana a la intensidad.';
+      else if (streak >= 1) resp += L ? '\uD83C\uDF31 Good start! Build the habit one day at a time.' : '\uD83C\uDF31 ¡Buen inicio! Construye el hábito un día a la vez.';
+      else resp += L ? "\u23F0 Let's restart! One workout today and the streak begins." : '⏰ ¡A reiniciar! Un entreno hoy y la racha comienza.';
+      return resp;
+    }
     case 'food': {
       const food = findFood(text);
       if (!food) return L ? "I didn't find that food in my database. Try another name." : 'No encontré ese alimento en mi base de datos. Intenta con otro nombre.';
@@ -1051,12 +1120,18 @@ function jarvisRespond(intent, text, ctx) {
       const ex = findExercise(text);
       if (!ex) return L ? "I didn't find that exercise. Try the exact name." : 'No encontré ese ejercicio. Intenta con el nombre exacto (ej: "press pecho", "sentadilla", "peso muerto").';
       const sw = STARTING_WEIGHTS[ex.id];
+      const rec = getRecords()[ex.id];
       const ytUrl = 'https://youtube.com/results?search_query=' + encodeURIComponent(ex.nameEn + ' form tutorial');
       let resp = '\uD83D\uDCD6 ' + exName(ex) + (L ? '' : ' (' + ex.nameEn + ')') + '\n\n';
       resp += '\uD83C\uDFAF ' + (L ? 'Muscle' : 'Músculo') + ': ' + t(ex.muscle) + '\n';
       resp += '\uD83D\uDD04 ' + (L ? 'Sets x Reps' : 'Series x Reps') + ': ' + ex.sets + 'x' + ex.reps + '\n';
       resp += '\uD83D\uDCDD ' + ex.desc + '\n';
       if (sw) resp += '\u2696\uFE0F ' + (L ? 'Starting weight' : 'Peso inicial') + ': ' + sw.kg + 'kg / ' + sw.lbs + 'lbs (' + sw.note + ')\n';
+      if (rec) {
+        const w = unitPref === rec.unit ? rec.weight : rec.unit === 'kg' ? Math.round(rec.weight * 2.20462) : Math.round(rec.weight / 2.20462);
+        const orm = estimate1RM(w, rec.reps);
+        resp += '\uD83C\uDFC6 ' + (L ? 'Your PR' : 'Tu PR') + ': ' + w + ' ' + unitPref + ' x' + rec.reps + ' | 1RM: ' + orm + ' ' + unitPref + '\n';
+      }
       resp += '\n\uD83C\uDFA5 ' + (L ? 'Watch tutorial' : 'Ver tutorial') + ': ' + ytUrl;
       return resp;
     }
@@ -1064,17 +1139,27 @@ function jarvisRespond(intent, text, ctx) {
       if (ctx.isRest) return L
         ? "Today is " + t(ctx.routineName).toLowerCase() + " day. No exercises scheduled. Enjoy the rest. \uD83D\uDE4C\uD83C\uDFFC"
         : 'Hoy es día de ' + ctx.routineName.toLowerCase() + '. No hay ejercicios programados. Disfruta el descanso. \uD83D\uDE4C\uD83C\uDFFC';
+      const records = getRecords();
       let resp = '\uD83D\uDCAA\uD83C\uDFFC ' + (L ? 'Suggested weights' : 'Pesos sugeridos') + ' — ' + t(ctx.routineName) + ' (' + t(ctx.routineFocus) + '):\n\n';
       const routine = ROUTINES[ctx.todayKey];
       routine.exercises.forEach((ex, i) => {
+        const rec = records[ex.id];
         const sw = STARTING_WEIGHTS[ex.id];
-        if (sw) {
-          resp += (i + 1) + '. ' + exName(ex) + ' — ' + sw.kg + 'kg / ' + sw.lbs + 'lbs (' + sw.note + ') — ' + ex.sets + 'x' + ex.reps + '\n';
+        if (rec) {
+          const w = unitPref === rec.unit ? rec.weight : rec.unit === 'kg' ? Math.round(rec.weight * 2.20462) : Math.round(rec.weight / 2.20462);
+          const orm = estimate1RM(w, rec.reps);
+          const work70 = Math.round(orm * 0.7);
+          const work80 = Math.round(orm * 0.8);
+          resp += (i + 1) + '. ' + exName(ex) + '\n';
+          resp += '   PR: ' + w + ' ' + unitPref + ' x' + rec.reps + ' | 1RM: ' + orm + ' ' + unitPref + '\n';
+          resp += '   ' + (L ? 'Suggested' : 'Sugerido') + ': ' + work70 + '-' + work80 + ' ' + unitPref + ' (70-80% 1RM)\n';
+        } else if (sw) {
+          resp += (i + 1) + '. ' + exName(ex) + ' — ' + sw.kg + 'kg / ' + sw.lbs + 'lbs (' + sw.note + ')\n';
         } else {
-          resp += (i + 1) + '. ' + exName(ex) + ' — ' + (L ? 'Bodyweight' : 'Peso corporal') + ' — ' + ex.sets + 'x' + ex.reps + '\n';
+          resp += (i + 1) + '. ' + exName(ex) + ' — ' + (L ? 'Bodyweight' : 'Peso corporal') + '\n';
         }
       });
-      resp += '\n' + (L ? 'Remember: if you complete all reps with good form, add 2-2.5kg next time.' : 'Recuerda: si completas todas las reps con buena forma, sube 2-2.5kg la próxima vez.');
+      resp += '\n' + (L ? '\uD83D\uDCA1 Progressive overload: if you complete all reps with good form, add 2-2.5kg next session.' : '\uD83D\uDCA1 Sobrecarga progresiva: si completas todas las reps con buena forma, sube 2-2.5kg la próxima sesión.');
       return resp;
     }
     case 'pain': {
@@ -1108,6 +1193,7 @@ function jarvisRespond(intent, text, ctx) {
     }
     case 'summary':
     default: {
+      const streak = getStreak();
       let resp = '\uD83D\uDCCA ' + (L ? 'Day summary' : 'Resumen del día') + ' — ' + ctx.dayLabel + '\n\n';
       if (ctx.isRest) {
         resp += (L ? '\uD83D\uDECB\uFE0F Routine: ' : '\uD83D\uDECB\uFE0F Rutina: ') + t(ctx.routineName) + ' (' + t(ctx.routineFocus) + ')\n';
@@ -1117,6 +1203,21 @@ function jarvisRespond(intent, text, ctx) {
       resp += '\uD83E\uDD69 ' + t('Proteína') + ': ' + ctx.proteinNow + 'g / ' + PROTEIN_GOAL + 'g\n';
       resp += '\uD83D\uDD25 ' + t('Calorías') + ': ' + ctx.caloriesNow + ' / ' + CALORIES_GOAL + ' kcal\n';
       resp += '\uD83D\uDCA7 ' + t('Agua') + ': ' + ctx.waterGlasses + ' / ' + ctx.waterGoalGlasses + ' ' + t('vasos') + ' (' + ctx.waterMl + 'ml)\n';
+      if (streak > 0) resp += '\uD83D\uDD25 ' + (L ? 'Streak' : 'Racha') + ': ' + streak + ' ' + (L ? 'days' : 'días') + '\n';
+      // Today's PRs
+      if (!ctx.isRest) {
+        const today = new Date().toISOString().slice(0, 10);
+        const records = getRecords();
+        const routine = ROUTINES[ctx.todayKey];
+        const todayPRs = routine.exercises.filter(ex => records[ex.id] && records[ex.id].date === today);
+        if (todayPRs.length > 0) {
+          resp += '\n\uD83C\uDFC6 ' + (L ? "Today's PRs" : 'PRs de hoy') + ': ' + todayPRs.map(ex => {
+            const rec = records[ex.id];
+            const w = unitPref === rec.unit ? rec.weight : rec.unit === 'kg' ? Math.round(rec.weight * 2.20462) : Math.round(rec.weight / 2.20462);
+            return exName(ex) + ' ' + w + unitPref + ' (1RM: ' + estimate1RM(w, rec.reps) + ')';
+          }).join(', ') + '\n';
+        }
+      }
       const protPct = ctx.proteinNow / PROTEIN_GOAL;
       const calPct = ctx.caloriesNow / CALORIES_GOAL;
       resp += '\n';
@@ -1838,6 +1939,20 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
               </div>
             `)}
           </div>
+          ${(() => {
+            if (isPlank) return '';
+            const doneSets = sets.filter(s => s.done && s.weight > 0 && s.reps > 0);
+            if (doneSets.length === 0) return '';
+            const best = doneSets.reduce((a, b) => estimate1RM(a.weight, a.reps) >= estimate1RM(b.weight, b.reps) ? a : b);
+            const orm = estimate1RM(best.weight, best.reps);
+            if (orm <= 0) return '';
+            return html`
+              <div className="flex items-center justify-between mt-2 px-3 py-2 rounded-lg" style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '15' }}>
+                <span style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>1RM Est.</span>
+                <span style=${{ fontSize: 13, fontWeight: 800, color: T.accent, fontFamily: 'Outfit, sans-serif' }}>${orm} ${unitPref}</span>
+              </div>
+            `;
+          })()}
           ${!allDone && html`
             <button onClick=${completeAll}
               className="w-full flex items-center justify-center gap-2 mt-3 py-2.5 rounded-xl press-scale transition-all"
@@ -3049,9 +3164,10 @@ function StreakCalendar() {
   `;
 }
 
-function ExerciseCatalog() {
+function ExerciseCatalog({ unitPref }) {
   const [openDay, setOpenDay] = useState(null);
   const [openExercise, setOpenExercise] = useState(null); // 'monday-0' format
+  const records = getRecords();
   const dayOrder = ['monday', 'tuesday', 'thursday', 'friday'];
   const dayNames = { monday: t('Lunes \u2014 Upper A'), tuesday: t('Martes \u2014 Lower A'), thursday: t('Jueves \u2014 Upper B'), friday: t('Viernes \u2014 Lower B') };
   const dayEmojis = { monday: '\uD83D\uDCAA\uD83C\uDFFC', tuesday: '\uD83E\uDDB5\uD83C\uDFFB', thursday: '\uD83D\uDCAA\uD83C\uDFFC', friday: '\uD83E\uDDB5\uD83C\uDFFB' };
@@ -3091,7 +3207,12 @@ function ExerciseCatalog() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div style=${{ fontSize: 13, fontWeight: 600, color: T.text }}>${exName(ex)}</div>
-                            <div style=${{ fontSize: 11, color: T.muted }}>${t(ex.muscle)} \u00B7 ${ex.sets}x${ex.reps}</div>
+                            <div style=${{ fontSize: 11, color: T.muted }}>${t(ex.muscle)} \u00B7 ${ex.sets}x${ex.reps}${(() => {
+                              const rec = records[ex.id];
+                              if (!rec) return '';
+                              const w = unitPref === rec.unit ? rec.weight : rec.unit === 'kg' ? Math.round(rec.weight * 2.20462) : Math.round(rec.weight / 2.20462);
+                              return ' · 1RM ' + estimate1RM(w, rec.reps) + ' ' + unitPref;
+                            })()}</div>
                           </div>
                           <${CaretDown} size=${12} weight="bold" color=${T.muted} style=${{ transition: 'transform 0.2s', transform: exOpen ? 'rotate(180deg)' : 'none', flexShrink: 0 }} />
                         </div>
@@ -3159,7 +3280,7 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
       <${WeekSummary} />
       <${MuscleMap} />
       <${StreakCalendar} />
-      <${ExerciseCatalog} />
+      <${ExerciseCatalog} unitPref=${'lbs'} />
       <${NextWeekPreview} />
 
       <div className="bottom-spacer" />
@@ -3392,7 +3513,8 @@ function RecordsCard({ unitPref }) {
                   ${rec ? html`
                     <div className="flex items-center gap-2">
                       <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${unitPref}</span>
-                      <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps} \u00B7 ${new Date(rec.date + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' })}</span>
+                      <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps}</span>
+                      <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${unitPref}</span>
                     </div>
                   ` : html`
                     <span style=${{ fontSize: 12, color: T.muted }}>\u2014 ${t('sin registro aún')}</span>
@@ -3736,7 +3858,7 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
           <${WeekSummary} />
           <${MuscleMap} />
           <${StreakCalendar} />
-          <${ExerciseCatalog} />
+          <${ExerciseCatalog} unitPref=${unitPref} />
           <${NextWeekPreview} />
         </div>
       `}
@@ -3762,6 +3884,15 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     try { return localStorage.getItem('ds_unit_water') || 'ml'; } catch { return 'ml'; }
   });
 
+  const handleFactoryReset = useCallback(() => {
+    if (!confirm(t('¿Estás seguro? Se borrarán entrenamientos, comidas, agua, récords, fotos y notas.'))) return;
+    const keep = ['ds_theme','ds_lang','ds_unit_pref','ds_goal_protein','ds_goal_calories','ds_goal_water_ml'];
+    Object.keys(localStorage).filter(k => k.startsWith('ds_') && !keep.includes(k)).forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
+    alert(t('Datos eliminados'));
+    location.reload();
+  }, []);
+
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem('ds_notes') || ''; } catch { return ''; }
   });
@@ -3775,10 +3906,21 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     }, 400);
   }
 
-  const lastWeight = (() => {
+  const initWeight = (() => {
     const log = getWeightLog();
     return log.length ? log[log.length - 1].kg : 72;
   })();
+  const [currentWeight, setCurrentWeight] = useState(initWeight);
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [weightInput, setWeightInput] = useState(String(initWeight));
+
+  function saveWeight() {
+    const val = parseFloat(weightInput);
+    if (isNaN(val) || val <= 0) return;
+    setCurrentWeight(val);
+    setEditingWeight(false);
+    saveWeightEntry({ date: new Date().toISOString().slice(0, 10), kg: val });
+  }
 
   function saveName() {
     const trimmed = nameInput.trim() || 'Felipe';
@@ -3867,7 +4009,25 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
           </div>
           <div style=${rowStyle(false)}>
             <span style=${{ fontSize: 13, fontWeight: 600, color: T.sub }}>⚖️ ${t('Peso actual')}</span>
-            <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${lastWeight} kg</span>
+            ${editingWeight ? html`
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.1" value=${weightInput} onInput=${e => setWeightInput(e.target.value)}
+                  onKeyDown=${e => e.key === 'Enter' && saveWeight()}
+                  className="text-sm font-bold rounded-lg py-1 px-2"
+                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text, width: 80, textAlign: 'right' }} />
+                <span style=${{ fontSize: 12, color: T.muted }}>kg</span>
+                <button onClick=${saveWeight} className="p-1 rounded-lg" style=${{ color: T.green }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+              </div>
+            ` : html`
+              <div className="flex items-center gap-2">
+                <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${currentWeight} kg</span>
+                <button onClick=${() => { setEditingWeight(true); setWeightInput(String(currentWeight)); }} className="p-1 rounded-lg" style=${{ color: T.muted }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+              </div>
+            `}
           </div>
           <div style=${rowStyle(false)}>
             <span style=${{ fontSize: 13, fontWeight: 600, color: T.sub }}>📏 ${t('Altura')}</span>
@@ -4053,20 +4213,11 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
           </div>
         </div>
 
-      </div>
-
         <!-- Card 9: Reset de fábrica -->
         <div className="ds-card" style=${{ padding: 20 }}>
           ${sectionTitle('🔄 ' + t('Restablecer datos'))}
           <div style=${{ fontSize: 12, color: T.muted, marginBottom: 14 }}>${t('Eliminar todos los datos y empezar de cero. Se conservan tus ajustes.')}</div>
-          <button onClick=${() => {
-            if (!confirm(t('¿Estás seguro? Se borrarán entrenamientos, comidas, agua, récords, fotos y notas.'))) return;
-            const keep = ['ds_theme','ds_lang','ds_unit_pref','ds_goal_protein','ds_goal_calories','ds_goal_water_ml'];
-            Object.keys(localStorage).filter(k => k.startsWith('ds_') && !keep.includes(k)).forEach(k => localStorage.removeItem(k));
-            sessionStorage.clear();
-            alert(t('Datos eliminados'));
-            location.reload();
-          }}
+          <button onClick=${handleFactoryReset}
             className="w-full py-3 rounded-xl font-semibold text-center active:scale-[0.97] transition-transform"
             style=${{ background: T.red + '15', color: T.red, fontSize: 13, border: '1px solid ' + T.red + '30' }}>
             ${t('Borrar todo')}
