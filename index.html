@@ -484,6 +484,11 @@ const EN = {
   // ── Additional ──
   'comidas': 'meals', 'Hidratación': 'Hydration',
   'Compartir': 'Share', 'Entrenamiento': 'Workout', 'Nutrición': 'Nutrition',
+  // ── Data export/import ──
+  'Mis datos': 'My data', 'Exportar backup JSON con todos tus datos': 'Export JSON backup with all your data',
+  'Exportar datos JSON': 'Export JSON data', 'Importar datos JSON': 'Import JSON data',
+  'Archivo inválido. Debe ser un backup de DontSkip con version y data.': 'Invalid file. Must be a DontSkip backup with version and data.',
+  'Datos importados correctamente': 'Data imported successfully',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -3884,6 +3889,48 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     try { return localStorage.getItem('ds_unit_water') || 'ml'; } catch { return 'ml'; }
   });
 
+  const handleExportJSON = useCallback(() => {
+    const data = {};
+    Object.keys(localStorage).filter(k => k.startsWith('ds_')).forEach(k => { data[k] = localStorage.getItem(k); });
+    const backup = { version: 1, exportedAt: new Date().toISOString(), app: 'DontSkip', data };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'dontskip-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, []);
+
+  const handleImportJSON = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const backup = JSON.parse(ev.target.result);
+          if (!backup.version || !backup.data || typeof backup.data !== 'object') {
+            alert(t('Archivo inválido. Debe ser un backup de DontSkip con version y data.'));
+            return;
+          }
+          const keys = Object.keys(backup.data);
+          const msg = LANG === 'en'
+            ? keys.length + ' keys will be imported. This will overwrite your current data. Continue?'
+            : 'Se importarán ' + keys.length + ' keys. Esto sobreescribirá tus datos actuales. ¿Continuar?';
+          if (!confirm(msg)) return;
+          keys.forEach(k => localStorage.setItem(k, backup.data[k]));
+          alert(t('Datos importados correctamente'));
+          location.reload();
+        } catch { alert(t('Archivo inválido. Debe ser un backup de DontSkip con version y data.')); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, []);
+
   const handleFactoryReset = useCallback(() => {
     if (!confirm(t('¿Estás seguro? Se borrarán entrenamientos, comidas, agua, récords, fotos y notas.'))) return;
     const keep = ['ds_theme','ds_lang','ds_unit_pref','ds_goal_protein','ds_goal_calories','ds_goal_water_ml'];
@@ -4188,6 +4235,24 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
             style=${{ background: T.accentDim, color: T.accent, fontSize: 13, border: '1px solid ' + T.accent + '20' }}>
             ${t('Descargar CSV (últimos 30 días)')}
           </button>
+        </div>
+
+        <!-- Card: Mis datos (backup/restore) -->
+        <div className="ds-card" style=${{ padding: 20 }}>
+          ${sectionTitle('💾 ' + t('Mis datos'))}
+          <div style=${{ fontSize: 12, color: T.muted, marginBottom: 14 }}>${t('Exportar backup JSON con todos tus datos')}</div>
+          <div className="flex gap-2">
+            <button onClick=${handleExportJSON}
+              className="flex-1 py-3 rounded-xl font-semibold text-center active:scale-[0.97] transition-transform"
+              style=${{ background: T.accentDim, color: T.accent, fontSize: 13, border: '1px solid ' + T.accent + '20' }}>
+              ${t('Exportar datos JSON')}
+            </button>
+            <button onClick=${handleImportJSON}
+              className="flex-1 py-3 rounded-xl font-semibold text-center active:scale-[0.97] transition-transform"
+              style=${{ background: T.elevated, color: T.text, fontSize: 13, border: '1px solid ' + T.border }}>
+              ${t('Importar datos JSON')}
+            </button>
+          </div>
         </div>
 
         <!-- Card 8: Notas de mejora -->
