@@ -4,7 +4,7 @@
   "description": "Fitness tracking — workouts, meals, water",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0f2338",
+  "background_color": "#ffffff",
   "theme_color": "#274472",
   "icons": [
     {
