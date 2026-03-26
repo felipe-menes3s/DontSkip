@@ -1451,7 +1451,7 @@ function WeekStrip() {
     const date = d.toISOString().slice(0, 10);
     const isToday = date === todayDate;
     const isFuture = d > today && !isToday;
-    const isRest = dk === 'wednesday' || dk === 'sunday';
+    const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
     let done = false;
     if (!isFuture && !isRest) {
       try {
@@ -1942,7 +1942,7 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
     }
   } catch {}
 
-  let caloriesCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + '2,200 kcal', color: T.sub };
+  let caloriesCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + CALORIES_GOAL.toLocaleString() + ' kcal', color: T.sub };
   try {
     const ym = JSON.parse(localStorage.getItem('ds_meals_' + yesterday) || '[]');
     const yCal = ym.filter(m => m.confirmed).reduce((s, m) => s + m.items.reduce((a, i) => a + (i.cal || 0), 0), 0);
@@ -2466,7 +2466,7 @@ function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpd
 
 // ── Meal Item ──────────────────────────────────────────────────────────
 
-function MealItem({ meal, index, onConfirm, onEdit }) {
+function MealItem({ meal, index, totalMeals, onConfirm, onEdit }) {
   const [editing, setEditing] = useState(false);
   const [editItems, setEditItems] = useState(meal.items);
   const totalCal = (meal.confirmed ? meal.items : editItems).reduce((s, i) => s + i.cal, 0);
@@ -2491,7 +2491,7 @@ function MealItem({ meal, index, onConfirm, onEdit }) {
       <div className="flex flex-col items-center">
         <div className="w-3 h-3 rounded-full flex-shrink-0 mt-1.5"
           style=${{ background: meal.confirmed ? T.green : T.muted, border: meal.confirmed ? '2px solid ' + T.green : '2px solid ' + T.muted, transition: 'all 0.4s ease' }} />
-        ${index < 4 && html`<div className="w-0.5 flex-1 mt-1" style=${{ background: T.border }} />`}
+        ${index < totalMeals - 1 && html`<div className="w-0.5 flex-1 mt-1" style=${{ background: T.border }} />`}
       </div>
       <div className="flex-1 pb-5">
         <div className="flex items-center justify-between mb-2">
@@ -2598,6 +2598,7 @@ function MealsTimeline({ meals, onConfirm, onEdit, onAddMeal }) {
             key=${i}
             meal=${meal}
             index=${i}
+            totalMeals=${meals.length}
             onConfirm=${() => onConfirm(i)}
             onEdit=${(items) => onEdit(i, items)}
           />
@@ -2838,12 +2839,13 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
   // Day summary cards
   const summaryCards = useMemo(() => {
     const cards = [];
-    const protPct = Math.min(100, Math.round((ctx.proteinNow / 150) * 100));
-    cards.push({ label: t('Proteína'), value: ctx.proteinNow + 'g', max: '150g', pct: protPct, color: T.accent });
-    const calPct = Math.min(100, Math.round((ctx.caloriesNow / 2200) * 100));
-    cards.push({ label: t('Calorías'), value: ctx.caloriesNow, max: '2,200', pct: calPct, color: T.amber || '#f59e0b' });
-    const waterPct = Math.min(100, Math.round((waterMl / 2250) * 100));
-    cards.push({ label: t('Agua'), value: ctx.waterGlasses, max: '9 ' + t('vasos'), pct: waterPct, color: T.water || '#38bdf8' });
+    const protPct = Math.min(100, Math.round((ctx.proteinNow / PROTEIN_GOAL) * 100));
+    cards.push({ label: t('Proteína'), value: ctx.proteinNow + 'g', max: PROTEIN_GOAL + 'g', pct: protPct, color: T.accent });
+    const calPct = Math.min(100, Math.round((ctx.caloriesNow / CALORIES_GOAL) * 100));
+    cards.push({ label: t('Calorías'), value: ctx.caloriesNow, max: CALORIES_GOAL.toLocaleString(), pct: calPct, color: T.amber || '#f59e0b' });
+    const wGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
+    const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL_ML) * 100));
+    cards.push({ label: t('Agua'), value: ctx.waterGlasses, max: wGoalGlasses + ' ' + t('vasos'), pct: waterPct, color: T.water || '#38bdf8' });
     if (!ctx.isRest) {
       const done = exerciseStates.filter(es => es.sets.every(s => s.done)).length;
       const total = routine.exercises ? routine.exercises.length : 0;
@@ -3569,7 +3571,7 @@ function StreakCalendar() {
       const todayStr = today.toISOString().slice(0, 10);
       const dayOfWeek = (date.getDay() + 6) % 7; // Mon=0
       const dk = dayKeys[dayOfWeek];
-      const isRest = dk === 'wednesday' || dk === 'sunday';
+      const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
       const isFuture = dateStr > todayStr;
       const isToday = dateStr === todayStr;
       let done = false;
@@ -6588,7 +6590,7 @@ function App() {
   const [theme, setTheme] = useState(getInitialTheme);
   const [tab, setTab] = useState('hoy');
   const [tabKey, setTabKey] = useState(0);
-  const handleTabChange = useCallback((t) => { setTab(t); setTabKey(k => k + 1); }, []);
+  const handleTabChange = useCallback((newTab) => { setTab(newTab); setTabKey(k => k + 1); }, []);
 
   // Swipe between tabs (#16)
   const tabOrder = ['live', 'hoy', 'comidas', 'progreso', 'jarvis'];
@@ -6690,7 +6692,7 @@ function App() {
 
   // Workout timer — persist start time + pause in localStorage
   const dateStr = new Date().toISOString().slice(0, 10);
-  const timerKey = 'ds_workout_timer_' + dateStr;
+  const timerKey = 'ds_workout_timer_' + todayKey + '_' + dateStr;
   const pauseKey = 'ds_workout_paused_' + dateStr;
   const [workoutStartTime, setWorkoutStartTime] = useState(() => {
     try { const v = localStorage.getItem(timerKey); return v ? Number(v) : null; } catch { return null; }
@@ -6767,7 +6769,7 @@ function App() {
 
   const handleAddWater = useCallback((ml) => {
     setWaterMl(w => {
-      const next = Math.min(w + ml, WATER_GOAL_ML);
+      const next = w + ml;
       try { localStorage.setItem(waterKey, String(next)); } catch {}
       return next;
     });
