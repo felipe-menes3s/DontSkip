@@ -6231,6 +6231,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
   const gymTotal = routine.rest ? 0 : routine.exercises.length;
 
   const streak = getStreak();
+  const profileName = (() => { try { return localStorage.getItem('ds_profile_name') || 'Felipe'; } catch { return 'Felipe'; } })();
 
   // Celebration modal
   const [showCelebration, setShowCelebration] = useState(false);
@@ -6303,30 +6304,30 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   return html`
     <div className="stagger">
-      <div className="px-5 pt-4 fade-up" style=${{ paddingBottom: 22, background: timeGradient, borderRadius: '0 0 28px 28px' }}>
+      <div className="px-5 pt-3 fade-up" style=${{ paddingBottom: 14, background: timeGradient, borderRadius: '0 0 24px 24px' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
             <${LangToggle} onToggle=${onLangToggle} />
-            <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 36, height: 36, borderRadius: 10, background: T.input }}>
-              <${GearSix} size=${18} weight="bold" color=${T.muted} />
+            <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 32, height: 32, borderRadius: 8, background: T.input }}>
+              <${GearSix} size=${16} weight="bold" color=${T.muted} />
             </button>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
-            <${FireSimple} size=${14} weight="fill" color=${T.amber} />
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
+            <${FireSimple} size=${12} weight="fill" color=${T.amber} />
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
           </div>
         </div>
-        <div style=${{ marginTop: 12 }}>
-          <div style=${{ fontSize: 14, fontWeight: 500, color: T.sub, marginBottom: 2 }}>
+        <div style=${{ marginTop: 8 }}>
+          <div style=${{ fontSize: 12, fontWeight: 500, color: T.sub, marginBottom: 1 }}>
             ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 900, color: T.text, letterSpacing: '-1px', lineHeight: 1.1 }}>
-            ${t(getGreeting())}, Felipe
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', lineHeight: 1.15 }}>
+            ${t(getGreeting())}, ${profileName}
           </div>
         </div>
-        <div className="flex items-center justify-between" style=${{ marginTop: 12 }}>
-          <div className="inline-flex items-center slide-in-right" style=${{ background: T.accentDim, color: T.accent, fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '6px 14px' }}>
+        <div className="flex items-center justify-between" style=${{ marginTop: 8 }}>
+          <div className="inline-flex items-center slide-in-right" style=${{ background: T.accentDim, color: T.accent, fontSize: 11, fontWeight: 700, borderRadius: 16, padding: '4px 12px' }}>
             ${todayDayLabel} \u00B7 ${t(routine.name)}
           </div>
           <${WeekStrip} />
