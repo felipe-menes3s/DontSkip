@@ -489,6 +489,7 @@ const EN = {
   'Exportar datos JSON': 'Export JSON data', 'Importar datos JSON': 'Import JSON data',
   'Archivo inválido. Debe ser un backup de DontSkip con version y data.': 'Invalid file. Must be a DontSkip backup with version and data.',
   'Datos importados correctamente': 'Data imported successfully',
+  'Rellenar sets': 'Fill all sets',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -815,6 +816,14 @@ function formatWeight(val, unit) {
 function sumMealsProp(meals, prop) {
   let total = 0;
   meals.forEach(m => { if (m.confirmed) m.items.forEach(i => { total += (i[prop] || 0); }); });
+  // Add whey supplement if taken today
+  const date = new Date().toISOString().slice(0, 10);
+  try {
+    if (localStorage.getItem('ds_whey_' + date) === 'true') {
+      if (prop === 'protein') total += 27;
+      if (prop === 'cal') total += 130;
+    }
+  } catch {}
   return total;
 }
 
@@ -827,6 +836,13 @@ function getGreeting() {
 // Note: getGreeting returns Spanish keys; wrap with t() at call sites
 
 function getStreak() {
+  try {
+    const data = JSON.parse(localStorage.getItem('ds_streak') || '{}');
+    return data.count || 0;
+  } catch { return 0; }
+}
+
+function updateStreak() {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const data = JSON.parse(localStorage.getItem('ds_streak') || '{}');
@@ -932,7 +948,7 @@ function updateStatsOnComplete() {
     if (stats.lastTrainDate === today) return;
     stats.lastTrainDate = today;
     stats.totalDays = (stats.totalDays || 0) + 1;
-    const streak = getStreak();
+    const streak = updateStreak();
     if (streak > (stats.maxStreak || 0)) stats.maxStreak = streak;
     localStorage.setItem('ds_stats', JSON.stringify(stats));
   } catch {}
@@ -1716,6 +1732,13 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
     onUpdate({ ...exerciseState, sets: newSets });
   }
 
+  function fillSets() {
+    const first = sets[0];
+    if (!first || (!first.weight && !first.reps)) return;
+    const newSets = sets.map(s => s.done ? s : { ...s, weight: first.weight || s.weight, reps: first.reps || s.reps });
+    onUpdate({ ...exerciseState, sets: newSets });
+  }
+
 
   function toggleSet(si) {
     const wasDone = sets[si].done;
@@ -1905,6 +1928,14 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
             `;
           })()}
 
+          ${!isPlank && sets[0] && sets[0].weight > 0 && sets.some(s => !s.done && !s.weight) ? html`
+            <button onClick=${fillSets}
+              className="w-full flex items-center justify-center gap-1.5 mb-2 py-2 rounded-xl press-scale"
+              style=${{ background: T.accentDim, color: T.accent, fontSize: 11, fontWeight: 700, border: '1px solid ' + T.accent + '15' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              ${t('Rellenar sets')} (${sets[0].weight} ${unitPref} × ${sets[0].reps || exercise.reps})
+            </button>
+          ` : ''}
           <div className="space-y-2">
             ${sets.map((s, si) => html`
               <div key=${si} className="flex items-center gap-2"
