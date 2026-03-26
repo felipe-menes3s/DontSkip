@@ -5436,45 +5436,6 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               </div>
             `)}
           </div>
-
-          ${warmupExercises.length > 0 && html`
-            <div className="mt-6 text-left">
-              <button onClick=${() => setShowWarmup(!showWarmup)}
-                className="w-full flex items-center justify-between py-3 press-scale"
-                style=${{ borderBottom: '1px solid ' + T.border }}>
-                <div className="flex items-center gap-2">
-                  <span style=${{ fontSize: 16 }}>🔥</span>
-                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Calentamiento dinámico')}</span>
-                  <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${warmupDone.length}/${warmupExercises.length}</span>
-                </div>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showWarmup ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              ${showWarmup && html`
-                <div className="slide-down" style=${{ paddingTop: 4 }}>
-                  <div style=${{ fontSize: 11, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
-                  ${warmupExercises.map((w, wi) => html`
-                    <button key=${wi} onClick=${() => toggleWarmup(wi)}
-                      className="w-full flex items-center gap-3 py-2.5 press-scale"
-                      style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                      <div style=${{
-                        width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
-                      }}>
-                        ${warmupDone.includes(wi)
-                          ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                          : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
-                      </div>
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
-                    </button>
-                  `)}
-                </div>
-              `}
-            </div>
-          `}
         </div>
         <div className="bottom-spacer" />
       </div>
@@ -5550,6 +5511,42 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           `)}
         </div>
       </div>
+
+      ${warmupExercises.length > 0 && warmupDone.length < warmupExercises.length && !allDone ? html`
+        <div className="px-5 pt-4 fade-up">
+          <div className="flex items-center gap-2 mb-2">
+            <span style=${{ fontSize: 14 }}>🔥</span>
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
+          </div>
+          <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
+            <div style=${{ padding: '12px 16px', borderBottom: '1px solid ' + T.border, background: T.amberDim + '40' }}>
+              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
+              <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${t(routine.focus)}</div>
+            </div>
+            <div style=${{ padding: '8px 12px 12px' }}>
+              ${warmupExercises.map((w, wi) => html`
+                <button key=${wi} onClick=${() => toggleWarmup(wi)}
+                  className="w-full flex items-center gap-3 py-2.5 press-scale"
+                  style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                  <div style=${{
+                    width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
+                  }}>
+                    ${warmupDone.includes(wi)
+                      ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                      : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                  </div>
+                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                </button>
+              `)}
+            </div>
+          </div>
+        </div>
+      ` : ''}
 
       ${allDone ? html`
         <div className="text-center px-5 fade-up" style=${{ paddingTop: 36 }}>
