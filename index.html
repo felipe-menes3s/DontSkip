@@ -490,6 +490,39 @@ const EN = {
   'Archivo inválido. Debe ser un backup de DontSkip con version y data.': 'Invalid file. Must be a DontSkip backup with version and data.',
   'Datos importados correctamente': 'Data imported successfully',
   'Rellenar sets': 'Fill all sets',
+  // ── Warmup & Stretching ──
+  'Calentamiento dinámico': 'Dynamic Warmup', 'Estiramientos post-entreno': 'Post-Workout Stretching',
+  'Prepara tu cuerpo para el entrenamiento': 'Prepare your body for the workout',
+  'Enfría y estira los músculos trabajados': 'Cool down and stretch the muscles worked',
+  'c/dirección': 'each direction', 'c/l': 'each side',
+  'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
+  'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
+  'Flexiones en pared': 'Wall Push-Ups', 'Rotación torácica': 'Thoracic Rotation',
+  'Movilidad de muñecas': 'Wrist Circles',
+  'Sentadilla sin peso': 'Bodyweight Squats', 'Estocadas caminando': 'Walking Lunges',
+  'Balanceo de piernas': 'Leg Swings', 'Puente de glúteos': 'Glute Bridges',
+  'Rotación de caderas': 'Hip Circles',
+  'Cat-Cow': 'Cat-Cow', 'Ángeles en pared': 'Wall Angels',
+  'Extensión de tríceps sin peso': 'Bodyweight Tricep Extensions',
+  'Buenos días sin peso': 'Bodyweight Good Mornings', 'Balanceo lateral de piernas': 'Lateral Leg Swings',
+  'Barrido de isquiotibiales': 'Hamstring Sweeps',
+  'Estiramiento de pecho en puerta': 'Doorway Chest Stretch',
+  'Estiramiento de hombro cruzado': 'Cross-Body Shoulder Stretch',
+  'Estiramiento de bíceps en pared': 'Wall Bicep Stretch',
+  'Estiramiento de cuello/trapecios': 'Neck/Trap Stretch',
+  'Estiramiento de cuádriceps de pie': 'Standing Quad Stretch',
+  'Estiramiento de isquiotibiales de pie': 'Standing Hamstring Stretch',
+  'Estiramiento 90/90 de caderas': '90/90 Hip Stretch',
+  'Estiramiento de pantorrillas en pared': 'Wall Calf Stretch',
+  'Postura del niño': "Child's Pose",
+  'Estiramiento de dorsales': 'Lat Doorway Stretch',
+  'Estiramiento de tríceps sobre cabeza': 'Overhead Tricep Stretch',
+  'Rotación espinal sentado': 'Seated Spinal Twist',
+  'Estiramiento de isquiotibiales sentado': 'Seated Hamstring Stretch',
+  'Postura de paloma': 'Pigeon Pose',
+  'Estiramiento de flexores de cadera': 'Kneeling Hip Flexor Stretch',
+  'Perro boca abajo': 'Downward Dog',
+  'Rodilla al pecho acostado': 'Knee-to-Chest Stretch',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -616,6 +649,69 @@ const ROUTINES = {
   },
   saturday: { name: 'Cardio', focus: 'LISS o HIIT (opcional)', rest: true, cardio: true },
   sunday: { name: 'Descanso', focus: 'Descanso total', rest: true },
+};
+
+// ── Warmup & Stretching ──────────────────────────────────────────────
+const WARMUP_ROUTINES = {
+  'Upper A': [
+    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄' },
+    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼' },
+    { name: 'Flexiones en pared', nameEn: 'Wall Push-Ups', sets: '2×10', detail: '', emoji: '🧱' },
+    { name: 'Rotación torácica', nameEn: 'Thoracic Rotation', sets: '2×10', detail: 'c/l', emoji: '🔄' },
+    { name: 'Movilidad de muñecas', nameEn: 'Wrist Circles', sets: '30s', detail: '', emoji: '🤲🏻' },
+  ],
+  'Lower A': [
+    { name: 'Sentadilla sin peso', nameEn: 'Bodyweight Squats', sets: '2×15', detail: '', emoji: '🦵🏻' },
+    { name: 'Estocadas caminando', nameEn: 'Walking Lunges', sets: '2×10', detail: 'c/l', emoji: '🚶🏼' },
+    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×12', detail: 'c/l', emoji: '🦿' },
+    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×12', detail: '', emoji: '🍑' },
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄' },
+  ],
+  'Upper B': [
+    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄' },
+    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '2×10', detail: '', emoji: '🐱' },
+    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼' },
+    { name: 'Ángeles en pared', nameEn: 'Wall Angels', sets: '2×10', detail: '', emoji: '👼🏻' },
+    { name: 'Extensión de tríceps sin peso', nameEn: 'Bodyweight Tricep Extensions', sets: '2×12', detail: '', emoji: '💪🏼' },
+  ],
+  'Lower B': [
+    { name: 'Buenos días sin peso', nameEn: 'Bodyweight Good Mornings', sets: '2×12', detail: '', emoji: '🙇🏼' },
+    { name: 'Balanceo lateral de piernas', nameEn: 'Lateral Leg Swings', sets: '2×10', detail: 'c/l', emoji: '🦿' },
+    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×15', detail: '', emoji: '🍑' },
+    { name: 'Barrido de isquiotibiales', nameEn: 'Hamstring Sweeps', sets: '2×8', detail: 'c/l', emoji: '🦵🏻' },
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄' },
+  ],
+};
+
+const STRETCHING_ROUTINES = {
+  'Upper A': [
+    { name: 'Estiramiento de pecho en puerta', nameEn: 'Doorway Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🚪' },
+    { name: 'Estiramiento de hombro cruzado', nameEn: 'Cross-Body Shoulder Stretch', sets: '30s', detail: 'c/l', emoji: '🤗' },
+    { name: 'Estiramiento de bíceps en pared', nameEn: 'Wall Bicep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼' },
+    { name: 'Estiramiento de cuello/trapecios', nameEn: 'Neck/Trap Stretch', sets: '20s', detail: 'c/l', emoji: '🧘🏼' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+  ],
+  'Lower A': [
+    { name: 'Estiramiento de cuádriceps de pie', nameEn: 'Standing Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻' },
+    { name: 'Estiramiento de isquiotibiales de pie', nameEn: 'Standing Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿' },
+    { name: 'Estiramiento 90/90 de caderas', nameEn: '90/90 Hip Stretch', sets: '30s', detail: 'c/l', emoji: '🧘🏼' },
+    { name: 'Estiramiento de pantorrillas en pared', nameEn: 'Wall Calf Stretch', sets: '30s', detail: 'c/l', emoji: '🧱' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+  ],
+  'Upper B': [
+    { name: 'Estiramiento de dorsales', nameEn: 'Lat Doorway Stretch', sets: '30s', detail: 'c/l', emoji: '🚪' },
+    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '10 reps', detail: '', emoji: '🐱' },
+    { name: 'Estiramiento de tríceps sobre cabeza', nameEn: 'Overhead Tricep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼' },
+    { name: 'Rotación espinal sentado', nameEn: 'Seated Spinal Twist', sets: '30s', detail: 'c/l', emoji: '🔄' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+  ],
+  'Lower B': [
+    { name: 'Estiramiento de isquiotibiales sentado', nameEn: 'Seated Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿' },
+    { name: 'Postura de paloma', nameEn: 'Pigeon Pose', sets: '30s', detail: 'c/l', emoji: '🐦' },
+    { name: 'Estiramiento de flexores de cadera', nameEn: 'Kneeling Hip Flexor Stretch', sets: '30s', detail: 'c/l', emoji: '🧎🏼' },
+    { name: 'Perro boca abajo', nameEn: 'Downward Dog', sets: '30s', detail: '', emoji: '🐕' },
+    { name: 'Rodilla al pecho acostado', nameEn: 'Knee-to-Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🛌' },
+  ],
 };
 
 // ── Meals ──────────────────────────────────────────────────────────────
@@ -5163,6 +5259,29 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
 
   const [confirmStop, setConfirmStop] = useState(false);
   const [expandedNext, setExpandedNext] = useState(false);
+  const [showWarmup, setShowWarmup] = useState(true);
+  const [warmupDone, setWarmupDone] = useState(() => {
+    try { const v = JSON.parse(localStorage.getItem('ds_warmup_' + new Date().toISOString().slice(0, 10)) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+  });
+  const [showStretching, setShowStretching] = useState(true);
+  const [stretchDone, setStretchDone] = useState(() => {
+    try { const v = JSON.parse(localStorage.getItem('ds_stretch_' + new Date().toISOString().slice(0, 10)) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+  });
+  const warmupExercises = WARMUP_ROUTINES[routine.name] || [];
+  const stretchExercises = STRETCHING_ROUTINES[routine.name] || [];
+
+  function toggleWarmup(idx) {
+    const next = warmupDone.includes(idx) ? warmupDone.filter(i => i !== idx) : [...warmupDone, idx];
+    setWarmupDone(next);
+    try { localStorage.setItem('ds_warmup_' + new Date().toISOString().slice(0, 10), JSON.stringify(next)); } catch {}
+    haptic([10]);
+  }
+  function toggleStretch(idx) {
+    const next = stretchDone.includes(idx) ? stretchDone.filter(i => i !== idx) : [...stretchDone, idx];
+    setStretchDone(next);
+    try { localStorage.setItem('ds_stretch_' + new Date().toISOString().slice(0, 10), JSON.stringify(next)); } catch {}
+    haptic([10]);
+  }
 
   // Mood/energy check-in
   const moodKey = 'ds_mood_' + new Date().toISOString().slice(0, 10);
@@ -5296,6 +5415,45 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               </div>
             `)}
           </div>
+
+          ${warmupExercises.length > 0 && html`
+            <div className="mt-6 text-left">
+              <button onClick=${() => setShowWarmup(!showWarmup)}
+                className="w-full flex items-center justify-between py-3 press-scale"
+                style=${{ borderBottom: '1px solid ' + T.border }}>
+                <div className="flex items-center gap-2">
+                  <span style=${{ fontSize: 16 }}>🔥</span>
+                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Calentamiento dinámico')}</span>
+                  <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${warmupDone.length}/${warmupExercises.length}</span>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showWarmup ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              ${showWarmup && html`
+                <div className="slide-down" style=${{ paddingTop: 4 }}>
+                  <div style=${{ fontSize: 11, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
+                  ${warmupExercises.map((w, wi) => html`
+                    <button key=${wi} onClick=${() => toggleWarmup(wi)}
+                      className="w-full flex items-center gap-3 py-2.5 press-scale"
+                      style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                      <div style=${{
+                        width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
+                      }}>
+                        ${warmupDone.includes(wi)
+                          ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                          : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                      </div>
+                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                    </button>
+                  `)}
+                </div>
+              `}
+            </div>
+          `}
         </div>
         <div className="bottom-spacer" />
       </div>
@@ -5398,6 +5556,45 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             ${t('Compartir')}
           </button>
         </div>
+
+        ${stretchExercises.length > 0 && html`
+          <div className="px-5 pt-6 fade-up" style=${{ animationDelay: '0.3s' }}>
+            <button onClick=${() => setShowStretching(!showStretching)}
+              className="w-full flex items-center justify-between py-3 press-scale"
+              style=${{ borderBottom: '1px solid ' + T.border }}>
+              <div className="flex items-center gap-2">
+                <span style=${{ fontSize: 16 }}>🧘🏼</span>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
+                <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${stretchDone.length}/${stretchExercises.length}</span>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showStretching ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            ${showStretching && html`
+              <div className="slide-down" style=${{ paddingTop: 4 }}>
+                <div style=${{ fontSize: 11, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>${t('Enfría y estira los músculos trabajados')}</div>
+                ${stretchExercises.map((st, si) => html`
+                  <button key=${si} onClick=${() => toggleStretch(si)}
+                    className="w-full flex items-center gap-3 py-2.5 press-scale"
+                    style=${{ borderBottom: si < stretchExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: stretchDone.includes(si) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                    <div style=${{
+                      width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: stretchDone.includes(si) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
+                    }}>
+                      ${stretchDone.includes(si)
+                        ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                        : html`<span style=${{ fontSize: 14 }}>${st.emoji}</span>`
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
+                    </div>
+                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
+                  </button>
+                `)}
+              </div>
+            `}
+          </div>
+        `}
       ` : html`
         <!-- Current Exercise -->
         ${currentEx && html`
