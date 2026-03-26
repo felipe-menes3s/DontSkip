@@ -930,14 +930,6 @@ function formatWeight(val, unit) {
 function sumMealsProp(meals, prop) {
   let total = 0;
   meals.forEach(m => { if (m.confirmed) m.items.forEach(i => { total += (i[prop] || 0); }); });
-  // Add whey supplement if taken today
-  const date = new Date().toISOString().slice(0, 10);
-  try {
-    if (localStorage.getItem('ds_whey_' + date) === 'true') {
-      if (prop === 'protein') total += 27;
-      if (prop === 'cal') total += 130;
-    }
-  } catch {}
   return total;
 }
 
@@ -3433,69 +3425,106 @@ function MuscleMap() {
       <${SectionHeader} title=${t("Músculos esta semana")} />
       <div className="flex gap-4" style=${{ alignItems: 'flex-start' }}>
         <!-- SVG Body -->
-        <div className="flex-shrink-0 flex justify-center" style=${{ width: 130 }}>
-          <svg width="130" height="220" viewBox="0 0 200 340" fill="none">
-            <!-- Base body silhouette -->
-            <g fill=${bodyFill} stroke="none">
-              <ellipse cx="100" cy="30" rx="18" ry="22"/>
-              <rect x="91" y="50" width="18" height="14" rx="4"/>
-              <path d="M70,64 Q60,66 56,72 L50,80 Q46,86 46,96 L46,120 Q46,130 48,140 L50,158 Q52,168 56,174 L62,180 Q66,184 70,186 L72,188 Q80,192 88,194 L100,196 L112,194 Q120,192 128,188 L130,186 Q134,184 138,180 L144,174 Q148,168 150,158 L152,140 Q154,130 154,120 L154,96 Q154,86 150,80 L144,72 Q140,66 130,64 Z"/>
-              <path d="M56,72 Q48,74 44,80 L38,96 Q34,106 32,116 L30,130 Q30,134 32,136 L38,138 Q42,138 44,134 L46,120 L46,96 Z"/>
-              <path d="M32,136 Q30,142 28,152 L26,166 Q24,176 24,184 L22,196 Q22,200 24,202 L28,204 Q32,204 34,200 L36,188 Q38,178 38,168 L38,152 L38,138 Z"/>
-              <path d="M24,202 Q22,208 20,214 Q18,220 20,222 Q22,224 26,222 L30,216 Q32,210 34,204 Z"/>
-              <path d="M144,72 Q152,74 156,80 L162,96 Q166,106 168,116 L170,130 Q170,134 168,136 L162,138 Q158,138 156,134 L154,120 L154,96 Z"/>
-              <path d="M168,136 Q170,142 172,152 L174,166 Q176,176 176,184 L178,196 Q178,200 176,202 L172,204 Q168,204 166,200 L164,188 Q162,178 162,168 L162,152 L162,138 Z"/>
-              <path d="M176,202 Q178,208 180,214 Q182,220 180,222 Q178,224 174,222 L170,216 Q168,210 166,204 Z"/>
-              <path d="M72,188 Q68,192 66,198 L62,218 Q60,232 58,246 L56,262 Q56,268 60,270 L68,272 Q76,272 80,268 L84,252 Q88,236 90,220 L92,200 Q92,196 90,194 Z"/>
-              <path d="M128,188 Q132,192 134,198 L138,218 Q140,232 142,246 L144,262 Q144,268 140,270 L132,272 Q124,272 120,268 L116,252 Q112,236 110,220 L108,200 Q108,196 110,194 Z"/>
-              <path d="M60,270 Q58,278 56,290 L54,306 Q54,316 56,324 L58,330 Q60,334 64,334 L72,334 Q76,334 76,330 L76,318 Q76,308 74,296 L72,282 Q70,274 68,270 Z"/>
-              <path d="M58,330 Q54,334 50,336 Q46,338 46,336 L48,332 Q52,330 58,330 Z M64,334 L72,334 Q76,338 72,340 L60,340 Q56,338 60,336 Z"/>
-              <path d="M140,270 Q142,278 144,290 L146,306 Q146,316 144,324 L142,330 Q140,334 136,334 L128,334 Q124,334 124,330 L124,318 Q124,308 126,296 L128,282 Q130,274 132,270 Z"/>
-              <path d="M142,330 Q146,334 150,336 Q154,338 154,336 L152,332 Q148,330 142,330 Z M136,334 L128,334 Q124,338 128,340 L140,340 Q144,338 140,336 Z"/>
+        <div className="flex-shrink-0 flex justify-center" style=${{ width: 120 }}>
+          <svg width="120" height="260" viewBox="0 0 120 260" fill="none">
+            <defs>
+              <linearGradient id="bodyGrad" x1="60" y1="0" x2="60" y2="260" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color=${bodyFill} />
+                <stop offset="100%" stop-color=${bodyFill} />
+              </linearGradient>
+              <linearGradient id="bodyShade" x1="40" y1="0" x2="80" y2="260" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#000" stop-opacity="0.04"/>
+                <stop offset="50%" stop-color="#000" stop-opacity="0.08"/>
+                <stop offset="100%" stop-color="#000" stop-opacity="0.03"/>
+              </linearGradient>
+            </defs>
+            <!-- Anatomical body silhouette -->
+            <g fill="url(#bodyGrad)" stroke="none">
+              <!-- Head -->
+              <ellipse cx="60" cy="16" rx="11" ry="14"/>
+              <!-- Neck -->
+              <path d="M54,29 C54,32 53,35 52,37 L68,37 C67,35 66,32 66,29 Z"/>
+              <!-- Torso -->
+              <path d="M40,39 C35,40 30,44 28,50 L25,60 C23,68 23,78 24,88 L25,98 C26,108 28,115 30,120 L34,130 C36,135 38,138 42,142 L46,146 C48,148 52,152 55,154 L60,156 L65,154 C68,152 72,148 74,146 L78,142 C82,138 84,135 86,130 L90,120 C92,115 94,108 95,98 L96,88 C97,78 97,68 95,60 L92,50 C90,44 85,40 80,39 Z"/>
+              <!-- Left shoulder+arm -->
+              <path d="M40,39 C34,40 28,44 24,50 L19,60 C16,68 15,75 16,82 L18,92 C19,98 21,102 22,104 L24,102 C24,96 25,88 26,80 L28,68 C29,62 32,55 36,48 Z"/>
+              <path d="M16,82 C14,88 13,96 13,104 L14,116 C14,122 15,126 16,128 L19,128 C20,124 20,118 20,110 L19,96 C18,90 17,86 16,82 Z"/>
+              <path d="M16,128 C15,134 14,140 14,146 L14,156 C14,160 15,162 17,163 L19,162 C19,158 19,152 19,144 L19,136 C19,132 19,130 19,128 Z"/>
+              <!-- Left hand -->
+              <path d="M14,156 C13,160 12,164 12,167 C12,170 13,171 15,171 L18,170 C19,168 19,165 19,162 Z"/>
+              <!-- Right shoulder+arm -->
+              <path d="M80,39 C86,40 92,44 96,50 L101,60 C104,68 105,75 104,82 L102,92 C101,98 99,102 98,104 L96,102 C96,96 95,88 94,80 L92,68 C91,62 88,55 84,48 Z"/>
+              <path d="M104,82 C106,88 107,96 107,104 L106,116 C106,122 105,126 104,128 L101,128 C100,124 100,118 100,110 L101,96 C102,90 103,86 104,82 Z"/>
+              <path d="M104,128 C105,134 106,140 106,146 L106,156 C106,160 105,162 103,163 L101,162 C101,158 101,152 101,144 L101,136 C101,132 101,130 101,128 Z"/>
+              <!-- Right hand -->
+              <path d="M106,156 C107,160 108,164 108,167 C108,170 107,171 105,171 L102,170 C101,168 101,165 101,162 Z"/>
+              <!-- Left leg -->
+              <path d="M46,146 C44,150 42,156 40,164 L38,176 C36,188 35,198 34,208 L33,218 C33,224 34,228 35,232 L37,234 C39,232 41,228 42,222 L44,210 C46,198 48,188 50,180 L52,172 C54,166 56,162 58,158 Z"/>
+              <!-- Left calf+foot -->
+              <path d="M35,232 C34,238 33,244 33,248 L34,252 C34,254 35,256 37,256 L44,256 C46,256 47,255 47,253 L47,250 C46,246 44,240 42,234 Z"/>
+              <!-- Right leg -->
+              <path d="M74,146 C76,150 78,156 80,164 L82,176 C84,188 85,198 86,208 L87,218 C87,224 86,228 85,232 L83,234 C81,232 79,228 78,222 L76,210 C74,198 72,188 70,180 L68,172 C66,166 64,162 62,158 Z"/>
+              <!-- Right calf+foot -->
+              <path d="M85,232 C86,238 87,244 87,248 L86,252 C86,254 85,256 83,256 L76,256 C74,256 73,255 73,253 L73,250 C74,246 76,240 78,234 Z"/>
             </g>
-            <!-- Muscle overlays -->
+            <!-- Subtle shading overlay -->
+            <g fill="url(#bodyShade)">
+              <ellipse cx="60" cy="16" rx="11" ry="14"/>
+              <path d="M40,39 C35,40 30,44 28,50 L25,60 C23,68 23,78 24,88 L25,98 C26,108 28,115 30,120 L34,130 C36,135 38,138 42,142 L46,146 C48,148 52,152 55,154 L60,156 L65,154 C68,152 72,148 74,146 L78,142 C82,138 84,135 86,130 L90,120 C92,115 94,108 95,98 L96,88 C97,78 97,68 95,60 L92,50 C90,44 85,40 80,39 Z"/>
+            </g>
+            <!-- Muscle definition lines -->
+            <g fill="none" stroke=${T.border} stroke-width="0.5" opacity="0.5">
+              <path d="M60,37 L60,68"/>
+              <path d="M48,60 C52,66 56,68 60,68 C64,68 68,66 72,60"/>
+              <path d="M50,75 C54,80 56,82 60,82 C64,82 66,80 70,75"/>
+              <line x1="60" y1="82" x2="60" y2="154"/>
+              <path d="M46,100 C50,104 55,106 60,106 C65,106 70,104 74,100"/>
+              <path d="M48,115 C52,118 56,120 60,120 C64,120 68,118 72,115"/>
+            </g>
+            <!-- MUSCLE OVERLAYS -->
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('pecho')}>
-              <path d="M72,76 Q68,78 66,82 L64,90 Q62,96 64,100 L72,104 Q82,108 92,106 L98,102 L98,82 Q98,76 92,74 Z"/>
-              <path d="M128,76 Q132,78 134,82 L136,90 Q138,96 136,100 L128,104 Q118,108 108,106 L102,102 L102,82 Q102,76 108,74 Z"/>
+              <path d="M42,52 C40,56 40,62 42,66 C46,72 54,74 60,72 L60,52 C54,50 48,50 42,52 Z"/>
+              <path d="M78,52 C80,56 80,62 78,66 C74,72 66,74 60,72 L60,52 C66,50 72,50 78,52 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('hombros')}>
-              <path d="M70,64 Q60,66 54,72 L48,82 Q46,88 48,90 L54,88 Q58,82 62,78 L68,74 Q72,72 72,70 Z"/>
-              <path d="M130,64 Q140,66 146,72 L152,82 Q154,88 152,90 L146,88 Q142,82 138,78 L132,74 Q128,72 128,70 Z"/>
+              <path d="M40,39 C34,40 28,44 24,50 L22,56 C24,54 28,50 34,46 C38,43 40,41 42,40 Z"/>
+              <path d="M80,39 C86,40 92,44 96,50 L98,56 C96,54 92,50 86,46 C82,43 80,41 78,40 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('biceps')}>
-              <path d="M46,96 Q42,100 40,108 L38,118 Q36,126 38,130 L42,132 Q46,132 46,126 L46,112 L48,100 Z"/>
-              <path d="M154,96 Q158,100 160,108 L162,118 Q164,126 162,130 L158,132 Q154,132 154,126 L154,112 L152,100 Z"/>
+              <path d="M24,62 C22,68 20,76 18,84 L16,82 C16,76 17,68 20,60 C22,56 24,54 26,56 Z"/>
+              <path d="M96,62 C98,68 100,76 102,84 L104,82 C104,76 103,68 100,60 C98,56 96,54 94,56 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('triceps')}>
-              <path d="M38,96 Q34,104 32,114 L30,126 Q30,132 32,134 L36,132 Q38,128 38,122 L38,108 Z"/>
-              <path d="M162,96 Q166,104 168,114 L170,126 Q170,132 168,134 L164,132 Q162,128 162,122 L162,108 Z"/>
+              <path d="M18,84 C17,90 16,96 15,104 L14,112 C14,118 15,122 16,124 L19,124 C19,118 19,110 19,102 L20,92 Z"/>
+              <path d="M102,84 C103,90 104,96 105,104 L106,112 C106,118 105,122 104,124 L101,124 C101,118 101,110 101,102 L100,92 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('espalda')}>
-              <path d="M56,88 Q50,94 48,102 L48,118 Q48,128 50,136 L54,144 Q58,148 62,146 L66,138 Q68,130 68,120 L68,106 Q66,96 62,90 Z"/>
-              <path d="M144,88 Q150,94 152,102 L152,118 Q152,128 150,136 L146,144 Q142,148 138,146 L134,138 Q132,130 132,120 L132,106 Q134,96 138,90 Z"/>
+              <path d="M30,56 C28,64 26,72 26,80 L28,88 C32,84 36,78 38,72 L40,64 C40,60 38,56 34,54 Z"/>
+              <path d="M90,56 C92,64 94,72 94,80 L92,88 C88,84 84,78 82,72 L80,64 C80,60 82,56 86,54 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('posterior')}>
-              <path d="M76,64 Q72,66 70,70 L68,78 Q66,84 68,86 L76,84 Q82,80 86,76 L90,72 Q92,68 88,66 Z"/>
-              <path d="M124,64 Q128,66 130,70 L132,78 Q134,84 132,86 L124,84 Q118,80 114,76 L110,72 Q108,68 112,66 Z"/>
+              <path d="M42,40 C40,42 38,44 36,46 L32,50 C36,46 42,42 48,40 Z"/>
+              <path d="M78,40 C80,42 82,44 84,46 L88,50 C84,46 78,42 72,40 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('core')}>
-              <path d="M82,106 Q78,108 76,114 L74,128 Q72,142 74,156 L76,168 Q78,176 82,182 L88,188 Q94,192 100,194 Q106,192 112,188 L118,182 Q122,176 124,168 L126,156 Q128,142 126,128 L124,114 Q122,108 118,106 L108,104 Q104,104 100,104 Q96,104 92,104 Z"/>
+              <path d="M48,82 C50,86 54,90 60,90 C66,90 70,86 72,82 L74,100 C72,108 68,114 60,114 C52,114 48,108 46,100 Z"/>
+              <path d="M46,100 C44,108 42,118 42,128 L44,138 C48,144 54,148 60,150 C66,148 72,144 76,138 L78,128 C78,118 76,108 74,100 C70,108 66,114 60,114 C54,114 50,108 46,100 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('gluteos')}>
-              <path d="M72,182 Q66,186 64,192 L62,200 Q62,206 66,208 L76,208 Q84,206 88,200 L92,194 Q90,190 86,188 L78,184 Z"/>
-              <path d="M128,182 Q134,186 136,192 L138,200 Q138,206 134,208 L124,208 Q116,206 112,200 L108,194 Q110,190 114,188 L122,184 Z"/>
+              <path d="M44,142 C42,146 40,152 40,156 C42,158 46,160 50,160 L55,158 C56,154 54,148 52,144 Z"/>
+              <path d="M76,142 C78,146 80,152 80,156 C78,158 74,160 70,160 L65,158 C64,154 66,148 68,144 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('cuadriceps')}>
-              <path d="M76,208 Q72,212 68,222 L64,238 Q62,250 60,260 Q60,266 64,268 L74,268 Q80,266 82,260 L86,244 Q88,232 88,220 L88,210 Q86,206 82,206 Z"/>
-              <path d="M124,208 Q128,212 132,222 L136,238 Q138,250 140,260 Q140,266 136,268 L126,268 Q120,266 118,260 L114,244 Q112,232 112,220 L112,210 Q114,206 118,206 Z"/>
+              <path d="M42,156 C40,164 38,174 36,186 L35,200 C35,208 36,214 38,218 L42,218 C44,212 46,204 48,194 L50,182 C52,172 54,164 56,158 Z"/>
+              <path d="M78,156 C80,164 82,174 84,186 L85,200 C85,208 84,214 82,218 L78,218 C76,212 74,204 72,194 L70,182 C68,172 66,164 64,158 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('isquiotibiales')}>
-              <path d="M88,210 Q90,216 92,226 L92,242 Q92,254 88,264 Q86,268 82,268 L82,260 Q84,250 86,238 L88,222 Z"/>
-              <path d="M112,210 Q110,216 108,226 L108,242 Q108,254 112,264 Q114,268 118,268 L118,260 Q116,250 114,238 L112,222 Z"/>
+              <path d="M50,170 C52,178 54,186 54,194 L52,206 C50,214 48,218 46,220 L42,218 C42,214 44,206 46,196 L48,184 Z"/>
+              <path d="M70,170 C68,178 66,186 66,194 L68,206 C70,214 72,218 74,220 L78,218 C78,214 76,206 74,196 L72,184 Z"/>
             </g>
             <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('pantorrillas')}>
-              <path d="M60,274 Q58,280 56,290 L54,304 Q54,314 56,320 L60,326 Q64,328 68,326 L72,318 Q74,310 74,300 L72,288 Q70,278 68,274 Z"/>
-              <path d="M140,274 Q142,280 144,290 L146,304 Q146,314 144,320 L140,326 Q136,328 132,326 L128,318 Q126,310 126,300 L128,288 Q130,278 132,274 Z"/>
+              <path d="M36,230 C35,236 34,242 34,248 L35,252 C36,254 38,255 40,254 L42,250 C43,244 42,238 40,232 Z"/>
+              <path d="M84,230 C85,236 86,242 86,248 L85,252 C84,254 82,255 80,254 L78,250 C77,244 78,238 80,232 Z"/>
             </g>
           </svg>
         </div>
@@ -6306,30 +6335,30 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   return html`
     <div className="stagger">
-      <div className="px-5 pt-3 fade-up" style=${{ paddingBottom: 14, background: timeGradient, borderRadius: '0 0 24px 24px' }}>
+      <div className="mx-5 fade-up" style=${{ paddingTop: 16, paddingBottom: 18, paddingLeft: 20, paddingRight: 20, background: timeGradient, borderRadius: 20, marginBottom: 12 }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
             <${LangToggle} onToggle=${onLangToggle} />
-            <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 32, height: 32, borderRadius: 8, background: T.input }}>
-              <${GearSix} size=${16} weight="bold" color=${T.muted} />
+            <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 36, height: 36, borderRadius: 10, background: T.input }}>
+              <${GearSix} size=${18} weight="bold" color=${T.muted} />
             </button>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
-            <${FireSimple} size=${12} weight="fill" color=${T.amber} />
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
+            <${FireSimple} size=${14} weight="fill" color=${T.amber} />
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
           </div>
         </div>
-        <div style=${{ marginTop: 8 }}>
-          <div style=${{ fontSize: 12, fontWeight: 500, color: T.sub, marginBottom: 1 }}>
+        <div style=${{ marginTop: 12 }}>
+          <div style=${{ fontSize: 14, fontWeight: 500, color: T.sub, marginBottom: 2 }}>
             ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', lineHeight: 1.15 }}>
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: T.text, letterSpacing: '-1px', lineHeight: 1.1 }}>
             ${t(getGreeting())}, ${profileName}
           </div>
         </div>
-        <div className="flex items-center justify-between" style=${{ marginTop: 8 }}>
-          <div className="inline-flex items-center slide-in-right" style=${{ background: T.accentDim, color: T.accent, fontSize: 11, fontWeight: 700, borderRadius: 16, padding: '4px 12px' }}>
+        <div className="flex items-center justify-between" style=${{ marginTop: 12 }}>
+          <div className="inline-flex items-center slide-in-right" style=${{ background: T.accentDim, color: T.accent, fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '6px 14px' }}>
             ${todayDayLabel} \u00B7 ${t(routine.name)}
           </div>
           <${WeekStrip} />
@@ -6366,13 +6395,6 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
         <//>
       </div>
 
-      <div className="px-5">
-        <${CollapsibleSection} title=${LANG === 'en' ? 'Nutrition' : 'Nutrición'} icon=${html`<div style=${{ width: 36, height: 36, borderRadius: 10, background: 'rgba(234,88,12,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><${ForkKnife} size=${20} weight="duotone" color="#ea580c" /></div>`} defaultOpen=${false}
-          summary=${meals.filter(m => m.confirmed).length + (LANG === 'en' ? ' of ' : ' de ') + meals.length + ' ' + t('comidas')}
-          badge=${{ text: meals.filter(m => m.confirmed).length + '/' + meals.length, bg: meals.every(m => m.confirmed) ? T.greenDim : T.accentDim, color: meals.every(m => m.confirmed) ? T.green : T.accent }}>
-          <${MealsTimeline} meals=${meals} onConfirm=${onMealConfirm} onEdit=${onMealEdit} onAddMeal=${onAddMeal} />
-        <//>
-      </div>
 
       <div className="px-5">
         <div className="flex items-center gap-2 mb-3" style=${{ paddingLeft: 4 }}>
