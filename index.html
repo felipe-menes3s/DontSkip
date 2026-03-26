@@ -349,6 +349,7 @@ const EN = {
   'Métricas físicas': 'Body metrics', 'Peso': 'Weight', 'Cintura': 'Waist', 'Cuello': 'Neck',
   'Guardar medición': 'Save measurement', 'Última medición': 'Last measurement',
   'Registra tu primera medición': 'Log your first measurement',
+  'Brazo': 'Arm', 'Cadera': 'Hips', 'Muslo': 'Thigh', 'mediciones': 'measurements',
   'Evolución de peso': 'Weight evolution',
   'Registra tu peso semanalmente': 'Log your weight weekly', 'para ver tu evolución': 'to see your evolution',
   'Récords en el gym': 'Gym records', 'sin registro aún': 'no record yet',
@@ -3682,71 +3683,102 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
 // ── Progreso Tab ──────────────────────────────────────────────────────
 
 function MetricsCard({ unitPref, onSaved }) {
+  const BODY_PARTS = [
+    { key: 'cuello', label: 'Cuello', labelEn: 'Neck', emoji: '👔', placeholder: 38, y: 52 },
+    { key: 'pecho', label: 'Pecho', labelEn: 'Chest', emoji: '👕', placeholder: 95, y: 88 },
+    { key: 'brazo', label: 'Brazo', labelEn: 'Arm', emoji: '💪🏼', placeholder: 32, y: 105 },
+    { key: 'cintura', label: 'Cintura', labelEn: 'Waist', emoji: '📏', placeholder: 85, y: 130 },
+    { key: 'cadera', label: 'Cadera', labelEn: 'Hips', emoji: '🍑', placeholder: 95, y: 155 },
+    { key: 'muslo', label: 'Muslo', labelEn: 'Thigh', emoji: '🦵🏻', placeholder: 55, y: 190 },
+  ];
+
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [inputVal, setInputVal] = useState('');
   const [weightVal, setWeightVal] = useState('');
-  const [cinturaVal, setCinturaVal] = useState('');
-  const [cuelloVal, setCuelloVal] = useState('');
   const [weightUnit, setWeightUnit] = useState(unitPref);
   const [measureUnit, setMeasureUnit] = useState('cm');
   const [lastEntry, setLastEntry] = useState(() => {
     const log = getWeightLog();
     return log.length ? log[log.length - 1] : null;
   });
+  const [chartPart, setChartPart] = useState(null);
 
   const cmToIn = (v) => Math.round(v / 2.54 * 10) / 10;
   const inToCm = (v) => Math.round(v * 2.54 * 10) / 10;
-
-  const weightConversion = useMemo(() => {
-    const v = parseFloat(weightVal);
-    if (!v || v <= 0) return '';
-    if (weightUnit === 'kg') return kgToLbs(v) + ' lbs';
-    return lbsToKg(v) + ' kg';
-  }, [weightVal, weightUnit]);
-
-  const cinturaConversion = useMemo(() => {
-    const v = parseFloat(cinturaVal);
-    if (!v || v <= 0) return '';
-    if (measureUnit === 'cm') return cmToIn(v) + ' in';
-    return inToCm(v) + ' cm';
-  }, [cinturaVal, measureUnit]);
-
-  const cuelloConversion = useMemo(() => {
-    const v = parseFloat(cuelloVal);
-    if (!v || v <= 0) return '';
-    if (measureUnit === 'cm') return cmToIn(v) + ' in';
-    return inToCm(v) + ' cm';
-  }, [cuelloVal, measureUnit]);
+  const dispMeasure = (cm) => measureUnit === 'in' ? cmToIn(cm) : cm;
 
   const handleSave = useCallback(() => {
     const w = parseFloat(weightVal);
-    if (!w || w <= 0) return;
-    const kg = weightUnit === 'lbs' ? lbsToKg(w) : w;
-    const c = parseFloat(cinturaVal);
-    const n = parseFloat(cuelloVal);
-    const cinturaCm = c ? (measureUnit === 'in' ? inToCm(c) : c) : null;
-    const cuelloCm = n ? (measureUnit === 'in' ? inToCm(n) : n) : null;
-    const entry = {
-      date: new Date().toISOString().slice(0, 10),
-      kg: Math.round(kg * 10) / 10,
-      cintura: cinturaCm ? Math.round(cinturaCm * 10) / 10 : null,
-      cuello: cuelloCm ? Math.round(cuelloCm * 10) / 10 : null,
-    };
+    const kg = w && w > 0 ? (weightUnit === 'lbs' ? lbsToKg(w) : w) : null;
+    const entry = { date: new Date().toISOString().slice(0, 10) };
+    if (kg) entry.kg = Math.round(kg * 10) / 10;
+    // Collect all body part values from last entry as base
+    BODY_PARTS.forEach(bp => { if (lastEntry && lastEntry[bp.key]) entry[bp.key] = lastEntry[bp.key]; });
+    // Override the selected part if we have input
+    if (selectedPart && inputVal) {
+      const v = parseFloat(inputVal);
+      if (v > 0) entry[selectedPart] = measureUnit === 'in' ? Math.round(inToCm(v) * 10) / 10 : Math.round(v * 10) / 10;
+    }
+    if (!entry.kg && !Object.keys(entry).some(k => BODY_PARTS.map(b => b.key).includes(k) && entry[k])) return;
+    if (!entry.kg && lastEntry) entry.kg = lastEntry.kg;
     saveWeightEntry(entry);
     setLastEntry(entry);
-    setWeightVal('');
-    setCinturaVal('');
-    setCuelloVal('');
+    setWeightVal(''); setInputVal(''); setSelectedPart(null);
     if (onSaved) onSaved();
-  }, [weightVal, cinturaVal, cuelloVal, weightUnit, measureUnit, onSaved]);
+  }, [weightVal, inputVal, selectedPart, weightUnit, measureUnit, lastEntry, onSaved]);
 
+  const log = getWeightLog();
   const chipStyle = (active) => ({
     fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8, cursor: 'pointer',
     background: active ? T.accent : 'transparent', color: active ? '#fff' : T.muted,
     border: active ? 'none' : '1px solid ' + T.border, transition: 'all 0.2s',
   });
 
+  // Mini chart for a selected body part
+  const chartData = useMemo(() => {
+    if (!chartPart) return [];
+    return log.filter(e => e[chartPart] != null).slice(-8).map(e => ({ date: e.date, value: e[chartPart] }));
+  }, [chartPart, log]);
+
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <${SectionHeader} title=${t("Métricas físicas")} />
+
+      <!-- Body Map SVG -->
+      <div className="flex justify-center" style=${{ marginBottom: 16, position: 'relative' }}>
+        <div style=${{ position: 'relative', width: 160, height: 240 }}>
+          <svg width="160" height="240" viewBox="0 0 160 240" fill="none">
+            <!-- Body silhouette -->
+            <ellipse cx="80" cy="28" rx="18" ry="22" fill=${T.input} />
+            <path d="M62 50 Q62 55 55 65 L40 90 Q35 95 38 100 L50 105 Q55 100 60 95 L60 130 Q58 140 50 155 L45 190 Q43 200 48 210 L52 220 Q55 225 60 225 L68 225 Q72 222 72 215 L75 190 Q78 170 80 165 Q82 170 85 190 L88 215 Q88 222 92 225 L100 225 Q105 225 108 220 L112 210 Q117 200 115 190 L110 155 Q102 140 100 130 L100 95 Q105 100 110 105 L122 100 Q125 95 120 90 L105 65 Q98 55 98 50 Z" fill=${T.input} />
+          </svg>
+          <!-- Tappable measurement points -->
+          ${BODY_PARTS.map(bp => {
+            const hasData = lastEntry && lastEntry[bp.key];
+            const isSelected = selectedPart === bp.key;
+            const isChart = chartPart === bp.key;
+            const xPos = bp.key === 'brazo' ? 28 : bp.key === 'muslo' ? 60 : 80;
+            return html`
+              <button key=${bp.key}
+                onClick=${() => { setSelectedPart(bp.key === selectedPart ? null : bp.key); setInputVal(''); setChartPart(null); }}
+                className="press-scale" style=${{
+                  position: 'absolute', left: xPos - 14, top: bp.y - 10,
+                  width: bp.key === 'brazo' || bp.key === 'muslo' ? 'auto' : 'auto',
+                  display: 'flex', alignItems: 'center', gap: 3,
+                  padding: '3px 8px', borderRadius: 10,
+                  background: isSelected ? T.accent : hasData ? T.greenDim : T.elevated,
+                  border: '1.5px solid ' + (isSelected ? T.accent : hasData ? T.green + '40' : T.border),
+                  transition: 'all 0.2s', zIndex: 2,
+                }}>
+                <span style=${{ fontSize: 10 }}>${bp.emoji}</span>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted, whiteSpace: 'nowrap' }}>
+                  ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : ' cm') : (LANG === 'en' ? bp.labelEn : bp.label)}
+                </span>
+              </button>
+            `;
+          })}
+        </div>
+      </div>
 
       <!-- Weight input -->
       <div className="mb-3">
@@ -3761,58 +3793,88 @@ function MetricsCard({ unitPref, onSaved }) {
           onInput=${e => setWeightVal(e.target.value)}
           className="w-full text-sm font-semibold rounded-xl py-2.5 px-3 text-center"
           style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
-        ${weightConversion && html`<div style=${{ fontSize: 11, color: T.muted, textAlign: 'center', marginTop: 3 }}>\u2248 ${weightConversion}</div>`}
       </div>
 
-      <!-- Measure inputs -->
-      <div className="flex gap-2 mb-3">
-        <div className="flex-1">
+      <!-- Selected body part input -->
+      ${selectedPart && html`
+        <div className="mb-3 slide-down">
           <div className="flex items-center justify-between mb-1">
-            <label style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${t('Cintura')}</label>
+            <label style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>
+              ${BODY_PARTS.find(b => b.key === selectedPart).emoji} ${LANG === 'en' ? BODY_PARTS.find(b => b.key === selectedPart).labelEn : BODY_PARTS.find(b => b.key === selectedPart).label}
+            </label>
             <div className="flex gap-1">
               <button onClick=${() => setMeasureUnit('cm')} style=${chipStyle(measureUnit === 'cm')}>cm</button>
               <button onClick=${() => setMeasureUnit('in')} style=${chipStyle(measureUnit === 'in')}>in</button>
             </div>
           </div>
-          <input type="number" placeholder=${measureUnit === 'cm' ? '85' : '33.5'} value=${cinturaVal}
-            onInput=${e => setCinturaVal(e.target.value)}
+          <input type="number" placeholder=${measureUnit === 'cm' ? String(BODY_PARTS.find(b => b.key === selectedPart).placeholder) : String(cmToIn(BODY_PARTS.find(b => b.key === selectedPart).placeholder))} value=${inputVal}
+            onInput=${e => setInputVal(e.target.value)}
             className="w-full text-sm font-semibold rounded-xl py-2.5 px-3 text-center"
-            style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
-          ${cinturaConversion && html`<div style=${{ fontSize: 11, color: T.muted, textAlign: 'center', marginTop: 3 }}>\u2248 ${cinturaConversion}</div>`}
+            style=${{ background: T.elevated, border: '1px solid ' + T.accent + '30', color: T.text }} />
         </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <label style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${t('Cuello')}</label>
-            <div className="flex gap-1">
-              <button onClick=${() => setMeasureUnit('cm')} style=${chipStyle(measureUnit === 'cm')}>cm</button>
-              <button onClick=${() => setMeasureUnit('in')} style=${chipStyle(measureUnit === 'in')}>in</button>
-            </div>
-          </div>
-          <input type="number" placeholder=${measureUnit === 'cm' ? '38' : '15'} value=${cuelloVal}
-            onInput=${e => setCuelloVal(e.target.value)}
-            className="w-full text-sm font-semibold rounded-xl py-2.5 px-3 text-center"
-            style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
-          ${cuelloConversion && html`<div style=${{ fontSize: 11, color: T.muted, textAlign: 'center', marginTop: 3 }}>\u2248 ${cuelloConversion}</div>`}
-        </div>
-      </div>
+      `}
 
-      <button onClick=${handleSave} disabled=${!weightVal}
+      <button onClick=${handleSave} disabled=${!weightVal && !inputVal}
         className="w-full py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.97]"
-        style=${{ background: weightVal ? T.accent : T.muted, color: '#fff', opacity: weightVal ? 1 : 0.4 }}>
+        style=${{ background: (weightVal || inputVal) ? T.accent : T.muted, color: '#fff', opacity: (weightVal || inputVal) ? 1 : 0.4 }}>
         ${t('Guardar medición')}
       </button>
-      ${lastEntry ? html`
-        <div className="mt-3 px-4 py-3 rounded-xl" style=${{ background: T.elevated }}>
-          <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, marginBottom: 4 }}>${t('Última medición')} \u2014 ${new Date(lastEntry.date + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-          <div className="flex gap-4">
-            <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>\u2696\uFE0F ${weightUnit === 'lbs' ? kgToLbs(lastEntry.kg) : lastEntry.kg} ${weightUnit}</span>
-            ${lastEntry.cintura && html`<span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>\uD83D\uDCCF ${measureUnit === 'in' ? cmToIn(lastEntry.cintura) : lastEntry.cintura} ${measureUnit}</span>`}
-            ${lastEntry.cuello && html`<span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>\uD83D\uDC55 ${measureUnit === 'in' ? cmToIn(lastEntry.cuello) : lastEntry.cuello} ${measureUnit}</span>`}
-          </div>
+
+      <!-- Measurement history pills -->
+      ${log.length > 1 && html`
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          ${BODY_PARTS.filter(bp => log.some(e => e[bp.key])).map(bp => html`
+            <button key=${bp.key} onClick=${() => setChartPart(chartPart === bp.key ? null : bp.key)}
+              className="press-scale" style=${{
+                fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 10,
+                background: chartPart === bp.key ? T.accent : T.elevated,
+                color: chartPart === bp.key ? '#fff' : T.sub,
+                border: '1px solid ' + (chartPart === bp.key ? T.accent : T.border),
+              }}>
+              ${bp.emoji} ${LANG === 'en' ? bp.labelEn : bp.label}
+            </button>
+          `)}
         </div>
-      ` : html`
-        <div className="mt-3 text-center py-3" style=${{ fontSize: 13, color: T.muted }}>
-          ${t('Registra tu primera medición')}
+      `}
+
+      <!-- Evolution mini chart -->
+      ${chartPart && chartData.length >= 2 && html`
+        <div className="mt-3 slide-down rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
+          <div className="flex items-center gap-1.5 px-3 py-2" style=${{ background: T.elevated }}>
+            <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted }}>${BODY_PARTS.find(b => b.key === chartPart).emoji} ${LANG === 'en' ? BODY_PARTS.find(b => b.key === chartPart).labelEn : BODY_PARTS.find(b => b.key === chartPart).label}</span>
+            <span className="ml-auto" style=${{ fontSize: 10, color: T.muted }}>${chartData.length} ${t('mediciones')}</span>
+          </div>
+          <div className="flex items-end gap-1 px-3 py-3" style=${{ height: 72 }}>
+            ${(() => {
+              const maxV = Math.max(...chartData.map(d => d.value));
+              const minV = Math.min(...chartData.map(d => d.value));
+              const range = maxV - minV || 1;
+              return chartData.map((d, di) => {
+                const pct2 = 20 + ((d.value - minV) / range) * 80;
+                const isLast = di === chartData.length - 1;
+                return html`
+                  <div key=${di} className="flex-1 flex flex-col items-center gap-1" style=${{ height: '100%', justifyContent: 'flex-end' }}>
+                    <span style=${{ fontSize: 8, fontWeight: 700, color: isLast ? T.accent : T.muted }}>${dispMeasure(d.value)}</span>
+                    <div style=${{ width: '100%', maxWidth: 28, height: pct2 + '%', minHeight: 4, borderRadius: 4, background: isLast ? T.accent : T.elevated }} />
+                    <span style=${{ fontSize: 7, color: T.muted }}>${new Date(d.date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' }).replace(' ', '')}</span>
+                  </div>
+                `;
+              });
+            })()}
+          </div>
+          ${(() => {
+            const first = chartData[0].value;
+            const last = chartData[chartData.length - 1].value;
+            const diff = Math.round((last - first) * 10) / 10;
+            const diffDisp = dispMeasure(Math.abs(diff));
+            return html`
+              <div className="px-3 pb-2 text-center">
+                <span style=${{ fontSize: 11, fontWeight: 700, color: diff < 0 ? T.green : diff > 0 ? T.amber : T.muted }}>
+                  ${diff < 0 ? '\u2193 -' + diffDisp : diff > 0 ? '\u2191 +' + diffDisp : '\u2194 0'} ${measureUnit}
+                </span>
+              </div>
+            `;
+          })()}
         </div>
       `}
     </div>

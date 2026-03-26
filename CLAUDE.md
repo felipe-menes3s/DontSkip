@@ -109,6 +109,9 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 - `estimate1RM(weight, reps)` — Epley formula: `weight × (1 + reps/30)`
 - `calcCaloriesBurned(durationSec, bodyWeightKg)` — MET-based: `5.0 × weight × hours`
 - `getUserWeightKg()` — latest body weight from weight log, default 72kg
+- `getRestTime(exerciseId)` — smart rest duration lookup (150s compound heavy, 120s moderate, 75s isolation, 60s core)
+- `getTrainingWeek()` — calculates week number from `ds_stats.startDate`
+- `getWeeklyRecommendations(routine, todayKey, unitPref)` — progressive overload per exercise
 - `t(key)` — i18n translation function
 - `exName(ex)` — language-aware exercise name
 - `dayLabel(key)` — language-aware day name
@@ -176,8 +179,8 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 ## Planned Features (roadmap agreed 2026-03-24)
 1. ~~1RM Estimator~~ ✅ Done
 2. ~~Estimated calories burned per workout~~ ✅ Done (MET 5.0 × weight × hours)
-3. Body measurements with interactive SVG body map + evolution charts
-4. HIIT / interval timer (work/rest/rounds)
+3. ~~Body measurements with interactive SVG body map + evolution charts~~ ✅ Done
+4. ~~HIIT / interval timer (work/rest/rounds)~~ ✅ Done
 
 ## Recent Features (2026-03-26)
 - **Dynamic warmup** — 5 muscle-specific exercises before workout (per training day)
@@ -185,6 +188,10 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 - **Estimated calories burned** — MET-based calculation shown in Live tab metrics + post-workout
 - **Fill sets button** — copies first set's weight/reps to remaining empty sets
 - **Records fix** — saveRecord triggers on weight update for already-done sets
+- **Smart rest timer** — auto-countdown between sets, duration by exercise type (150s/120s/75s/60s)
+- **Weekly coach** — progressive overload recommendations per exercise, deload every 4th week
+- **HIIT timer** — configurable work/rest/rounds timer for rest/cardio days
+- **Body measurements** — interactive SVG body map (6 body parts), evolution charts, cm/in toggle
 
 ## Related Projects
 - `enzo-hchb-sync` and `enzo-sync-ingestion` — same React+htm+single-HTML pattern
