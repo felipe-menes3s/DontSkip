@@ -740,8 +740,9 @@ const MEALS_OFFICE = [
     { name: 'Agua', cal: 0, protein: 0, carbs: 0, fat: 0 },
   ]},
   { time: '9:30 AM', name: 'Desayuno Oficina', icon: '\uD83E\uDD56', items: [
-    { name: 'Pan integral (2 rebanadas)', cal: 180, protein: 8, carbs: 32, fat: 2 },
+    { name: 'Pan de molde (2 rebanadas)', cal: 140, protein: 5, carbs: 26, fat: 2 },
     { name: 'Jamón de pavo', cal: 60, protein: 10, carbs: 2, fat: 1 },
+    { name: 'Queso (1 rebanada)', cal: 70, protein: 5, carbs: 1, fat: 5 },
     { name: 'Leche Nurri', cal: 240, protein: 6, carbs: 26, fat: 13 },
   ]},
   { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83C\uDF57', items: [
@@ -765,13 +766,14 @@ const MEALS_PACKED = [
     { name: 'Agua', cal: 0, protein: 0, carbs: 0, fat: 0 },
   ]},
   { time: '9:30 AM', name: 'Desayuno', icon: '\uD83E\uDD56', items: [
-    { name: 'Pan integral (2 rebanadas)', cal: 180, protein: 8, carbs: 32, fat: 2 },
+    { name: 'Pan de molde (2 rebanadas)', cal: 140, protein: 5, carbs: 26, fat: 2 },
     { name: 'Jamón de pavo', cal: 60, protein: 10, carbs: 2, fat: 1 },
+    { name: 'Queso (1 rebanada)', cal: 70, protein: 5, carbs: 1, fat: 5 },
   ]},
-  { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83E\uDD57', items: [
-    { name: 'Ensalada con atún (1 lata)', cal: 280, protein: 30, carbs: 8, fat: 12 },
-    { name: 'Vegetales mixtos', cal: 60, protein: 2, carbs: 10, fat: 1 },
-    { name: 'Aderezo', cal: 80, protein: 0, carbs: 2, fat: 8 },
+  { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83C\uDF5D', items: [
+    { name: 'Fideos (1 porción)', cal: 220, protein: 8, carbs: 42, fat: 1 },
+    { name: 'Huevos revueltos (3)', cal: 210, protein: 18, carbs: 2, fat: 15 },
+    { name: 'Aceite para cocinar', cal: 45, protein: 0, carbs: 0, fat: 5 },
   ]},
   { time: '3:30 PM', name: 'Snack', icon: '\uD83C\uDF6B', items: [
     { name: 'Protein Bar Built', cal: 200, protein: 17, carbs: 22, fat: 7 },
@@ -942,22 +944,36 @@ function getGreeting() {
 // Note: getGreeting returns Spanish keys; wrap with t() at call sites
 
 function getStreak() {
+  // Calculate streak from actual workout data in localStorage
   try {
-    const data = JSON.parse(localStorage.getItem('ds_streak') || '{}');
-    return data.count || 0;
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    let streak = 0;
+    const now = new Date();
+    for (let d = 0; d < 60; d++) {
+      const date = new Date(now.getTime() - d * 86400000);
+      const dateStr = date.toISOString().slice(0, 10);
+      const dk = dayKeys[date.getDay()];
+      const r = ROUTINES[dk];
+      // Skip rest/cardio days — they don't break the streak
+      if (r.rest || r.cardio) { if (d > 0 || streak > 0) continue; else continue; }
+      // Check if there's actual workout data with at least one completed set
+      const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
+      if (!saved) { if (d === 0) continue; break; } // today not done yet is ok
+      try {
+        const states = JSON.parse(saved);
+        const hasDone = states.some(ex => ex.sets && ex.sets.some(s => s.done));
+        if (hasDone) { streak++; }
+        else { if (d === 0) continue; break; }
+      } catch { if (d === 0) continue; break; }
+    }
+    return streak;
   } catch { return 0; }
 }
 
 function updateStreak() {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    const data = JSON.parse(localStorage.getItem('ds_streak') || '{}');
-    if (data.date === today) return data.count;
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const count = data.date === yesterday ? (data.count || 0) + 1 : 1;
-    localStorage.setItem('ds_streak', JSON.stringify({ date: today, count }));
-    return count;
-  } catch { return 1; }
+  const count = getStreak();
+  localStorage.setItem('ds_streak', JSON.stringify({ date: new Date().toISOString().slice(0, 10), count }));
+  return count;
 }
 
 function getWeekDays() {
@@ -1384,8 +1400,8 @@ function jarvisRespond(intent, text, ctx) {
 
 // ── Section Header ────────────────────────────────────────────────────
 
-function SectionHeader({ title }) {
-  return html`<div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase', marginBottom: 10, paddingLeft: 4 }}>${title}</div>`;
+function SectionHeader({ title, noMargin }) {
+  return html`<div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase', marginBottom: noMargin ? 0 : 10, paddingLeft: 4 }}>${title}</div>`;
 }
 
 function CollapsibleSection({ title, icon, summary, badge, extra, children, defaultOpen }) {
@@ -3424,55 +3440,9 @@ function MuscleMap() {
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <${SectionHeader} title=${t("Músculos esta semana")} />
       <div className="flex gap-4" style=${{ alignItems: 'flex-start' }}>
-        <!-- Anatomical Body with Muscle Overlays -->
-        <div className="flex-shrink-0" style=${{ width: 120, position: 'relative' }}>
-          <img src="body-figure.png" width="120" style=${{ display: 'block', opacity: 0.85 }} />
-          <svg width="120" height="224" viewBox="0 0 160 298" fill="none" style=${{ position: 'absolute', top: 0, left: 0 }}>
-            <!-- Muscle highlight overlays mapped to anatomical figure -->
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('hombros')}>
-              <ellipse cx="30" cy="68" rx="14" ry="10"/>
-              <ellipse cx="130" cy="68" rx="14" ry="10"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('pecho')}>
-              <path d="M52,72 C48,78 46,86 48,92 C52,100 64,104 80,102 L80,74 C68,70 58,70 52,72 Z"/>
-              <path d="M108,72 C112,78 114,86 112,92 C108,100 96,104 80,102 L80,74 C92,70 102,70 108,72 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('biceps')}>
-              <path d="M24,82 C20,92 18,104 18,114 L22,118 C26,118 28,112 30,104 L32,92 C32,86 30,82 28,80 Z"/>
-              <path d="M136,82 C140,92 142,104 142,114 L138,118 C134,118 132,112 130,104 L128,92 C128,86 130,82 132,80 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('triceps')}>
-              <path d="M18,114 C16,122 15,130 16,138 L20,140 C22,136 22,128 22,120 Z"/>
-              <path d="M142,114 C144,122 145,130 144,138 L140,140 C138,136 138,128 138,120 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('espalda')}>
-              <path d="M44,80 C40,88 38,98 40,108 L46,112 C50,104 52,94 50,86 Z"/>
-              <path d="M116,80 C120,88 122,98 120,108 L114,112 C110,104 108,94 110,86 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('posterior')}>
-              <path d="M48,68 C42,70 36,76 32,80 L38,80 C42,76 46,72 52,70 Z"/>
-              <path d="M112,68 C118,70 124,76 128,80 L122,80 C118,76 114,72 108,70 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('core')}>
-              <path d="M62,104 C58,112 56,124 56,138 L58,156 C62,164 70,170 80,172 C90,170 98,164 102,156 L104,138 C104,124 102,112 98,104 C92,108 86,110 80,110 C74,110 68,108 62,104 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('gluteos')}>
-              <path d="M58,164 C56,170 54,176 56,180 C60,184 68,186 74,184 L78,178 C76,172 72,166 66,164 Z"/>
-              <path d="M102,164 C104,170 106,176 104,180 C100,184 92,186 86,184 L82,178 C84,172 88,166 94,164 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('cuadriceps')}>
-              <path d="M56,178 C52,190 48,206 46,220 L48,234 C52,238 58,240 62,236 L66,220 C68,208 70,196 72,186 C68,182 62,180 56,178 Z"/>
-              <path d="M104,178 C108,190 112,206 114,220 L112,234 C108,238 102,240 98,236 L94,220 C92,208 90,196 88,186 C92,182 98,180 104,178 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('isquiotibiales')}>
-              <path d="M66,200 C68,210 70,220 70,230 L66,236 L62,236 C62,228 64,218 66,208 Z"/>
-              <path d="M94,200 C92,210 90,220 90,230 L94,236 L98,236 C98,228 96,218 94,208 Z"/>
-            </g>
-            <g fill=${accentFill} style=${{ transition: 'opacity 0.5s ease' }} opacity=${getOpacity('pantorrillas')}>
-              <path d="M48,240 C46,250 46,260 48,270 L52,274 C56,274 58,268 58,260 L56,248 Z"/>
-              <path d="M112,240 C114,250 114,260 112,270 L108,274 C104,274 102,268 102,260 L104,248 Z"/>
-            </g>
-          </svg>
+        <!-- Anatomical Body (clean, no overlays) -->
+        <div className="flex-shrink-0" style=${{ width: 100 }}>
+          <img src="body-figure.png" width="100" style=${{ display: 'block', opacity: 0.85 }} />
         </div>
         <!-- Legend -->
         <div className="flex-1" style=${{ minWidth: 0 }}>
@@ -3718,12 +3688,12 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
 
 function MetricsCard({ unitPref, onSaved }) {
   const BODY_PARTS = [
-    { key: 'cuello', label: 'Cuello', labelEn: 'Neck', emoji: '👔', placeholder: 38, y: 52 },
-    { key: 'pecho', label: 'Pecho', labelEn: 'Chest', emoji: '👕', placeholder: 95, y: 88 },
-    { key: 'brazo', label: 'Brazo', labelEn: 'Arm', emoji: '💪🏼', placeholder: 32, y: 105 },
-    { key: 'cintura', label: 'Cintura', labelEn: 'Waist', emoji: '📏', placeholder: 85, y: 130 },
-    { key: 'cadera', label: 'Cadera', labelEn: 'Hips', emoji: '🍑', placeholder: 95, y: 155 },
-    { key: 'muslo', label: 'Muslo', labelEn: 'Thigh', emoji: '🦵🏻', placeholder: 55, y: 190 },
+    { key: 'cuello', label: 'Cuello', labelEn: 'Neck', placeholder: 38, y: 40, side: 'right' },
+    { key: 'pecho', label: 'Pecho', labelEn: 'Chest', placeholder: 95, y: 68, side: 'right' },
+    { key: 'brazo', label: 'Brazo', labelEn: 'Arm', placeholder: 32, y: 80, side: 'left' },
+    { key: 'cintura', label: 'Cintura', labelEn: 'Waist', placeholder: 85, y: 100, side: 'right' },
+    { key: 'cadera', label: 'Cadera', labelEn: 'Hips', placeholder: 95, y: 116, side: 'left' },
+    { key: 'muslo', label: 'Muslo', labelEn: 'Thigh', placeholder: 55, y: 148, side: 'right' },
   ];
 
   const [selectedPart, setSelectedPart] = useState(null);
@@ -3736,6 +3706,17 @@ function MetricsCard({ unitPref, onSaved }) {
     return log.length ? log[log.length - 1] : null;
   });
   const [chartPart, setChartPart] = useState(null);
+
+  const bpIcon = (key, color) => {
+    const p = { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: '2.2', strokeLinecap: 'round', strokeLinejoin: 'round' };
+    if (key === 'cuello') return html`<svg ...${p}><circle cx="12" cy="7" r="4.5"/><path d="M8.5 11.5L7 20M15.5 11.5L17 20"/></svg>`;
+    if (key === 'pecho') return html`<svg ...${p}><path d="M4 10C4 6 8 3 12 3s8 3 8 7"/><path d="M4 10l2 8h12l2-8"/></svg>`;
+    if (key === 'brazo') return html`<svg ...${p}><path d="M6 18l2-6c1-3 3-4 5-4h2"/><path d="M13 8c2-1 4-1 5 1s0 5-2 7"/></svg>`;
+    if (key === 'cintura') return html`<svg ...${p}><path d="M5 6h14"/><path d="M5 6c0 6 2 7 7 7s7-1 7-7"/><path d="M5 18h14"/><path d="M5 18c0-6 2-7 7-7s7 1 7 7"/></svg>`;
+    if (key === 'cadera') return html`<svg ...${p}><path d="M6 8c0 0 1 8 6 8s6-8 6-8"/><circle cx="9" cy="12" r="1.5" fill=${color} stroke="none"/><circle cx="15" cy="12" r="1.5" fill=${color} stroke="none"/></svg>`;
+    if (key === 'muslo') return html`<svg ...${p}><path d="M8 4c-1 5-2 10-1 16"/><path d="M16 4c1 5 2 10 1 16"/><path d="M8 4h8"/></svg>`;
+    return null;
+  };
 
   const cmToIn = (v) => Math.round(v / 2.54 * 10) / 10;
   const inToCm = (v) => Math.round(v * 2.54 * 10) / 10;
@@ -3778,34 +3759,43 @@ function MetricsCard({ unitPref, onSaved }) {
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <${SectionHeader} title=${t("Métricas físicas")} />
 
-      <!-- Body Map SVG -->
+      <!-- Body Map -->
       <div className="flex justify-center" style=${{ marginBottom: 16, position: 'relative' }}>
-        <div style=${{ position: 'relative', width: 160, height: 240 }}>
-          <svg width="160" height="240" viewBox="0 0 160 240" fill="none">
-            <!-- Body silhouette -->
-            <ellipse cx="80" cy="28" rx="18" ry="22" fill=${T.input} />
-            <path d="M62 50 Q62 55 55 65 L40 90 Q35 95 38 100 L50 105 Q55 100 60 95 L60 130 Q58 140 50 155 L45 190 Q43 200 48 210 L52 220 Q55 225 60 225 L68 225 Q72 222 72 215 L75 190 Q78 170 80 165 Q82 170 85 190 L88 215 Q88 222 92 225 L100 225 Q105 225 108 220 L112 210 Q117 200 115 190 L110 155 Q102 140 100 130 L100 95 Q105 100 110 105 L122 100 Q125 95 120 90 L105 65 Q98 55 98 50 Z" fill=${T.input} />
+        <div style=${{ position: 'relative', width: 280, height: 220 }}>
+          <!-- Anatomical body figure centered -->
+          <div style=${{ position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)', width: 110, height: 220 }}>
+            <img src="body-figure.png" width="110" style=${{ display: 'block', height: 220, objectFit: 'contain', opacity: 0.85 }} />
+          </div>
+          <!-- Connector lines -->
+          <svg width="280" height="220" viewBox="0 0 280 220" fill="none" style=${{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1 }}>
+            ${BODY_PARTS.map(bp => {
+              const cy = bp.y + 10;
+              const bodyEdge = bp.side === 'left' ? 92 : 188;
+              const pillEdge = bp.side === 'left' ? 75 : 205;
+              return html`<line x1=${bodyEdge} y1=${cy} x2=${pillEdge} y2=${cy} stroke=${T.border} strokeWidth="1" strokeDasharray="3 2" />`;
+            })}
           </svg>
-          <!-- Tappable measurement points -->
+          <!-- Tappable measurement points on sides -->
           ${BODY_PARTS.map(bp => {
             const hasData = lastEntry && lastEntry[bp.key];
             const isSelected = selectedPart === bp.key;
-            const isChart = chartPart === bp.key;
-            const xPos = bp.key === 'brazo' ? 28 : bp.key === 'muslo' ? 60 : 80;
+            const pillStyle = {
+              position: 'absolute', top: bp.y,
+              display: 'flex', alignItems: 'center', gap: 3,
+              padding: '3px 10px', borderRadius: 10,
+              background: isSelected ? T.accent : hasData ? T.greenDim : T.elevated,
+              border: '1.5px solid ' + (isSelected ? T.accent : hasData ? T.green + '40' : T.border),
+              transition: 'all 0.2s', zIndex: 2,
+              whiteSpace: 'nowrap',
+            };
+            if (bp.side === 'left') { pillStyle.right = '50%'; pillStyle.marginRight = 62; }
+            else { pillStyle.left = '50%'; pillStyle.marginLeft = 62; }
             return html`
               <button key=${bp.key}
                 onClick=${() => { setSelectedPart(bp.key === selectedPart ? null : bp.key); setInputVal(''); setChartPart(null); }}
-                className="press-scale" style=${{
-                  position: 'absolute', left: xPos - 14, top: bp.y - 10,
-                  width: bp.key === 'brazo' || bp.key === 'muslo' ? 'auto' : 'auto',
-                  display: 'flex', alignItems: 'center', gap: 3,
-                  padding: '3px 8px', borderRadius: 10,
-                  background: isSelected ? T.accent : hasData ? T.greenDim : T.elevated,
-                  border: '1.5px solid ' + (isSelected ? T.accent : hasData ? T.green + '40' : T.border),
-                  transition: 'all 0.2s', zIndex: 2,
-                }}>
-                <span style=${{ fontSize: 10 }}>${bp.emoji}</span>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted, whiteSpace: 'nowrap' }}>
+                className="press-scale" style=${pillStyle}>
+                ${bpIcon(bp.key, isSelected ? '#fff' : hasData ? T.green : T.muted)}
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted }}>
                   ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : ' cm') : (LANG === 'en' ? bp.labelEn : bp.label)}
                 </span>
               </button>
@@ -3834,7 +3824,7 @@ function MetricsCard({ unitPref, onSaved }) {
         <div className="mb-3 slide-down">
           <div className="flex items-center justify-between mb-1">
             <label style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>
-              ${BODY_PARTS.find(b => b.key === selectedPart).emoji} ${LANG === 'en' ? BODY_PARTS.find(b => b.key === selectedPart).labelEn : BODY_PARTS.find(b => b.key === selectedPart).label}
+              ${LANG === 'en' ? BODY_PARTS.find(b => b.key === selectedPart).labelEn : BODY_PARTS.find(b => b.key === selectedPart).label}
             </label>
             <div className="flex gap-1">
               <button onClick=${() => setMeasureUnit('cm')} style=${chipStyle(measureUnit === 'cm')}>cm</button>
@@ -3865,7 +3855,7 @@ function MetricsCard({ unitPref, onSaved }) {
                 color: chartPart === bp.key ? '#fff' : T.sub,
                 border: '1px solid ' + (chartPart === bp.key ? T.accent : T.border),
               }}>
-              ${bp.emoji} ${LANG === 'en' ? bp.labelEn : bp.label}
+              ${LANG === 'en' ? bp.labelEn : bp.label}
             </button>
           `)}
         </div>
@@ -3875,7 +3865,7 @@ function MetricsCard({ unitPref, onSaved }) {
       ${chartPart && chartData.length >= 2 && html`
         <div className="mt-3 slide-down rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
           <div className="flex items-center gap-1.5 px-3 py-2" style=${{ background: T.elevated }}>
-            <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted }}>${BODY_PARTS.find(b => b.key === chartPart).emoji} ${LANG === 'en' ? BODY_PARTS.find(b => b.key === chartPart).labelEn : BODY_PARTS.find(b => b.key === chartPart).label}</span>
+            <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted }}>${LANG === 'en' ? BODY_PARTS.find(b => b.key === chartPart).labelEn : BODY_PARTS.find(b => b.key === chartPart).label}</span>
             <span className="ml-auto" style=${{ fontSize: 10, color: T.muted }}>${chartData.length} ${t('mediciones')}</span>
           </div>
           <div className="flex items-end gap-1 px-3 py-3" style=${{ height: 72 }}>
@@ -3967,18 +3957,31 @@ function WeightChart() {
 function RecordsCard({ unitPref }) {
   const records = getRecords();
   const routineDays = ['monday', 'tuesday', 'thursday', 'friday'];
+  const [displayUnit, setDisplayUnit] = useState(unitPref);
 
   function displayWeight(rec) {
     if (!rec) return null;
-    if (rec.unit === unitPref) return rec.weight;
-    if (unitPref === 'kg' && rec.unit === 'lbs') return lbsToKg(rec.weight);
-    if (unitPref === 'lbs' && rec.unit === 'kg') return kgToLbs(rec.weight);
+    if (rec.unit === displayUnit) return rec.weight;
+    if (displayUnit === 'kg' && rec.unit === 'lbs') return lbsToKg(rec.weight);
+    if (displayUnit === 'lbs' && rec.unit === 'kg') return kgToLbs(rec.weight);
     return rec.weight;
   }
 
+  const chipStyle = (active) => ({
+    fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 8, cursor: 'pointer',
+    background: active ? T.accent : 'transparent', color: active ? '#fff' : T.muted,
+    border: active ? 'none' : '1px solid ' + T.border, transition: 'all 0.2s',
+  });
+
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
-      <${SectionHeader} title=${t("Récords en el gym")} />
+      <div className="flex items-center justify-between mb-3">
+        <${SectionHeader} title=${t("Récords en el gym")} noMargin />
+        <div className="flex gap-1">
+          <button onClick=${() => setDisplayUnit('kg')} style=${chipStyle(displayUnit === 'kg')}>kg</button>
+          <button onClick=${() => setDisplayUnit('lbs')} style=${chipStyle(displayUnit === 'lbs')}>lbs</button>
+        </div>
+      </div>
       ${routineDays.map(dayKey => {
         const r = ROUTINES[dayKey];
         return html`
@@ -3998,9 +4001,9 @@ function RecordsCard({ unitPref }) {
                   </div>
                   ${rec ? html`
                     <div className="flex items-center gap-2">
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${unitPref}</span>
+                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${displayUnit}</span>
                       <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps}</span>
-                      <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${unitPref}</span>
+                      <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${displayUnit}</span>
                     </div>
                   ` : html`
                     <span style=${{ fontSize: 12, color: T.muted }}>\u2014 ${t('sin registro aún')}</span>
@@ -6644,11 +6647,22 @@ function App() {
 
   const dayMeals = getMealsForDay(todayKey);
   const mealsKey = 'ds_meals_' + new Date().toISOString().slice(0, 10);
+  const mealsVersionKey = mealsKey + '_v';
+  const currentVersion = dayMeals.map(m => m.items.map(i => i.name).join('|')).join('~');
   const [meals, setMeals] = useState(() => {
     try {
       const saved = localStorage.getItem(mealsKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const savedVersion = localStorage.getItem(mealsVersionKey);
+        if (savedVersion === currentVersion) return JSON.parse(saved);
+        // Defaults changed — reset all meals to new defaults
+        localStorage.setItem(mealsVersionKey, currentVersion);
+        const fresh = dayMeals.map(m => ({ ...m, confirmed: false, items: m.items.map(it => ({ ...it })) }));
+        localStorage.setItem(mealsKey, JSON.stringify(fresh));
+        return fresh;
+      }
     } catch {}
+    localStorage.setItem(mealsVersionKey, currentVersion);
     return dayMeals.map(m => ({ ...m, confirmed: false, items: m.items.map(i => ({ ...i })) }));
   });
 
