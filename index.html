@@ -523,8 +523,9 @@ const EN = {
   'Estiramiento de flexores de cadera': 'Kneeling Hip Flexor Stretch',
   'Perro boca abajo': 'Downward Dog',
   'Rodilla al pecho acostado': 'Knee-to-Chest Stretch',
-  // ── Calories burned ──
+  // ── Calories burned & Rest ──
   'quemadas': 'burned', 'Calorías quemadas (est.)': 'Calories burned (est.)',
+  'Descanso': 'Rest', 'Saltar': 'Skip',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -1474,6 +1475,17 @@ function WeekStrip() {
 
 // ── Rest Timer ────────────────────────────────────────────────────────
 
+// Rest time by exercise type (seconds)
+// Compound heavy: 150s, Compound moderate: 120s, Isolation: 75s, Core: 60s
+const REST_TIMES = {
+  bench_press: 150, squat: 150, deadlift: 150, ohp: 150, hip_thrust: 150,
+  incline_press: 120, leg_press: 120, lat_pulldown: 120, cable_row: 120, bulgarian: 120, db_row: 120,
+  lateral_raise: 75, bicep_curl: 75, hammer_curl: 75, leg_ext: 75, leg_curl: 75,
+  calf_raise_a: 75, calf_raise_b: 75, rear_delt: 75, tricep_push: 75, skull_crush: 75, seated_curl: 75,
+  plank: 60, crunch: 60,
+};
+function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
+
 function RestTimer({ duration = 90, onDone }) {
   const [left, setLeft] = useState(duration);
   const notified = useRef(false);
@@ -1491,27 +1503,36 @@ function RestTimer({ duration = 90, onDone }) {
     return () => clearTimeout(tid);
   }, [left]);
   const pct = left / duration;
-  const sz = 44, sw = 3.5, r = (sz - sw) / 2, circ = 2 * Math.PI * r, off = circ * (1 - pct), ctr = sz / 2;
+  const urgentColor = left <= 10 ? T.red : left <= 30 ? T.amber : T.accent;
+  const restLabel = duration >= 150 ? (LANG === 'en' ? 'Heavy compound' : 'Compuesto pesado')
+    : duration >= 120 ? (LANG === 'en' ? 'Compound' : 'Compuesto')
+    : duration <= 60 ? 'Core'
+    : (LANG === 'en' ? 'Isolation' : 'Aislamiento');
+  const mm = Math.floor(left / 60);
+  const ss = left % 60;
+  const timeStr = mm > 0 ? mm + ':' + String(ss).padStart(2, '0') : left + 's';
+  const sz = 52, sw = 4, r = (sz - sw) / 2, circ = 2 * Math.PI * r, off = circ * (1 - pct), ctr = sz / 2;
   return html`
-    <div className="flex items-center gap-3 py-2 px-3 rounded-xl fade-up mt-2"
-      style=${{ background: T.elevated, border: '1px solid ' + T.border }}>
+    <div className="flex items-center gap-3 py-3 px-4 rounded-xl fade-up mt-2"
+      style=${{ background: T.elevated, border: '1px solid ' + urgentColor + '30' }}>
       <div className="relative" style=${{ width: sz, height: sz, flexShrink: 0 }}>
         <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
           <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${T.input} strokeWidth=${sw} />
-          <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${T.accent} strokeWidth=${sw}
+          <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${urgentColor} strokeWidth=${sw}
             strokeDasharray=${circ} strokeDashoffset=${off} strokeLinecap="round"
-            style=${{ transition: 'stroke-dashoffset 1s linear' }} />
+            style=${{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }} />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span style=${{ fontSize: 11, fontWeight: 700, color: T.text }}>${left}</span>
+          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: urgentColor, fontVariantNumeric: 'tabular-nums', transition: 'color 0.5s' }}>${timeStr}</span>
         </div>
       </div>
       <div className="flex-1">
-        <div style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>${t('Descanso')}</div>
-        <div style=${{ fontSize: 10, color: T.muted }}>${LANG === 'en' ? 'Next set in' : 'Siguiente set en'} ${left}s</div>
+        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Descanso')}</div>
+        <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${restLabel} \u00B7 ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}</div>
       </div>
       <button onClick=${() => onDone && onDone()}
-        style=${{ fontSize: 11, fontWeight: 700, color: T.accent, padding: '6px 12px', borderRadius: 8, background: T.accentDim, border: 'none' }}>
+        className="press-scale"
+        style=${{ fontSize: 11, fontWeight: 700, color: T.accent, padding: '8px 14px', borderRadius: 10, background: T.accentDim, border: 'none' }}>
         ${t('Saltar')}
       </button>
     </div>
@@ -2114,7 +2135,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
               ${t('Completar ejercicio')}
             </button>
           `}
-          ${showTimer && !allDone && html`<${RestTimer} duration=${90} onDone=${() => setShowTimer(false)} />`}
+          ${showTimer && !allDone && html`<${RestTimer} duration=${getRestTime(exercise.id)} onDone=${() => setShowTimer(false)} />`}
 
           ${html`
             <div className="mt-3 flex items-start gap-2">
