@@ -3321,7 +3321,16 @@ function WeekSummary() {
   const streak = getStreak();
   const planWeek = getPlanWeek();
   const weekDays = getWeekDays();
-  const trainedThisWeek = weekDays.filter(d => (d.isPast || d.isToday) && !d.routine.rest).length;
+  const trainedThisWeek = weekDays.filter(d => {
+    if (d.routine.rest || d.routine.cardio) return false;
+    const dateStr = d.date.toISOString().slice(0, 10);
+    try {
+      const saved = localStorage.getItem('ds_workout_' + d.dayKey + '_' + dateStr);
+      if (!saved) return false;
+      const states = JSON.parse(saved);
+      return states.some(ex => ex.sets && ex.sets.some(s => s.done));
+    } catch { return false; }
+  }).length;
   const totalTrainDays = weekDays.filter(d => !d.routine.rest).length;
 
   const weeksUntilDeload = 8 - ((planWeek - 1) % 8) - 1;
