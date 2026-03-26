@@ -4892,6 +4892,7 @@ const FOOD_LIBRARY_DEFAULT = [
   { id: 'manzana', icon: '🍎', name: 'Manzana', portion: '1 unidad', protein: 0, cal: 80, carbs: 21, fat: 0 },
   { id: 'naranja', icon: '🍊', name: 'Naranja', portion: '1 unidad', protein: 1, cal: 60, carbs: 15, fat: 0 },
   // Snacks y comida rápida
+  { id: 'galleta_grande', icon: '🍪', name: 'Galleta grande (Costco)', portion: '1 unidad', protein: 4, cal: 210, carbs: 28, fat: 10 },
   { id: 'pizza', icon: '🍕', name: 'Pizza pepperoni', portion: '1 slice', protein: 12, cal: 285, carbs: 36, fat: 10 },
   { id: 'hamburguesa', icon: '🍔', name: 'Hamburguesa', portion: '1 unidad', protein: 25, cal: 540, carbs: 40, fat: 28 },
   { id: 'yogurt', icon: '🥛', name: 'Yogurt griego', portion: '1 porción', protein: 15, cal: 130, carbs: 7, fat: 4 },
@@ -5323,8 +5324,9 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
 }
 
 
-function ComidasTab({ meals, onMealConfirm, onMealEdit, dark, onThemeToggle, onLangToggle }) {
+function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onThemeToggle, onLangToggle }) {
   const [section, setSection] = useState('hoy');
+  const [addingMeal, setAddingMeal] = useState(false);
   const [foodLibrary, setFoodLibrary] = useState(() => {
     try {
       const saved = localStorage.getItem('ds_food_library_custom');
@@ -5545,6 +5547,29 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, dark, onThemeToggle, onL
               ` : ''}
             </div>
           `)}
+
+          <!-- Add extra meal -->
+          ${addingMeal ? html`
+            <div className="ds-card mx-1 mb-4" style=${{ padding: 16 }}>
+              <div className="flex items-center justify-between mb-2">
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${t('Nueva comida')}</span>
+                <button onClick=${() => setAddingMeal(false)} className="press-scale"
+                  style=${{ fontSize: 11, fontWeight: 600, color: T.muted, padding: '2px 8px' }}>${t('Cancelar')}</button>
+              </div>
+              <${MealBuilder}
+                foodLibrary=${foodLibrary}
+                onSave=${(items) => { onAddMeal(items); setAddingMeal(false); }}
+                onCancel=${() => setAddingMeal(false)}
+                onAddFood=${handleAddFood}
+              />
+            </div>
+          ` : html`
+            <button onClick=${() => setAddingMeal(true)}
+              className="w-full py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.97] mx-1 mb-4"
+              style=${{ background: T.accentDim, color: T.accent, border: '1.5px dashed ' + T.accent + '40' }}>
+              + ${t('Agregar comida')}
+            </button>
+          `}
 
           <!-- Food verifier -->
           <${FoodVerifier} consumedCal=${consumedCal} consumedProtein=${consumedProtein} foodLibrary=${foodLibrary} />
@@ -6856,7 +6881,7 @@ function App() {
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'comidas' && html`<${ComidasTab}
-        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit}
+        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'progreso' && html`<${ProgresoTab} dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle} unitPref=${unitPref} />`}
