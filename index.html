@@ -523,9 +523,18 @@ const EN = {
   'Estiramiento de flexores de cadera': 'Kneeling Hip Flexor Stretch',
   'Perro boca abajo': 'Downward Dog',
   'Rodilla al pecho acostado': 'Knee-to-Chest Stretch',
-  // ── Calories burned & Rest ──
+  // ── Calories burned ──
   'quemadas': 'burned', 'Calorías quemadas (est.)': 'Calories burned (est.)',
-  'Descanso': 'Rest', 'Saltar': 'Skip',
+  // ── Weekly Coach ──
+  'Semana': 'Week', 'Recomendaciones de la semana': 'Weekly recommendations',
+  'Semana de descarga': 'Deload week',
+  'Basado en tu rendimiento reciente': 'Based on your recent performance',
+  'Reduce la intensidad para recuperar': 'Reduce intensity to recover',
+  'Subir peso': 'Increase weight', 'Mantener peso': 'Maintain weight', 'Descarga': 'Deload',
+  'Sin registro': 'No record', 'Completaste todos los reps': 'You completed all reps',
+  'Sigue trabajando en este peso': 'Keep working at this weight',
+  'Usa 80% de tu peso actual': 'Use 80% of your current weight',
+  'Registra tu primera sesión': 'Record your first session',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -1485,6 +1494,62 @@ const REST_TIMES = {
   plank: 60, crunch: 60,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
+
+// Weight increment by exercise type (lbs)
+const WEIGHT_INCREMENTS = {
+  squat: 10, deadlift: 10, leg_press: 10, hip_thrust: 10,
+  bench_press: 5, incline_press: 5, ohp: 5, lat_pulldown: 5, cable_row: 5, db_row: 5, bulgarian: 5,
+  lateral_raise: 5, bicep_curl: 5, hammer_curl: 5, leg_ext: 5, leg_curl: 5,
+  calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, seated_curl: 5,
+};
+
+function getTrainingWeek() {
+  try {
+    const stats = JSON.parse(localStorage.getItem('ds_stats') || '{}');
+    const start = stats.startDate || new Date().toISOString().slice(0, 10);
+    const diff = Math.floor((Date.now() - new Date(start + 'T00:00:00').getTime()) / (7 * 86400000));
+    return Math.max(1, diff + 1);
+  } catch { return 1; }
+}
+
+function getWeeklyRecommendations(routine, todayKey, unitPref) {
+  if (!routine.exercises) return [];
+  const week = getTrainingWeek();
+  const isDeload = week % 4 === 0;
+  const records = getRecords();
+  return routine.exercises.map((ex, ei) => {
+    const rec = records[ex.id];
+    if (!rec || !rec.weight) return { exercise: ex, index: ei, current: null, recommended: null, status: 'new' };
+    const currentW = rec.unit === unitPref ? rec.weight : (unitPref === 'kg' ? rec.weight / 2.20462 : rec.weight * 2.20462);
+    const roundedCurrent = Math.round(currentW);
+    if (isDeload) {
+      return { exercise: ex, index: ei, current: roundedCurrent, recommended: Math.round(roundedCurrent * 0.8 / 5) * 5, status: 'deload' };
+    }
+    // Check if user completed all reps in last session
+    let hitAllReps = false;
+    try {
+      for (let d = 1; d <= 28; d++) {
+        const prev = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+        const pk = 'ds_workout_' + todayKey + '_' + prev;
+        const ps = localStorage.getItem(pk);
+        if (ps) {
+          const states = JSON.parse(ps);
+          if (states[ei] && states[ei].sets) {
+            const doneSets = states[ei].sets.filter(s => s.done && s.weight > 0);
+            hitAllReps = doneSets.length >= ex.sets && doneSets.every(s => (s.reps || 0) >= parseInt(ex.reps));
+          }
+          break;
+        }
+      }
+    } catch {}
+    if (hitAllReps) {
+      const inc = WEIGHT_INCREMENTS[ex.id] || 5;
+      const incUnit = unitPref === 'kg' ? Math.round(inc / 2.20462 / 2.5) * 2.5 || 2.5 : inc;
+      return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent + incUnit, status: 'increase' };
+    }
+    return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent, status: 'maintain' };
+  });
+}
 
 function RestTimer({ duration = 90, onDone }) {
   const [left, setLeft] = useState(duration);
@@ -5325,6 +5390,12 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
     haptic([10]);
   }
 
+  // Weekly coach
+  const [showCoach, setShowCoach] = useState(false);
+  const trainingWeek = getTrainingWeek();
+  const recommendations = useMemo(() => getWeeklyRecommendations(routine, getTodayKey(), unitPref), [routine, unitPref]);
+  const hasRecommendations = recommendations.some(r => r.status !== 'new');
+
   // Mood/energy check-in
   const moodKey = 'ds_mood_' + new Date().toISOString().slice(0, 10);
   const [mood, setMood] = useState(() => {
@@ -5445,6 +5516,16 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
             <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>${t('Comenzar')}</span>
           </button>
+
+          ${hasRecommendations && html`
+            <button onClick=${() => setShowCoach(true)}
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl press-scale"
+              style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '20' }}>
+              <span style=${{ fontSize: 16 }}>📋</span>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${t('Semana')} ${trainingWeek}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          `}
           <div className="mt-8 text-left">
             ${exercises.map((ex, i) => html`
               <div key=${i} className="flex items-center gap-3 py-3 px-1"
@@ -5796,6 +5877,62 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       `}
 
       <div className="bottom-spacer" />
+
+      ${showCoach && html`
+        <div className="fixed inset-0 z-50 flex items-end justify-center"
+          style=${{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+          onClick=${() => setShowCoach(false)}>
+          <div className="celebrate-modal w-full" onClick=${(e) => e.stopPropagation()}
+            style=${{ background: T.card, borderRadius: '24px 24px 0 0', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', maxHeight: '80vh', overflowY: 'auto', border: '1px solid ' + T.border, borderBottom: 'none' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>
+                  📋 ${t('Semana')} ${trainingWeek}
+                </div>
+                <div style=${{ fontSize: 11, color: T.sub, marginTop: 2 }}>
+                  ${trainingWeek % 4 === 0 ? t('Semana de descarga') + ' \u2014 ' + t('Reduce la intensidad para recuperar') : t('Basado en tu rendimiento reciente')}
+                </div>
+              </div>
+              <button onClick=${() => setShowCoach(false)} className="press-scale"
+                style=${{ width: 32, height: 32, borderRadius: '50%', background: T.input, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              ${recommendations.map((rec, ri) => {
+                const statusColor = rec.status === 'increase' ? T.green : rec.status === 'deload' ? T.amber : rec.status === 'maintain' ? T.accent : T.muted;
+                const statusBg = rec.status === 'increase' ? T.greenDim : rec.status === 'deload' ? T.amberDim : rec.status === 'maintain' ? T.accentDim : T.input;
+                const statusLabel = rec.status === 'increase' ? t('Subir peso') : rec.status === 'deload' ? t('Descarga') : rec.status === 'maintain' ? t('Mantener peso') : t('Sin registro');
+                const statusTip = rec.status === 'increase' ? t('Completaste todos los reps') : rec.status === 'deload' ? t('Usa 80% de tu peso actual') : rec.status === 'maintain' ? t('Sigue trabajando en este peso') : t('Registra tu primera sesión');
+                return html`
+                  <div key=${ri} className="flex items-center gap-3 py-3 px-3 rounded-xl"
+                    style=${{ background: T.elevated, border: '1px solid ' + T.border }}>
+                    <div className="flex-1 min-w-0">
+                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(rec.exercise)}</div>
+                      <div style=${{ fontSize: 10, color: T.muted, marginTop: 1 }}>${statusTip}</div>
+                    </div>
+                    ${rec.current !== null ? html`
+                      <div className="text-right" style=${{ flexShrink: 0 }}>
+                        <div className="flex items-center gap-1.5">
+                          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 600, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>${rec.current}</span>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${statusColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 900, color: statusColor, fontVariantNumeric: 'tabular-nums' }}>${rec.recommended} ${unitPref}</span>
+                        </div>
+                        <div style=${{ marginTop: 3 }}>
+                          <span style=${{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: statusBg, color: statusColor }}>${statusLabel}</span>
+                        </div>
+                      </div>
+                    ` : html`
+                      <span style=${{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: T.input, color: T.muted }}>${statusLabel}</span>
+                    `}
+                  </div>
+                `;
+              })}
+            </div>
+          </div>
+        </div>
+      `}
     </div>
   `;
 }
