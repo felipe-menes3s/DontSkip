@@ -523,6 +523,8 @@ const EN = {
   'Estiramiento de flexores de cadera': 'Kneeling Hip Flexor Stretch',
   'Perro boca abajo': 'Downward Dog',
   'Rodilla al pecho acostado': 'Knee-to-Chest Stretch',
+  // ── Calories burned ──
+  'quemadas': 'burned', 'Calorías quemadas (est.)': 'Calories burned (est.)',
   // ── 1RM estimator ──
   '1RM Est.': '1RM Est.', 'sin registro aún': 'no record yet',
   // ── Jarvis buttons ──
@@ -1010,6 +1012,21 @@ function estimate1RM(weight, reps) {
   if (!weight || weight <= 0 || !reps || reps <= 0) return 0;
   if (reps === 1) return weight;
   return Math.round(weight * (1 + reps / 30));
+}
+
+// Estimated calories burned (MET-based)
+// Weight training MET: 3.5 (light) to 6.0 (vigorous), using 5.0 as moderate default
+function calcCaloriesBurned(durationSec, bodyWeightKg) {
+  const MET = 5.0;
+  const hours = durationSec / 3600;
+  const weight = bodyWeightKg || 72; // default 72kg
+  return Math.round(MET * weight * hours);
+}
+
+function getUserWeightKg() {
+  const log = getWeightLog();
+  if (log.length > 0) return log[log.length - 1].kg;
+  return 72; // default
 }
 
 function getRecords() {
@@ -1826,6 +1843,10 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
   function updateSet(si, field, val) {
     const newSets = sets.map((s, i) => i === si ? { ...s, [field]: val } : s);
     onUpdate({ ...exerciseState, sets: newSets });
+    // Save record if set is already done and weight was updated
+    if (newSets[si].done && field === 'weight' && val > 0) {
+      saveRecord(exercise.id, val, newSets[si].reps || 0, new Date().toISOString().slice(0, 10), unitPref);
+    }
   }
 
   function fillSets() {
@@ -5520,6 +5541,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             { value: gymDone + '/' + gymTotal, label: t('EJERCICIOS') },
             { value: completedSets + '/' + totalSets, label: t('SETS') },
             { value: totalVolume > 0 ? formatVolume(totalVolume) : '--', label: unitPref.toUpperCase() },
+            { value: elapsed > 0 ? '~' + calcCaloriesBurned(elapsed, getUserWeightKg()) : '--', label: 'KCAL' },
           ].map((met, i) => html`
             <div key=${i} className="text-center">
               <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', lineHeight: 1.2 }}>${met.value}</div>
@@ -5538,13 +5560,21 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           </svg>
           <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginBottom: 6 }}>${t('Entrenamiento completado')}</div>
           <div style=${{ fontSize: 13, color: T.sub }}>${t(routine.focus)} \u00B7 ${Math.floor(elapsed / 60)} min \u00B7 ${formatVolume(totalVolume)} ${unitPref}</div>
+          ${elapsed > 0 && html`
+            <div style=${{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 12, background: T.amberDim }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=${T.amber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c-4.97 0-7-3.58-7-7 0-4 3.5-8 5-9.5.42 2 2 3 2 3 1-2.5 3-4.5 4-5.5.67 2 1 4 1 4s2-1 2-3c2.5 3.5 3 5.5 3 7 0 5-3 8-7 8z"/></svg>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.amber }}>~${calcCaloriesBurned(elapsed, getUserWeightKg())} kcal ${t('quemadas')}</span>
+            </div>
+          `}
           <button onClick=${() => {
+            const calsBurned = calcCaloriesBurned(elapsed, getUserWeightKg());
             const lines = [
               t('Entrenamiento completado'),
               routine.name + ' \u2014 ' + t(routine.focus),
               gymTotal + ' ' + t('ejercicios') + ' \u00B7 ' + completedSets + ' sets',
               totalVolume > 0 ? formatVolume(totalVolume) + ' ' + unitPref + ' ' + t('volumen total') : '',
               Math.floor(elapsed / 60) > 0 ? Math.floor(elapsed / 60) + ' ' + t('minutos') : '',
+              calsBurned > 0 ? '~' + calsBurned + ' kcal' : '',
               '#DontSkip'
             ].filter(Boolean).join('\n');
             if (navigator.share) navigator.share({ text: lines }).catch(() => {});
