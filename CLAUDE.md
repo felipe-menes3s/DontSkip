@@ -91,6 +91,8 @@ Hidden: **Perfil** (accessed via gear icon ⚙️ in Hoy header) — settings, e
 - `ds_workout_timer_{todayKey}_{date}` — workout start timestamp
 - `ds_workout_paused_{date}` — paused elapsed seconds
 - `ds_stats` — `{ startDate, totalDays, maxStreak, lastTrainDate }`
+- `ds_warmup_{date}` — array of completed warmup exercise indices
+- `ds_stretch_{date}` — array of completed stretching exercise indices
 
 ## Exercise Data Structure (in ROUTINES)
 Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
@@ -105,6 +107,8 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 - `useCountUp(target, duration)` — animated number hook (easeOutCubic)
 - `formatVolume(v)` — formats kg/lbs volume with locale separators
 - `estimate1RM(weight, reps)` — Epley formula: `weight × (1 + reps/30)`
+- `calcCaloriesBurned(durationSec, bodyWeightKg)` — MET-based: `5.0 × weight × hours`
+- `getUserWeightKg()` — latest body weight from weight log, default 72kg
 - `t(key)` — i18n translation function
 - `exName(ex)` — language-aware exercise name
 - `dayLabel(key)` — language-aware day name
@@ -171,9 +175,16 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 
 ## Planned Features (roadmap agreed 2026-03-24)
 1. ~~1RM Estimator~~ ✅ Done
-2. Estimated calories burned per workout (MET × weight × duration)
+2. ~~Estimated calories burned per workout~~ ✅ Done (MET 5.0 × weight × hours)
 3. Body measurements with interactive SVG body map + evolution charts
 4. HIIT / interval timer (work/rest/rounds)
+
+## Recent Features (2026-03-26)
+- **Dynamic warmup** — 5 muscle-specific exercises before workout (per training day)
+- **Post-workout stretching** — 5 targeted stretches after completing all exercises
+- **Estimated calories burned** — MET-based calculation shown in Live tab metrics + post-workout
+- **Fill sets button** — copies first set's weight/reps to remaining empty sets
+- **Records fix** — saveRecord triggers on weight update for already-done sets
 
 ## Related Projects
 - `enzo-hchb-sync` and `enzo-sync-ingestion` — same React+htm+single-HTML pattern
