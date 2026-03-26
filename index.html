@@ -6655,6 +6655,17 @@ function App() {
   useEffect(() => {
     if (!routine.rest && exerciseStates.length > 0) {
       try { localStorage.setItem(workoutKey, JSON.stringify(exerciseStates)); } catch {}
+      // Sync records: save any completed set with weight > 0
+      const dateNow = new Date().toISOString().slice(0, 10);
+      routine.exercises.forEach((ex, ei) => {
+        const es = exerciseStates[ei];
+        if (!es || !es.sets) return;
+        es.sets.forEach(s => {
+          if (s.done && s.weight > 0) {
+            saveRecord(ex.id, s.weight, s.reps || 0, dateNow, unitPref);
+          }
+        });
+      });
     }
   }, [exerciseStates, workoutKey, routine.rest]);
 
