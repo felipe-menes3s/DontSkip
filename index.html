@@ -119,7 +119,7 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--safe-top);
+  height: calc(var(--safe-top) + 1px);
   z-index: 99;
   pointer-events: none;
   transition: background 0.3s;
@@ -6908,26 +6908,30 @@ function App() {
       const saved = localStorage.getItem(mealsKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Migrate old format: drop unconfirmed template meals, keep confirmed ones
+        // Migration v2: clean up bad auto-confirmed template meals from v1 migration
+        const migrationKey = mealsKey + '_migv2';
+        const hasBadMigration = !localStorage.getItem(migrationKey) && parsed.some(m => m.category === 'other');
         const needsMigration = parsed.some(m => !m.category);
-        if (needsMigration) {
+        if (needsMigration || hasBadMigration) {
           const migrated = [];
           let hasWhey = false;
           parsed.forEach(m => {
-            const isWhey = m.name && m.name.toLowerCase().includes('whey');
+            const isWhey = (m.name && m.name.toLowerCase().includes('whey')) || m.category === 'whey';
             if (isWhey) {
               hasWhey = true;
               migrated.push({ ...m, category: 'whey' });
-            } else if (m.confirmed) {
-              // Keep meals the user actually confirmed eating
-              migrated.push({ ...m, category: 'other' });
+            } else if (m.category && m.category !== 'other') {
+              // New-format meal (desayuno/almuerzo/cena/snack) — keep as-is
+              migrated.push(m);
             }
-            // Drop unconfirmed template meals — they were just placeholders
+            // Drop 'other' category meals (old templates that got bad-migrated)
+            // and unconfirmed meals without category (original old format)
           });
           if (!hasWhey) {
-            migrated.unshift(DEFAULT_MEALS[0]);
+            migrated.unshift({ ...DEFAULT_MEALS[0], items: DEFAULT_MEALS[0].items.map(i => ({ ...i })) });
           }
           localStorage.setItem(mealsKey, JSON.stringify(migrated));
+          localStorage.setItem(migrationKey, '1');
           return migrated;
         }
         return parsed;
