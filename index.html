@@ -6335,14 +6335,14 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   return html`
     <div className="stagger">
-      <div className="mx-5 fade-up" style=${{ paddingTop: 16, paddingBottom: 18, paddingLeft: 20, paddingRight: 20, background: timeGradient, borderRadius: 20, marginBottom: 12 }}>
+      <div className="mx-5 fade-up" style=${{ paddingTop: 16, paddingBottom: 18, paddingLeft: 20, paddingRight: 20, background: T.card, borderRadius: 20, marginBottom: 12, border: '1px solid ' + T.border }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <${LangToggle} onToggle=${onLangToggle} />
-            <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
             <button onClick=${onOpenPerfil} className="flex items-center justify-center press-scale" style=${{ width: 36, height: 36, borderRadius: 10, background: T.input }}>
               <${GearSix} size=${18} weight="bold" color=${T.muted} />
             </button>
+            <${LangToggle} onToggle=${onLangToggle} />
+            <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
             <${FireSimple} size=${14} weight="fill" color=${T.amber} />
