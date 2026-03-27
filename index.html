@@ -3331,7 +3331,7 @@ function WeekSummary() {
   const weekDays = getWeekDays();
   const trainedThisWeek = weekDays.filter(d => {
     if (d.routine.rest || d.routine.cardio) return false;
-    const dateStr = d.localDate(date);
+    const dateStr = localDate(d.date);
     try {
       const saved = localStorage.getItem('ds_workout_' + d.dayKey + '_' + dateStr);
       if (!saved) return false;
@@ -4922,6 +4922,14 @@ const FOOD_LIBRARY_DEFAULT = [
   { id: 'yogurt', icon: '🥛', name: 'Yogurt griego', portion: '1 porción', protein: 15, cal: 130, carbs: 7, fat: 4 },
   // Bebidas
   { id: 'jugo', icon: '🍊', name: 'Jugo de naranja', portion: '1 vaso', protein: 2, cal: 110, carbs: 26, fat: 0 },
+  // Proteínas extra
+  { id: 'pavo', icon: '🍗', name: 'Pechuga de pavo', portion: '100g', protein: 29, cal: 135, carbs: 0, fat: 2 },
+  { id: 'carne_molida', icon: '🥩', name: 'Carne molida magra', portion: '100g', protein: 26, cal: 176, carbs: 0, fat: 10 },
+  { id: 'claras', icon: '🥚', name: 'Claras de huevo (4)', portion: '4 claras', protein: 14, cal: 68, carbs: 1, fat: 0 },
+  { id: 'queso_string', icon: '🧀', name: 'Queso string/mozzarella', portion: '1 pieza', protein: 7, cal: 80, carbs: 1, fat: 6 },
+  { id: 'lentejas', icon: '🫘', name: 'Lentejas cocidas', portion: '1 taza', protein: 18, cal: 230, carbs: 40, fat: 1 },
+  { id: 'jerky', icon: '🥩', name: 'Jerky de res', portion: '30g', protein: 10, cal: 80, carbs: 3, fat: 1 },
+  { id: 'leche_choco', icon: '🥛', name: 'Leche de chocolate', portion: '1 vaso', protein: 8, cal: 190, carbs: 26, fat: 5 },
 ];
 
 
