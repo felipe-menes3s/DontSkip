@@ -780,79 +780,19 @@ const STRETCHING_ROUTINES = {
 
 // ── Meals ──────────────────────────────────────────────────────────────
 
-const MEALS_OFFICE = [
-  { time: '7:05 AM', name: 'Whey Post-Gym', icon: '\uD83E\uDD64', items: [
+const DEFAULT_MEALS = [
+  { time: '7:05 AM', name: 'Whey Post-Gym', icon: '\uD83E\uDD64', category: 'whey', items: [
     { name: 'Whey Protein (1 scoop)', cal: 130, protein: 27, carbs: 3, fat: 1 },
     { name: 'Agua', cal: 0, protein: 0, carbs: 0, fat: 0 },
-  ]},
-  { time: '9:30 AM', name: 'Desayuno Oficina', icon: '\uD83E\uDD56', items: [
-    { name: 'Pan de molde (2 rebanadas)', cal: 140, protein: 5, carbs: 26, fat: 2 },
-    { name: 'Jamón de pavo', cal: 60, protein: 10, carbs: 2, fat: 1 },
-    { name: 'Queso (1 rebanada)', cal: 70, protein: 5, carbs: 1, fat: 5 },
-    { name: 'Leche Nurri', cal: 240, protein: 6, carbs: 26, fat: 13 },
-  ]},
-  { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83C\uDF57', items: [
-    { name: 'Pechuga de pollo (200g)', cal: 330, protein: 38, carbs: 0, fat: 7 },
-    { name: 'Arroz (1 taza)', cal: 210, protein: 4, carbs: 45, fat: 1 },
-    { name: 'Ensalada mixta', cal: 80, protein: 2, carbs: 10, fat: 4 },
-  ]},
-  { time: '3:30 PM', name: 'Snack', icon: '\uD83C\uDF6B', items: [
-    { name: 'Protein Bar Built', cal: 200, protein: 17, carbs: 22, fat: 7 },
-  ]},
-  { time: '7:00 PM', name: 'Cena', icon: '\uD83E\uDD57', items: [
-    { name: 'Pechuga de pollo (180g)', cal: 300, protein: 34, carbs: 0, fat: 6 },
-    { name: 'Ensalada grande', cal: 120, protein: 3, carbs: 12, fat: 7 },
-    { name: 'Aderezo / aceite oliva', cal: 90, protein: 0, carbs: 0, fat: 10 },
-  ]},
+  ], confirmed: false },
 ];
 
-const MEALS_PACKED = [
-  { time: '7:05 AM', name: 'Whey Post-Gym', icon: '\uD83E\uDD64', items: [
-    { name: 'Whey Protein (1 scoop)', cal: 130, protein: 27, carbs: 3, fat: 1 },
-    { name: 'Agua', cal: 0, protein: 0, carbs: 0, fat: 0 },
-  ]},
-  { time: '9:30 AM', name: 'Desayuno', icon: '\uD83E\uDD56', items: [
-    { name: 'Pan de molde (2 rebanadas)', cal: 140, protein: 5, carbs: 26, fat: 2 },
-    { name: 'Jamón de pavo', cal: 60, protein: 10, carbs: 2, fat: 1 },
-    { name: 'Queso (1 rebanada)', cal: 70, protein: 5, carbs: 1, fat: 5 },
-  ]},
-  { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83C\uDF5D', items: [
-    { name: 'Fideos (1 porción)', cal: 220, protein: 8, carbs: 42, fat: 1 },
-    { name: 'Huevos revueltos (3)', cal: 210, protein: 18, carbs: 2, fat: 15 },
-    { name: 'Aceite para cocinar', cal: 45, protein: 0, carbs: 0, fat: 5 },
-  ]},
-  { time: '3:30 PM', name: 'Snack', icon: '\uD83C\uDF6B', items: [
-    { name: 'Protein Bar Built', cal: 200, protein: 17, carbs: 22, fat: 7 },
-  ]},
-  { time: '7:00 PM', name: 'Cena Variable', icon: '\uD83C\uDF7D\uFE0F', items: [
-    { name: 'Proteína (porción)', cal: 350, protein: 30, carbs: 10, fat: 15 },
-    { name: 'Acompañamiento', cal: 250, protein: 5, carbs: 35, fat: 8 },
-  ]},
+const MEAL_CATEGORIES = [
+  { key: 'desayuno', name: 'Desayuno', nameEn: 'Breakfast', icon: '\uD83E\uDD63', defaultTime: '9:00 AM' },
+  { key: 'almuerzo', name: 'Almuerzo', nameEn: 'Lunch', icon: '\uD83C\uDF71', defaultTime: '12:30 PM' },
+  { key: 'cena', name: 'Cena', nameEn: 'Dinner', icon: '\uD83C\uDF7D\uFE0F', defaultTime: '7:00 PM' },
+  { key: 'snack', name: 'Snack', nameEn: 'Snack', icon: '\uD83C\uDF6A', defaultTime: '' },
 ];
-
-const MEALS_REST = [
-  { time: '9:30 AM', name: 'Desayuno', icon: '\uD83C\uDF73', items: [
-    { name: 'Huevos (3)', cal: 210, protein: 18, carbs: 2, fat: 15 },
-    { name: 'Pan + acompañamiento', cal: 250, protein: 7, carbs: 35, fat: 8 },
-  ]},
-  { time: '12:30 PM', name: 'Almuerzo', icon: '\uD83C\uDF5B', items: [
-    { name: 'Proteína (porción)', cal: 350, protein: 30, carbs: 5, fat: 15 },
-    { name: 'Carbohidrato complejo', cal: 200, protein: 4, carbs: 40, fat: 2 },
-  ]},
-  { time: '3:30 PM', name: 'Merienda', icon: '\uD83C\uDF4E', items: [
-    { name: 'Fruta + yogurt/snack', cal: 250, protein: 15, carbs: 30, fat: 6 },
-  ]},
-  { time: '7:00 PM', name: 'Cena', icon: '\uD83C\uDF7D\uFE0F', items: [
-    { name: 'Proteína ligera', cal: 300, protein: 25, carbs: 8, fat: 12 },
-    { name: 'Ensalada o vegetales', cal: 100, protein: 3, carbs: 12, fat: 5 },
-  ]},
-];
-
-function getMealsForDay(dayName) {
-  if (dayName === 'saturday' || dayName === 'sunday') return MEALS_REST;
-  if (dayName === 'tuesday' || dayName === 'thursday') return MEALS_PACKED;
-  return MEALS_OFFICE;
-}
 
 const FOOD_ICONS = [
   [/whey|prote[ií]na?\b.*scoop|scoop/i, '🥤'], [/protein bar|built/i, '🍫'],
@@ -5207,7 +5147,7 @@ function FoodLibrary({ foodLibrary, onAddFood }) {
 
 // ── Comidas Tab ─────────────────────────────────────────────────────────
 
-function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
+function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood, templates, onDeleteTemplate }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState([]);
   const [qtyPick, setQtyPick] = useState(null); // food being quantity-picked
@@ -5252,8 +5192,36 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
     setQuery('');
   }
 
+  function handleUseTemplate(tpl) {
+    setSelected(prev => [...prev, ...tpl.items.map(it => ({ ...it }))]);
+  }
+
   return html`
     <div className="fade-up" style=${{ padding: '0 0 4px' }}>
+
+      <!-- Templates -->
+      ${templates && templates.length > 0 && selected.length === 0 && html`
+        <div className="mb-3">
+          <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>\uD83D\uDCCB ${LANG === 'en' ? 'My templates' : 'Mis plantillas'}</div>
+          <div className="space-y-1.5">
+            ${templates.map(tpl => html`
+              <div key=${tpl.id} className="flex items-center gap-2">
+                <button onClick=${() => handleUseTemplate(tpl)}
+                  className="flex-1 flex items-center gap-2 py-2 px-3 rounded-lg press-scale text-left"
+                  style=${{ background: T.input, border: '1px solid ' + T.border }}>
+                  <span className="text-xs font-semibold truncate" style=${{ color: T.text }}>${tpl.name}</span>
+                  <span className="text-xs flex-shrink-0" style=${{ color: T.muted }}>${tpl.items.reduce((s, it) => s + it.protein, 0)}g P \u00B7 ${tpl.items.reduce((s, it) => s + it.cal, 0)} cal</span>
+                </button>
+                ${onDeleteTemplate && html`
+                  <button onClick=${() => onDeleteTemplate(tpl.id)} className="press-scale" style=${{ color: T.muted, padding: 4 }}>
+                    <${X} size=${12} weight="bold" />
+                  </button>
+                `}
+              </div>
+            `)}
+          </div>
+        </div>
+      `}
 
       <!-- Selected items -->
       ${selected.length > 0 && html`
@@ -5402,9 +5370,10 @@ function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood }) {
 }
 
 
-function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onThemeToggle, onLangToggle }) {
+function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem, dark, onThemeToggle, onLangToggle }) {
   const [section, setSection] = useState('hoy');
-  const [addingMeal, setAddingMeal] = useState(false);
+  const [addingCategory, setAddingCategory] = useState(null); // null | category object
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [foodLibrary, setFoodLibrary] = useState(() => {
     try {
       const saved = localStorage.getItem('ds_food_library_custom');
@@ -5412,7 +5381,9 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
     } catch {}
     return FOOD_LIBRARY_DEFAULT;
   });
-  const [buildingMeal, setBuildingMeal] = useState(null);
+  const [templates, setTemplates] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ds_meal_templates') || '[]'); } catch { return []; }
+  });
 
   const consumedCal = sumMealsProp(meals, 'cal');
   const consumedProtein = sumMealsProp(meals, 'protein');
@@ -5432,6 +5403,34 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
       saved.push(food);
       localStorage.setItem('ds_food_library_custom', JSON.stringify(saved));
     } catch {}
+  }
+
+  function handleSaveTemplate(mealIdx) {
+    const meal = meals[mealIdx];
+    if (!meal) return;
+    const defaultName = meal.items.map(it => it.name.split('(')[0].trim()).join(' + ');
+    const name = prompt(LANG === 'en' ? 'Template name:' : 'Nombre de la plantilla:', defaultName);
+    if (!name) return;
+    const tpl = { id: Date.now(), name, category: meal.category || 'snack', items: meal.items.map(it => ({ name: it.name, cal: it.cal, protein: it.protein, carbs: it.carbs || 0, fat: it.fat || 0 })) };
+    const next = [...templates, tpl];
+    setTemplates(next);
+    try { localStorage.setItem('ds_meal_templates', JSON.stringify(next)); } catch {}
+  }
+
+  function handleDeleteTemplate(tplId) {
+    const next = templates.filter(tp => tp.id !== tplId);
+    setTemplates(next);
+    try { localStorage.setItem('ds_meal_templates', JSON.stringify(next)); } catch {}
+  }
+
+  function handleSelectCategory(cat) {
+    setAddingCategory(cat);
+    setShowCategoryPicker(false);
+  }
+
+  function handleSaveMeal(items) {
+    onAddMeal(items, addingCategory);
+    setAddingCategory(null);
   }
 
   return html`
@@ -5468,21 +5467,18 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
           <!-- Macro donut + progress bars -->
           <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
             ${(() => {
-              // Compute macros from confirmed meals
               const confirmed = meals.filter(m => m.confirmed);
               const totalProt = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.protein || 0), 0), 0);
               const totalCarbs = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.carbs || 0), 0), 0);
               const totalFat = confirmed.reduce((s, m) => s + m.items.reduce((a, i) => a + (i.fat || 0), 0), 0);
               const total = totalProt + totalCarbs + totalFat;
               const dsz = 90, dsw = 10, dr = (dsz - dsw) / 2, dcirc = 2 * Math.PI * dr;
-
               const protFrac = total > 0 ? totalProt / total : 0;
               const carbFrac = total > 0 ? totalCarbs / total : 0;
               const fatFrac = total > 0 ? totalFat / total : 0;
               const seg1 = dcirc * protFrac;
               const seg2 = dcirc * carbFrac;
               const seg3 = dcirc * fatFrac;
-              const off1 = 0;
               const off2 = seg1;
               const off3 = seg1 + seg2;
 
@@ -5493,7 +5489,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
                       <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.input} strokeWidth=${dsw} />
                       ${total > 0 ? html`
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.copper} strokeWidth=${dsw}
-                          strokeDasharray="${seg1} ${dcirc - seg1}" strokeDashoffset=${-off1} strokeLinecap="butt" className="ring-circle" />
+                          strokeDasharray="${seg1} ${dcirc - seg1}" strokeDashoffset=${0} strokeLinecap="butt" className="ring-circle" />
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.amber} strokeWidth=${dsw}
                           strokeDasharray="${seg2} ${dcirc - seg2}" strokeDashoffset=${-off2} strokeLinecap="butt" className="ring-circle" />
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke="#e879a0" strokeWidth=${dsw}
@@ -5509,7 +5505,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div style=${{ width: 8, height: 8, borderRadius: 2, background: T.copper }} />
-                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>${t('Proteína')}</span>
+                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.sub }}>${t('Prote\u00EDna')}</span>
                       </div>
                       <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>${totalProt}g</span>
                     </div>
@@ -5534,7 +5530,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>${t('Proteína')}</span>
+                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>${t('Prote\u00EDna')}</span>
                   <span className="text-xs font-bold" style=${{ color: barColor(protPct) }}>${consumedProtein}g / ${PROTEIN_GOAL}g</span>
                 </div>
                 <div className="h-2 rounded-full" style=${{ background: T.input }}>
@@ -5544,7 +5540,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>${t('Calorías')}</span>
+                  <span className="text-xs font-semibold" style=${{ color: T.sub }}>${t('Calor\u00EDas')}</span>
                   <span className="text-xs font-bold" style=${{ color: barColor(calPct) }}>${consumedCal} / ${CALORIES_GOAL} kcal</span>
                 </div>
                 <div className="h-2 rounded-full" style=${{ background: T.input }}>
@@ -5555,94 +5551,132 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
             </div>
           </div>
 
-          <!-- Detailed meals -->
-          ${meals.map((meal, i) => html`
-            <div key=${i} className="ds-card mb-3 overflow-hidden fade-up">
-              <!-- Meal header -->
-              <div className="flex items-center justify-between px-5 pt-4 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">${meal.icon}</span>
-                  <div>
-                    <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
-                    <div className="text-xs" style=${{ color: T.muted }}>${meal.time}</div>
+          <!-- Meal cards -->
+          ${meals.map((meal, i) => {
+            const isWhey = meal.category === 'whey';
+            const mealTotalP = meal.items.reduce((s, it) => s + it.protein, 0);
+            const mealTotalCal = meal.items.reduce((s, it) => s + it.cal, 0);
+
+            // Compact Whey card
+            if (isWhey && !meal.confirmed) {
+              return html`
+                <div key=${i} className="ds-card mb-3 fade-up" style=${{ padding: '14px 18px' }}>
+                  <div className="flex items-center gap-3">
+                    <span style=${{ fontSize: 22 }}>${meal.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g ${t('prote\u00EDna')}</div>
+                    </div>
+                    <button onClick=${() => onMealConfirm(i)}
+                      className="py-2 px-4 rounded-xl text-xs font-bold press-scale"
+                      style=${{ background: T.accent, color: '#fff' }}>
+                      \u2713 ${LANG === 'en' ? 'Had my whey' : 'Tom\u00E9 mi whey'}
+                    </button>
                   </div>
                 </div>
-                ${meal.confirmed
-                  ? html`<span className="text-xs font-bold px-2.5 py-1 rounded-lg" style=${{ background: T.greenDim, color: T.green }}>\u2713 ${t('Confirmado')}</span>`
-                  : html`<span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style=${{ background: T.elevated, color: T.muted }}>${t('Pendiente')}</span>`
-                }
-              </div>
+              `;
+            }
 
-              <!-- Items table -->
-              <div className="px-5 pb-2">
-                <div className="rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
-                  <!-- Header row -->
-                  <div className="flex items-center py-2 px-3" style=${{ background: T.input }}>
-                    <span className="flex-1 text-xs font-semibold" style=${{ color: T.muted }}>${t('Alimento')}</span>
-                    <span className="w-16 text-center text-xs font-semibold" style=${{ color: T.accent }}>${t('Prot')}</span>
-                    <span className="w-16 text-center text-xs font-semibold" style=${{ color: T.amber }}>Kcal</span>
+            // Confirmed Whey — compact green
+            if (isWhey && meal.confirmed) {
+              return html`
+                <div key=${i} className="ds-card mb-3 fade-up" style=${{ padding: '14px 18px', opacity: 0.7 }}>
+                  <div className="flex items-center gap-3">
+                    <span style=${{ fontSize: 22 }}>${meal.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g ${t('prote\u00EDna')}</div>
+                    </div>
+                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg" style=${{ background: T.greenDim, color: T.green }}>
+                      <svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      ${t('Confirmado')}
+                    </span>
                   </div>
+                </div>
+              `;
+            }
+
+            // Regular meal card (Desayuno, Almuerzo, Cena, Snack)
+            return html`
+              <div key=${i} className="ds-card mb-3 overflow-hidden fade-up">
+                <div className="flex items-center justify-between px-5 pt-4 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">${meal.icon}</span>
+                    <div>
+                      <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${meal.time}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold" style=${{ color: T.copper }}>${mealTotalP}g P \u00B7 ${mealTotalCal} kcal</span>
+                </div>
+
+                <div className="px-5 pb-3">
                   ${meal.items.map((item, j) => html`
-                    <div key=${j} className="flex items-center py-2 px-3"
-                      style=${{ borderTop: '1px solid ' + T.border }}>
-                      <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.sub }}><span style=${{ fontSize: 13, marginRight: 5 }}>${foodIcon(item.name)}</span>${item.name}</span>
-                      <span className="w-16 text-center text-xs font-mono font-semibold" style=${{ color: T.accent }}>${item.protein}g</span>
-                      <span className="w-16 text-center text-xs font-mono font-semibold" style=${{ color: T.amber }}>${item.cal}</span>
+                    <div key=${j} className="flex items-center gap-2 py-1.5"
+                      style=${{ borderBottom: j < meal.items.length - 1 ? '1px solid ' + T.border + '40' : 'none' }}>
+                      <span style=${{ fontSize: 14 }}>${foodIcon(item.name)}</span>
+                      <span className="flex-1 min-w-0 truncate" style=${{ fontSize: 12, color: T.text }}>${item.name}</span>
+                      <span style=${{ fontSize: 11, color: T.copper, fontWeight: 600, width: 32, textAlign: 'right' }}>${item.protein}g</span>
+                      <span style=${{ fontSize: 11, color: T.muted, width: 42, textAlign: 'right' }}>${item.cal}</span>
+                      <button onClick=${() => onRemoveItem(i, j)} className="press-scale"
+                        style=${{ color: T.muted, padding: 4, marginLeft: 2 }}>
+                        <${X} size=${14} weight="bold" />
+                      </button>
                     </div>
                   `)}
-                  <!-- Total row -->
-                  <div className="flex items-center py-2 px-3" style=${{ background: T.input, borderTop: '1px solid ' + T.borderMed }}>
-                    <span className="flex-1 text-xs font-bold" style=${{ color: T.sub }}>${t('Total')}</span>
-                    <span className="w-16 text-center text-xs font-mono font-bold" style=${{ color: T.accent }}>${meal.items.reduce((s, it) => s + it.protein, 0)}g</span>
-                    <span className="w-16 text-center text-xs font-mono font-bold" style=${{ color: T.amber }}>${meal.items.reduce((s, it) => s + it.cal, 0)}</span>
-                  </div>
+                </div>
+
+                <div className="px-5 pb-4">
+                  <button onClick=${() => handleSaveTemplate(i)}
+                    className="text-xs font-semibold press-scale"
+                    style=${{ color: T.accent, padding: '4px 0' }}>
+                    \u2B50 ${LANG === 'en' ? 'Save as template' : 'Guardar como plantilla'}
+                  </button>
                 </div>
               </div>
+            `;
+          })}
 
-              <!-- Actions / Builder -->
-              ${!meal.confirmed && buildingMeal === i ? html`
-                <div className="px-5 pb-4 pt-1">
-                  <${MealBuilder}
-                    foodLibrary=${foodLibrary}
-                    onSave=${(items) => { onMealEdit(i, items); setBuildingMeal(null); }}
-                    onCancel=${() => setBuildingMeal(null)}
-                    onAddFood=${handleAddFood}
-                  />
+          <!-- Add meal: category picker or MealBuilder -->
+          ${addingCategory ? html`
+            <div className="ds-card mx-1 mb-4 fade-up" style=${{ padding: 16 }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span style=${{ fontSize: 16 }}>${addingCategory.icon}</span>
+                  <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? addingCategory.nameEn : addingCategory.name}</span>
                 </div>
-              ` : !meal.confirmed ? html`
-                <div className="flex gap-2 px-5 pb-4 pt-1">
-                  <button onClick=${() => onMealConfirm(i)}
-                    className="meal-btn flex-1 py-2.5 rounded-xl text-xs font-bold text-white"
-                    style=${{ background: T.accent, color: T.bg }}>
-                    \u2713 ${t('Comí esto')}
-                  </button>
-                  <button onClick=${() => setBuildingMeal(i)}
-                    className="meal-btn py-2.5 px-4 rounded-xl text-xs font-semibold"
-                    style=${{ background: T.accentDim, color: T.accent }}>
-                    ${t('Cambié algo')}
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-          `)}
-
-          <!-- Add extra meal -->
-          ${addingMeal ? html`
-            <div className="ds-card mx-1 mb-4" style=${{ padding: 16 }}>
-              <div className="flex items-center justify-between mb-2">
-                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${t('Nueva comida')}</span>
-                <button onClick=${() => setAddingMeal(false)} className="press-scale"
+                <button onClick=${() => setAddingCategory(null)} className="press-scale"
                   style=${{ fontSize: 11, fontWeight: 600, color: T.muted, padding: '2px 8px' }}>${t('Cancelar')}</button>
               </div>
               <${MealBuilder}
                 foodLibrary=${foodLibrary}
-                onSave=${(items) => { onAddMeal(items); setAddingMeal(false); }}
-                onCancel=${() => setAddingMeal(false)}
+                onSave=${handleSaveMeal}
+                onCancel=${() => setAddingCategory(null)}
                 onAddFood=${handleAddFood}
+                templates=${templates.filter(tp => tp.category === addingCategory.key)}
+                onDeleteTemplate=${handleDeleteTemplate}
               />
             </div>
+          ` : showCategoryPicker ? html`
+            <div className="ds-card mx-1 mb-4 fade-up" style=${{ padding: 16 }}>
+              <div className="flex items-center justify-between mb-3">
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? 'What type of meal?' : '\u00BFQu\u00E9 tipo de comida?'}</span>
+                <button onClick=${() => setShowCategoryPicker(false)} className="press-scale"
+                  style=${{ fontSize: 11, fontWeight: 600, color: T.muted, padding: '2px 8px' }}>${t('Cancelar')}</button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                ${MEAL_CATEGORIES.map(cat => html`
+                  <button key=${cat.key} onClick=${() => handleSelectCategory(cat)}
+                    className="flex items-center gap-2.5 py-3 px-4 rounded-xl press-scale transition-all active:scale-[0.97]"
+                    style=${{ background: T.input, border: '1px solid ' + T.border }}>
+                    <span style=${{ fontSize: 20 }}>${cat.icon}</span>
+                    <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? cat.nameEn : cat.name}</span>
+                  </button>
+                `)}
+              </div>
+            </div>
           ` : html`
-            <button onClick=${() => setAddingMeal(true)}
+            <button onClick=${() => setShowCategoryPicker(true)}
               className="w-full py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.97] mx-1 mb-4"
               style=${{ background: T.accentDim, color: T.accent, border: '1.5px dashed ' + T.accent + '40' }}>
               + ${t('Agregar comida')}
@@ -5656,6 +5690,31 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, dark, onTheme
         </div>
       ` : html`
         <div className="px-5">
+          <!-- Meal templates section -->
+          ${templates.length > 0 && html`
+            <div className="ds-card mb-4 fade-up" style=${{ padding: 16 }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span style=${{ fontSize: 14 }}>\uD83D\uDCCB</span>
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? 'My Templates' : 'Mis Plantillas'}</span>
+              </div>
+              <div className="space-y-2">
+                ${templates.map(tpl => html`
+                  <div key=${tpl.id} className="flex items-center gap-2 py-2 px-3 rounded-lg"
+                    style=${{ background: T.input, border: '1px solid ' + T.border }}>
+                    <span style=${{ fontSize: 14 }}>${MEAL_CATEGORIES.find(c => c.key === tpl.category)?.icon || '\uD83C\uDF7D\uFE0F'}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate" style=${{ color: T.text }}>${tpl.name}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${tpl.items.length} ${LANG === 'en' ? 'items' : 'items'} \u00B7 ${tpl.items.reduce((s, it) => s + it.protein, 0)}g P</div>
+                    </div>
+                    <button onClick=${() => handleDeleteTemplate(tpl.id)} className="press-scale"
+                      style=${{ color: T.muted, padding: 4 }}>
+                      <${X} size=${14} weight="bold" />
+                    </button>
+                  </div>
+                `)}
+              </div>
+            </div>
+          `}
           <${FoodLibrary} foodLibrary=${foodLibrary} onAddFood=${handleAddFood} />
           <div className="bottom-spacer" />
         </div>
@@ -6843,25 +6902,29 @@ function App() {
     }));
   });
 
-  const dayMeals = getMealsForDay(todayKey);
   const mealsKey = 'ds_meals_' + localDate();
-  const mealsVersionKey = mealsKey + '_v';
-  const currentVersion = dayMeals.map(m => m.items.map(i => i.name).join('|')).join('~');
   const [meals, setMeals] = useState(() => {
     try {
       const saved = localStorage.getItem(mealsKey);
       if (saved) {
-        const savedVersion = localStorage.getItem(mealsVersionKey);
-        if (savedVersion === currentVersion) return JSON.parse(saved);
-        // Defaults changed — reset all meals to new defaults
-        localStorage.setItem(mealsVersionKey, currentVersion);
-        const fresh = dayMeals.map(m => ({ ...m, confirmed: false, items: m.items.map(it => ({ ...it })) }));
-        localStorage.setItem(mealsKey, JSON.stringify(fresh));
-        return fresh;
+        const parsed = JSON.parse(saved);
+        // Migrate old format: add category field, auto-confirm non-whey meals
+        const needsMigration = parsed.some(m => !m.category);
+        if (needsMigration) {
+          const migrated = parsed.map(m => {
+            if (!m.category) {
+              const isWhey = m.name && m.name.toLowerCase().includes('whey');
+              return { ...m, category: isWhey ? 'whey' : 'other', confirmed: isWhey ? m.confirmed : true };
+            }
+            return m;
+          });
+          localStorage.setItem(mealsKey, JSON.stringify(migrated));
+          return migrated;
+        }
+        return parsed;
       }
     } catch {}
-    localStorage.setItem(mealsVersionKey, currentVersion);
-    return dayMeals.map(m => ({ ...m, confirmed: false, items: m.items.map(i => ({ ...i })) }));
+    return DEFAULT_MEALS.map(m => ({ ...m, items: m.items.map(i => ({ ...i })) }));
   });
 
   useEffect(() => {
@@ -6948,11 +7011,26 @@ function App() {
     });
   }, [saveMeals]);
 
-  const handleAddMeal = useCallback((items) => {
+  const handleAddMeal = useCallback((items, category) => {
     const hour = new Date().getHours();
-    const timeStr = (hour > 12 ? hour - 12 : hour || 12) + ':' + String(new Date().getMinutes()).padStart(2, '0') + (hour >= 12 ? ' PM' : ' AM');
+    const min = String(new Date().getMinutes()).padStart(2, '0');
+    const timeStr = (hour > 12 ? hour - 12 : hour || 12) + ':' + min + (hour >= 12 ? ' PM' : ' AM');
+    const cat = category || { key: 'snack', name: 'Snack', nameEn: 'Snack', icon: '\uD83C\uDF6A' };
+    const mealName = LANG === 'en' ? (cat.nameEn || cat.name) : cat.name;
     setMeals(prev => {
-      const next = [...prev, { time: timeStr, name: LANG === 'en' ? 'Custom meal' : 'Comida personalizada', icon: 'custom', confirmed: true, items }];
+      const next = [...prev, { time: timeStr, name: mealName, icon: cat.icon, category: cat.key, confirmed: true, items }];
+      saveMeals(next);
+      return next;
+    });
+  }, [saveMeals]);
+
+  const handleRemoveItem = useCallback((mealIdx, itemIdx) => {
+    setMeals(prev => {
+      const next = prev.map((m, i) => {
+        if (i !== mealIdx) return m;
+        const newItems = m.items.filter((_, ii) => ii !== itemIdx);
+        return { ...m, items: newItems };
+      }).filter(m => m.items.length > 0);
       saveMeals(next);
       return next;
     });
@@ -7052,7 +7130,7 @@ function App() {
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'comidas' && html`<${ComidasTab}
-        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal}
+        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal} onRemoveItem=${handleRemoveItem}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'progreso' && html`<${ProgresoTab} dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle} unitPref=${unitPref} />`}
