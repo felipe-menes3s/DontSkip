@@ -924,6 +924,12 @@ const JARVIS_BUTTONS = [
 const DEV_DAY_OVERRIDE = null; // 'monday','tuesday','wednesday','thursday','friday','saturday','sunday' or null
 function getTodayKey() { return DEV_DAY_OVERRIDE || DAYS[new Date().getDay()]; }
 
+// Local date string (YYYY-MM-DD) — avoids UTC timezone bug
+function localDate(d) {
+  const dt = d || new Date();
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+}
+
 function kgToLbs(kg) { return Math.round(kg * 2.20462 * 10) / 10; }
 function lbsToKg(lbs) { return Math.round(lbs / 2.20462 * 10) / 10; }
 
@@ -954,7 +960,7 @@ function getStreak() {
     const now = new Date();
     for (let d = 0; d < 60; d++) {
       const date = new Date(now.getTime() - d * 86400000);
-      const dateStr = date.toISOString().slice(0, 10);
+      const dateStr = localDate(date);
       const dk = dayKeys[date.getDay()];
       const r = ROUTINES[dk];
       // Skip rest/cardio days — they don't break the streak
@@ -975,7 +981,7 @@ function getStreak() {
 
 function updateStreak() {
   const count = getStreak();
-  localStorage.setItem('ds_streak', JSON.stringify({ date: new Date().toISOString().slice(0, 10), count }));
+  localStorage.setItem('ds_streak', JSON.stringify({ date: localDate(), count }));
   return count;
 }
 
@@ -1006,11 +1012,11 @@ function getStats() {
   try {
     let stats = JSON.parse(localStorage.getItem('ds_stats') || 'null');
     if (!stats) {
-      stats = { startDate: new Date().toISOString().slice(0, 10) };
+      stats = { startDate: localDate() };
       localStorage.setItem('ds_stats', JSON.stringify(stats));
     }
     return stats;
-  } catch { return { startDate: new Date().toISOString().slice(0, 10) }; }
+  } catch { return { startDate: localDate() }; }
 }
 
 function getPlanWeek() {
@@ -1076,15 +1082,15 @@ function saveRecord(exerciseId, weight, reps, date, unit) {
 function getFullStats() {
   try {
     const stats = JSON.parse(localStorage.getItem('ds_stats') || '{}');
-    return { startDate: stats.startDate || new Date().toISOString().slice(0, 10), totalDays: stats.totalDays || 0, maxStreak: stats.maxStreak || 0 };
-  } catch { return { startDate: new Date().toISOString().slice(0, 10), totalDays: 0, maxStreak: 0 }; }
+    return { startDate: stats.startDate || localDate(), totalDays: stats.totalDays || 0, maxStreak: stats.maxStreak || 0 };
+  } catch { return { startDate: localDate(), totalDays: 0, maxStreak: 0 }; }
 }
 
 function updateStatsOnComplete() {
   try {
     const stats = JSON.parse(localStorage.getItem('ds_stats') || '{}');
-    if (!stats.startDate) stats.startDate = new Date().toISOString().slice(0, 10);
-    const today = new Date().toISOString().slice(0, 10);
+    if (!stats.startDate) stats.startDate = localDate();
+    const today = localDate();
     if (stats.lastTrainDate === today) return;
     stats.lastTrainDate = today;
     stats.totalDays = (stats.totalDays || 0) + 1;
@@ -1367,7 +1373,7 @@ function jarvisRespond(intent, text, ctx) {
       if (streak > 0) resp += '\uD83D\uDD25 ' + (L ? 'Streak' : 'Racha') + ': ' + streak + ' ' + (L ? 'days' : 'días') + '\n';
       // Today's PRs
       if (!ctx.isRest) {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDate();
         const records = getRecords();
         const routine = ROUTINES[ctx.todayKey];
         const todayPRs = routine.exercises.filter(ex => records[ex.id] && records[ex.id].date === today);
@@ -1450,7 +1456,7 @@ function WeekStrip() {
   const dayLabelsShort = LANG === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   const today = new Date();
   const todayKey = getTodayKey();
-  const todayDate = today.toISOString().slice(0, 10);
+  const todayDate = localDate(today);
 
   // Find Monday of current week
   const dayOfWeek = today.getDay(); // 0=Sun
@@ -1459,7 +1465,7 @@ function WeekStrip() {
   const days = dayKeys.map((dk, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() + mondayOffset + i);
-    const date = d.toISOString().slice(0, 10);
+    const date = localDate(d);
     const isToday = date === todayDate;
     const isFuture = d > today && !isToday;
     const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
@@ -1523,7 +1529,7 @@ const WEIGHT_INCREMENTS = {
 function getTrainingWeek() {
   try {
     const stats = JSON.parse(localStorage.getItem('ds_stats') || '{}');
-    const start = stats.startDate || new Date().toISOString().slice(0, 10);
+    const start = stats.startDate || localDate();
     const diff = Math.floor((Date.now() - new Date(start + 'T00:00:00').getTime()) / (7 * 86400000));
     return Math.max(1, diff + 1);
   } catch { return 1; }
@@ -1546,7 +1552,7 @@ function getWeeklyRecommendations(routine, todayKey, unitPref) {
     let hitAllReps = false;
     try {
       for (let d = 1; d <= 28; d++) {
-        const prev = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+        const prev = localDate(new Date(Date.now() - d * 86400000));
         const pk = 'ds_workout_' + todayKey + '_' + prev;
         const ps = localStorage.getItem(pk);
         if (ps) {
@@ -1857,7 +1863,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
 // ── Supplements Check ────────────────────────────────────────────────
 
 function SupplementsCheck() {
-  const date = new Date().toISOString().slice(0, 10);
+  const date = localDate();
   const [creatine, setCreatine] = useState(() => {
     try { return localStorage.getItem('ds_creatine_' + date) === 'true'; } catch { return false; }
   });
@@ -1922,7 +1928,7 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   // Sparkline data — last 7 days
   const sparklines = useMemo(() => {
     const days = [];
-    for (let i = 6; i >= 0; i--) days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+    for (let i = 6; i >= 0; i--) days.push(localDate(new Date(Date.now() - i * 86400000)));
     const prot = [], cal = [], wat = [];
     days.forEach(d => {
       try {
@@ -1939,7 +1945,7 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   }, [protein, calories, waterGlasses]);
 
   // Context: compare with yesterday
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yesterday = localDate(new Date(Date.now() - 86400000));
 
   let proteinCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + PROTEIN_GOAL + (LANG === 'en' ? 'g daily' : 'g diarios'), color: T.sub };
   try {
@@ -2045,11 +2051,11 @@ function DaySummary({ protein, calories, waterMl, gymDone, gymTotal }) {
 // ── Exercise Item ──────────────────────────────────────────────────────
 
 function getExerciseHistory(exerciseIndex, todayKey, maxSessions) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDate();
   const sessions = [];
   for (let d = 1; d <= 90 && sessions.length < maxSessions; d++) {
     const prev = new Date(Date.now() - d * 86400000);
-    const date = prev.toISOString().slice(0, 10);
+    const date = localDate(prev);
     if (date === today) continue;
     const pk = 'ds_workout_' + todayKey + '_' + date;
     try {
@@ -2094,7 +2100,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
     onUpdate({ ...exerciseState, sets: newSets });
     // Save record if set is already done and weight was updated
     if (newSets[si].done && field === 'weight' && val > 0) {
-      saveRecord(exercise.id, val, newSets[si].reps || 0, new Date().toISOString().slice(0, 10), unitPref);
+      saveRecord(exercise.id, val, newSets[si].reps || 0, localDate(), unitPref);
     }
   }
 
@@ -2117,7 +2123,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
       const prev = records[exercise.id];
       const prevLbs = prev ? (prev.unit === 'kg' ? prev.weight * 2.20462 : prev.weight) : 0;
       const curLbs = unitPref === 'kg' ? sets[si].weight * 2.20462 : sets[si].weight;
-      saveRecord(exercise.id, sets[si].weight, sets[si].reps || 0, new Date().toISOString().slice(0, 10), unitPref);
+      saveRecord(exercise.id, sets[si].weight, sets[si].reps || 0, localDate(), unitPref);
       if (curLbs > prevLbs && prevLbs > 0) {
         setPrSet(si);
         setTimeout(() => setPrSet(null), 3000);
@@ -3215,7 +3221,7 @@ function WeeklyVolumeReport() {
     // This week
     for (let d = 0; d <= mondayOffset; d++) {
       const date = new Date(today.getTime() - d * 86400000);
-      const dateStr = date.toISOString().slice(0, 10);
+      const dateStr = localDate(date);
       const dayIdx = date.getDay();
       const dk = dayKeys[dayIdx];
       const r = ROUTINES[dk];
@@ -3245,7 +3251,7 @@ function WeeklyVolumeReport() {
     // Last week
     for (let d = mondayOffset + 1; d <= mondayOffset + 7; d++) {
       const date = new Date(today.getTime() - d * 86400000);
-      const dateStr = date.toISOString().slice(0, 10);
+      const dateStr = localDate(date);
       const dayIdx = date.getDay();
       const dk = dayKeys[dayIdx];
       const r = ROUTINES[dk];
@@ -3323,7 +3329,7 @@ function WeekSummary() {
   const weekDays = getWeekDays();
   const trainedThisWeek = weekDays.filter(d => {
     if (d.routine.rest || d.routine.cardio) return false;
-    const dateStr = d.date.toISOString().slice(0, 10);
+    const dateStr = d.localDate(date);
     try {
       const saved = localStorage.getItem('ds_workout_' + d.dayKey + '_' + dateStr);
       if (!saved) return false;
@@ -3377,7 +3383,7 @@ function MuscleMap() {
     const dayOfWeek = today.getDay(); // 0=Sun
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     for (let d = 0; d <= mondayOffset; d++) {
-      const date = new Date(today.getTime() - d * 86400000).toISOString().slice(0, 10);
+      const date = localDate(new Date(today.getTime() - d * 86400000));
       const dayIdx = (dayOfWeek - d + 7) % 7;
       const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const dk = dayKeys[dayIdx];
@@ -3524,8 +3530,8 @@ function StreakCalendar() {
     for (let i = 0; i < firstDayOfWeek; i++) result.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d);
-      const dateStr = date.toISOString().slice(0, 10);
-      const todayStr = today.toISOString().slice(0, 10);
+      const dateStr = localDate(date);
+      const todayStr = localDate(today);
       const dayOfWeek = (date.getDay() + 6) % 7; // Mon=0
       const dk = dayKeys[dayOfWeek];
       const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
@@ -3737,7 +3743,7 @@ function MetricsCard({ unitPref, onSaved }) {
   const handleSave = useCallback(() => {
     const w = parseFloat(weightVal);
     const kg = w && w > 0 ? (weightUnit === 'lbs' ? lbsToKg(w) : w) : null;
-    const entry = { date: new Date().toISOString().slice(0, 10) };
+    const entry = { date: localDate() };
     if (kg) entry.kg = Math.round(kg * 10) / 10;
     // Collect all body part values from last entry as base
     BODY_PARTS.forEach(bp => { if (lastEntry && lastEntry[bp.key]) entry[bp.key] = lastEntry[bp.key]; });
@@ -4094,7 +4100,7 @@ function WeeklyShareCard() {
     const dow = today.getDay() || 7; // 1=Mon, 7=Sun
     for (let i = dow - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
-      const ds = d.toISOString().slice(0, 10);
+      const ds = localDate(d);
       const dk = DAYS[d.getDay()];
       let workouts = 0, prot = 0, cal = 0, water = 0;
       try {
@@ -4235,7 +4241,7 @@ function ProgressPhotos() {
         canvas.height = img.height * scale;
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        const entry = { date: new Date().toISOString().slice(0, 10), src: dataUrl };
+        const entry = { date: localDate(), src: dataUrl };
         setPhotos(prev => {
           const next = [entry, ...prev].slice(0, 12); // Max 12 photos
           try { localStorage.setItem('ds_progress_photos', JSON.stringify(next)); } catch {}
@@ -4373,7 +4379,7 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
 // ── Perfil Tab ────────────────────────────────────────────────────────
 
 function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }) {
-  const date = new Date().toISOString().slice(0, 10);
+  const date = localDate();
 
   const [name, setName] = useState(() => {
     try { return localStorage.getItem('ds_profile_name') || 'Felipe'; } catch { return 'Felipe'; }
@@ -4392,7 +4398,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'dontskip-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'dontskip-backup-' + localDate() + '.json';
     a.click();
     URL.revokeObjectURL(a.href);
   }, []);
@@ -4462,7 +4468,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     if (isNaN(val) || val <= 0) return;
     setCurrentWeight(val);
     setEditingWeight(false);
-    saveWeightEntry({ date: new Date().toISOString().slice(0, 10), kg: val });
+    saveWeightEntry({ date: localDate(), kg: val });
   }
 
   const initHeight = (() => {
@@ -4756,7 +4762,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
           <button onClick=${() => {
             const rows = [t('Fecha,Proteína (g),Calorías,Agua (ml),Ejercicios completados')];
             for (let i = 30; i >= 0; i--) {
-              const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+              const d = localDate(new Date(Date.now() - i * 86400000));
               try {
                 const m = JSON.parse(localStorage.getItem('ds_meals_' + d) || '[]');
                 const conf = m.filter(x => x.confirmed);
@@ -4772,7 +4778,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
             const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'dontskip_export_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.download = 'dontskip_export_' + localDate() + '.csv';
             a.click();
           }}
             className="w-full py-3 rounded-xl font-bold press-scale"
@@ -5657,11 +5663,11 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   const [expandedNext, setExpandedNext] = useState(false);
   const [showWarmup, setShowWarmup] = useState(true);
   const [warmupDone, setWarmupDone] = useState(() => {
-    try { const v = JSON.parse(localStorage.getItem('ds_warmup_' + new Date().toISOString().slice(0, 10)) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+    try { const v = JSON.parse(localStorage.getItem('ds_warmup_' + localDate()) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
   });
   const [showStretching, setShowStretching] = useState(true);
   const [stretchDone, setStretchDone] = useState(() => {
-    try { const v = JSON.parse(localStorage.getItem('ds_stretch_' + new Date().toISOString().slice(0, 10)) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+    try { const v = JSON.parse(localStorage.getItem('ds_stretch_' + localDate()) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
   });
   const warmupExercises = WARMUP_ROUTINES[routine.name] || [];
   const stretchExercises = STRETCHING_ROUTINES[routine.name] || [];
@@ -5669,13 +5675,13 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   function toggleWarmup(idx) {
     const next = warmupDone.includes(idx) ? warmupDone.filter(i => i !== idx) : [...warmupDone, idx];
     setWarmupDone(next);
-    try { localStorage.setItem('ds_warmup_' + new Date().toISOString().slice(0, 10), JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('ds_warmup_' + localDate(), JSON.stringify(next)); } catch {}
     haptic([10]);
   }
   function toggleStretch(idx) {
     const next = stretchDone.includes(idx) ? stretchDone.filter(i => i !== idx) : [...stretchDone, idx];
     setStretchDone(next);
-    try { localStorage.setItem('ds_stretch_' + new Date().toISOString().slice(0, 10), JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('ds_stretch_' + localDate(), JSON.stringify(next)); } catch {}
     haptic([10]);
   }
 
@@ -5689,7 +5695,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   const hasRecommendations = recommendations.some(r => r.status !== 'new');
 
   // Mood/energy check-in
-  const moodKey = 'ds_mood_' + new Date().toISOString().slice(0, 10);
+  const moodKey = 'ds_mood_' + localDate();
   const [mood, setMood] = useState(() => {
     try { return Number(localStorage.getItem(moodKey)) || 0; } catch { return 0; }
   });
@@ -6254,7 +6260,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   // Celebration modal
   const [showCelebration, setShowCelebration] = useState(false);
-  const celebratedKey = 'ds_workout_celebrated_' + new Date().toISOString().slice(0, 10);
+  const celebratedKey = 'ds_workout_celebrated_' + localDate();
 
   useEffect(() => {
     if (gymDone === gymTotal && gymTotal > 0) {
@@ -6278,10 +6284,10 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
     if (!showCelebration || routine.rest) return [];
     const msgs = [];
     try {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDate();
       let lastStates = null;
       for (let d = 1; d <= 28; d++) {
-        const prev = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+        const prev = localDate(new Date(Date.now() - d * 86400000));
         if (prev === today) continue;
         const pk = 'ds_workout_' + todayKey + '_' + prev;
         const ps = localStorage.getItem(pk);
@@ -6647,7 +6653,7 @@ function App() {
   const [unitPref, setUnitPref] = useState(() => {
     try { return localStorage.getItem('ds_unit_pref') || 'lbs'; } catch { return 'lbs'; }
   });
-  const waterKey = 'ds_water_' + new Date().toISOString().slice(0, 10);
+  const waterKey = 'ds_water_' + localDate();
   const waterLogKey = waterKey + '_log';
   const [waterMl, setWaterMl] = useState(() => {
     try { return Number(localStorage.getItem(waterKey)) || 0; } catch { return 0; }
@@ -6656,7 +6662,7 @@ function App() {
     try { const s = localStorage.getItem(waterLogKey); return s ? JSON.parse(s) : []; } catch { return []; }
   });
 
-  const workoutKey = 'ds_workout_' + todayKey + '_' + new Date().toISOString().slice(0, 10);
+  const workoutKey = 'ds_workout_' + todayKey + '_' + localDate();
 
   const [exerciseStates, setExerciseStates] = useState(() => {
     if (routine.rest) return [];
@@ -6667,9 +6673,9 @@ function App() {
     // Pre-fill weights from last session of the same day
     let lastWeights = null;
     try {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDate();
       for (let d = 1; d <= 28; d++) {
-        const prev = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+        const prev = localDate(new Date(Date.now() - d * 86400000));
         if (prev === today) continue;
         const pk = 'ds_workout_' + todayKey + '_' + prev;
         const ps = localStorage.getItem(pk);
@@ -6685,7 +6691,7 @@ function App() {
   });
 
   const dayMeals = getMealsForDay(todayKey);
-  const mealsKey = 'ds_meals_' + new Date().toISOString().slice(0, 10);
+  const mealsKey = 'ds_meals_' + localDate();
   const mealsVersionKey = mealsKey + '_v';
   const currentVersion = dayMeals.map(m => m.items.map(i => i.name).join('|')).join('~');
   const [meals, setMeals] = useState(() => {
@@ -6709,7 +6715,7 @@ function App() {
     if (!routine.rest && exerciseStates.length > 0) {
       try { localStorage.setItem(workoutKey, JSON.stringify(exerciseStates)); } catch {}
       // Sync records: save any completed set with weight > 0
-      const dateNow = new Date().toISOString().slice(0, 10);
+      const dateNow = localDate();
       routine.exercises.forEach((ex, ei) => {
         const es = exerciseStates[ei];
         if (!es || !es.sets) return;
@@ -6723,7 +6729,7 @@ function App() {
   }, [exerciseStates, workoutKey, routine.rest]);
 
   // Workout timer — persist start time + pause in localStorage
-  const dateStr = new Date().toISOString().slice(0, 10);
+  const dateStr = localDate();
   const timerKey = 'ds_workout_timer_' + todayKey + '_' + dateStr;
   const pauseKey = 'ds_workout_paused_' + dateStr;
   const [workoutStartTime, setWorkoutStartTime] = useState(() => {
