@@ -120,7 +120,7 @@ body::before {
   left: 0;
   right: 0;
   height: var(--safe-top);
-  z-index: 9990;
+  z-index: 99;
   pointer-events: none;
   transition: background 0.3s;
   background: var(--ds-bg, #f4f6f9);
@@ -539,6 +539,8 @@ const EN = {
   'Calentamiento dinámico': 'Dynamic Warmup', 'Estiramientos post-entreno': 'Post-Workout Stretching',
   'Prepara tu cuerpo para el entrenamiento': 'Prepare your body for the workout',
   'Enfría y estira los músculos trabajados': 'Cool down and stretch the muscles worked',
+  '¿Listo para entrenar?': 'Ready to train?', 'Calentamiento completado': 'Warmup complete',
+  '¿Listo para terminar?': 'Ready to finish?', 'Estiramientos completados': 'Stretching complete', 'Terminar entreno': 'Finish workout',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
   'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
@@ -716,63 +718,63 @@ const ROUTINES = {
 // ── Warmup & Stretching ──────────────────────────────────────────────
 const WARMUP_ROUTINES = {
   'Upper A': [
-    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄' },
-    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼' },
-    { name: 'Flexiones en pared', nameEn: 'Wall Push-Ups', sets: '2×10', detail: '', emoji: '🧱' },
-    { name: 'Rotación torácica', nameEn: 'Thoracic Rotation', sets: '2×10', detail: 'c/l', emoji: '🔄' },
-    { name: 'Movilidad de muñecas', nameEn: 'Wrist Circles', sets: '30s', detail: '', emoji: '🤲🏻' },
+    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, extiende los brazos a los lados. Haz círculos pequeños hacia adelante 15 veces, luego hacia atrás 15 veces. Mantén los brazos rectos.', howToEn: 'Stand with arms extended to the sides. Make small circles forward 15 times, then backward 15 times. Keep arms straight.' },
+    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼', howTo: 'Sostén una banda elástica al ancho de los hombros frente a ti. Estira la banda abriendo los brazos hacia los lados hasta que toque tu pecho. Regresa lento.', howToEn: 'Hold a resistance band at shoulder width in front of you. Pull it apart opening arms to the sides until it touches your chest. Return slowly.' },
+    { name: 'Flexiones en pared', nameEn: 'Wall Push-Ups', sets: '2×10', detail: '', emoji: '🧱', howTo: 'Manos en la pared al ancho de los hombros. Flexiona los codos acercando el pecho a la pared. Empuja de vuelta. Activa el pecho y tríceps.', howToEn: 'Hands on wall at shoulder width. Bend elbows bringing chest toward wall. Push back. Engage chest and triceps.' },
+    { name: 'Rotación torácica', nameEn: 'Thoracic Rotation', sets: '2×10', detail: 'c/l', emoji: '🔄', howTo: 'En cuatro puntos, pon una mano detrás de la cabeza. Rota el torso abriendo el codo hacia el techo. Regresa lento. 10 por lado.', howToEn: 'On all fours, place one hand behind your head. Rotate torso opening elbow toward ceiling. Return slowly. 10 per side.' },
+    { name: 'Movilidad de muñecas', nameEn: 'Wrist Circles', sets: '30s', detail: '', emoji: '🤲🏻', howTo: 'Entrelaza los dedos y haz círculos con las muñecas en ambas direcciones. 15 segundos en cada dirección.', howToEn: 'Interlace fingers and make circles with wrists in both directions. 15 seconds each direction.' },
   ],
   'Lower A': [
-    { name: 'Sentadilla sin peso', nameEn: 'Bodyweight Squats', sets: '2×15', detail: '', emoji: '🦵🏻' },
-    { name: 'Estocadas caminando', nameEn: 'Walking Lunges', sets: '2×10', detail: 'c/l', emoji: '🚶🏼' },
-    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×12', detail: 'c/l', emoji: '🦿' },
-    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×12', detail: '', emoji: '🍑' },
-    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄' },
+    { name: 'Sentadilla sin peso', nameEn: 'Bodyweight Squats', sets: '2×15', detail: '', emoji: '🦵🏻', howTo: 'Pies al ancho de los hombros. Baja como si te sentaras, rodillas siguiendo la dirección de los pies. Baja hasta que los muslos estén paralelos al piso. Sube apretando glúteos.', howToEn: 'Feet shoulder-width apart. Lower as if sitting, knees tracking over toes. Go down until thighs are parallel to floor. Push up squeezing glutes.' },
+    { name: 'Estocadas caminando', nameEn: 'Walking Lunges', sets: '2×10', detail: 'c/l', emoji: '🚶🏼', howTo: 'Da un paso largo hacia adelante y baja la rodilla trasera casi al piso. Empuja con el pie delantero y da el siguiente paso. Alterna piernas.', howToEn: 'Take a long step forward and lower back knee almost to floor. Push off front foot and take next step. Alternate legs.' },
+    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×12', detail: 'c/l', emoji: '🦿', howTo: 'Apóyate en una pared. Balancea una pierna hacia adelante y atrás de forma controlada. 12 por pierna. Mantén el torso recto.', howToEn: 'Hold onto a wall. Swing one leg forward and back in a controlled motion. 12 per leg. Keep torso upright.' },
+    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×12', detail: '', emoji: '🍑', howTo: 'Acostado boca arriba, rodillas dobladas, pies en el piso. Empuja las caderas hacia arriba apretando los glúteos arriba. Baja lento sin tocar el piso.', howToEn: 'Lying face up, knees bent, feet on floor. Push hips up squeezing glutes at top. Lower slowly without touching floor.' },
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, levanta una rodilla al frente y rota la cadera hacia afuera haciendo un círculo. 10 por dirección, luego cambia de pierna.', howToEn: 'Standing, lift one knee forward and rotate hip outward making a circle. 10 per direction, then switch legs.' },
   ],
   'Upper B': [
-    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄' },
-    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '2×10', detail: '', emoji: '🐱' },
-    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼' },
-    { name: 'Ángeles en pared', nameEn: 'Wall Angels', sets: '2×10', detail: '', emoji: '👼🏻' },
-    { name: 'Extensión de tríceps sin peso', nameEn: 'Bodyweight Tricep Extensions', sets: '2×12', detail: '', emoji: '💪🏼' },
+    { name: 'Rotaciones de hombro', nameEn: 'Arm Circles', sets: '2×15', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, extiende los brazos a los lados. Haz círculos pequeños hacia adelante 15 veces, luego hacia atrás 15 veces. Mantén los brazos rectos.', howToEn: 'Stand with arms extended to the sides. Make small circles forward 15 times, then backward 15 times. Keep arms straight.' },
+    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '2×10', detail: '', emoji: '🐱', howTo: 'En cuatro puntos, arquea la espalda hacia arriba (gato) y luego baja el abdomen hacia el piso (vaca). Mueve lento sincronizando con la respiración.', howToEn: 'On all fours, arch your back up (cat) then drop belly toward floor (cow). Move slowly syncing with breath.' },
+    { name: 'Estiramiento de pecho con banda', nameEn: 'Band Pull-Aparts', sets: '2×15', detail: '', emoji: '🤸🏼', howTo: 'Sostén una banda elástica al ancho de los hombros frente a ti. Estira la banda abriendo los brazos hacia los lados hasta que toque tu pecho. Regresa lento.', howToEn: 'Hold a resistance band at shoulder width in front of you. Pull it apart opening arms to the sides until it touches your chest. Return slowly.' },
+    { name: 'Ángeles en pared', nameEn: 'Wall Angels', sets: '2×10', detail: '', emoji: '👼🏻', howTo: 'De espaldas a la pared, brazos en "W". Sube los brazos por la pared hasta formar una "Y" sin despegar manos ni codos. Baja lento.', howToEn: 'Back against wall, arms in "W" shape. Slide arms up the wall to form a "Y" without lifting hands or elbows off. Lower slowly.' },
+    { name: 'Extensión de tríceps sin peso', nameEn: 'Bodyweight Tricep Extensions', sets: '2×12', detail: '', emoji: '💪🏼', howTo: 'Manos en una barra o superficie a la altura del pecho. Inclínate hacia adelante flexionando los codos. Extiende los brazos empujando de vuelta.', howToEn: 'Hands on a bar or surface at chest height. Lean forward bending elbows. Extend arms pushing back.' },
   ],
   'Lower B': [
-    { name: 'Buenos días sin peso', nameEn: 'Bodyweight Good Mornings', sets: '2×12', detail: '', emoji: '🙇🏼' },
-    { name: 'Balanceo lateral de piernas', nameEn: 'Lateral Leg Swings', sets: '2×10', detail: 'c/l', emoji: '🦿' },
-    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×15', detail: '', emoji: '🍑' },
-    { name: 'Barrido de isquiotibiales', nameEn: 'Hamstring Sweeps', sets: '2×8', detail: 'c/l', emoji: '🦵🏻' },
-    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄' },
+    { name: 'Buenos días sin peso', nameEn: 'Bodyweight Good Mornings', sets: '2×12', detail: '', emoji: '🙇🏼', howTo: 'De pie, manos detrás de la cabeza. Inclínate hacia adelante desde las caderas manteniendo la espalda recta. Baja hasta sentir los isquiotibiales. Sube apretando glúteos.', howToEn: 'Stand with hands behind head. Hinge forward from hips keeping back straight. Lower until you feel hamstrings. Rise squeezing glutes.' },
+    { name: 'Balanceo lateral de piernas', nameEn: 'Lateral Leg Swings', sets: '2×10', detail: 'c/l', emoji: '🦿', howTo: 'Apóyate en una pared. Balancea una pierna de lado a lado cruzando el cuerpo. 10 por pierna. Controla el movimiento.', howToEn: 'Hold onto a wall. Swing one leg side to side crossing your body. 10 per leg. Control the movement.' },
+    { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×15', detail: '', emoji: '🍑', howTo: 'Acostado boca arriba, rodillas dobladas, pies en el piso. Empuja las caderas hacia arriba apretando los glúteos arriba. Baja lento sin tocar el piso.', howToEn: 'Lying face up, knees bent, feet on floor. Push hips up squeezing glutes at top. Lower slowly without touching floor.' },
+    { name: 'Barrido de isquiotibiales', nameEn: 'Hamstring Sweeps', sets: '2×8', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, extiende una pierna al frente con el talón en el piso. Inclínate hacia adelante desde las caderas hasta sentir el estiramiento detrás de la pierna. Regresa. 8 por lado.', howToEn: 'Stand, extend one leg forward with heel on floor. Hinge forward from hips until you feel stretch behind the leg. Return. 8 per side.' },
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, levanta una rodilla al frente y rota la cadera hacia afuera haciendo un círculo. 10 por dirección, luego cambia de pierna.', howToEn: 'Standing, lift one knee forward and rotate hip outward making a circle. 10 per direction, then switch legs.' },
   ],
 };
 
 const STRETCHING_ROUTINES = {
   'Upper A': [
-    { name: 'Estiramiento de pecho en puerta', nameEn: 'Doorway Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🚪' },
-    { name: 'Estiramiento de hombro cruzado', nameEn: 'Cross-Body Shoulder Stretch', sets: '30s', detail: 'c/l', emoji: '🤗' },
-    { name: 'Estiramiento de bíceps en pared', nameEn: 'Wall Bicep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼' },
-    { name: 'Estiramiento de cuello/trapecios', nameEn: 'Neck/Trap Stretch', sets: '20s', detail: 'c/l', emoji: '🧘🏼' },
-    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+    { name: 'Estiramiento de pecho en puerta', nameEn: 'Doorway Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🚪', howTo: 'Pon el antebrazo en el marco de una puerta con el codo a 90 grados. Da un paso adelante hasta sentir el estiramiento en el pecho. 30s por lado.', howToEn: 'Place forearm on a door frame with elbow at 90 degrees. Step forward until you feel the stretch in your chest. 30s per side.' },
+    { name: 'Estiramiento de hombro cruzado', nameEn: 'Cross-Body Shoulder Stretch', sets: '30s', detail: 'c/l', emoji: '🤗', howTo: 'Lleva un brazo extendido al frente cruzando el cuerpo. Con la otra mano, presiona el brazo hacia tu pecho. 30s por lado.', howToEn: 'Bring one extended arm across your body. With the other hand, press the arm toward your chest. 30s per side.' },
+    { name: 'Estiramiento de bíceps en pared', nameEn: 'Wall Bicep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼', howTo: 'Pon la palma de la mano en la pared con el brazo extendido. Gira el cuerpo lentamente alejándote de la pared hasta sentir el estiramiento en el bíceps. 30s por lado.', howToEn: 'Place palm on wall with arm extended. Slowly rotate body away from wall until you feel the stretch in your bicep. 30s per side.' },
+    { name: 'Estiramiento de cuello/trapecios', nameEn: 'Neck/Trap Stretch', sets: '20s', detail: 'c/l', emoji: '🧘🏼', howTo: 'Inclina la cabeza hacia un lado llevando la oreja hacia el hombro. Con la mano del mismo lado, presiona suavemente. 20s por lado.', howToEn: 'Tilt head to one side bringing ear toward shoulder. With same-side hand, press gently. 20s per side.' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼', howTo: 'De rodillas, siéntate sobre los talones. Extiende los brazos hacia adelante en el piso. Baja el pecho y relaja la espalda. Respira profundo 45s.', howToEn: 'Kneeling, sit back on heels. Extend arms forward on floor. Lower chest and relax your back. Breathe deeply for 45s.' },
   ],
   'Lower A': [
-    { name: 'Estiramiento de cuádriceps de pie', nameEn: 'Standing Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻' },
-    { name: 'Estiramiento de isquiotibiales de pie', nameEn: 'Standing Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿' },
-    { name: 'Estiramiento 90/90 de caderas', nameEn: '90/90 Hip Stretch', sets: '30s', detail: 'c/l', emoji: '🧘🏼' },
-    { name: 'Estiramiento de pantorrillas en pared', nameEn: 'Wall Calf Stretch', sets: '30s', detail: 'c/l', emoji: '🧱' },
-    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+    { name: 'Estiramiento de cuádriceps de pie', nameEn: 'Standing Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, dobla una rodilla llevando el talón al glúteo. Sujeta el pie con la mano. Mantén las rodillas juntas. 30s por pierna.', howToEn: 'Standing, bend one knee bringing heel to glute. Hold foot with hand. Keep knees together. 30s per leg.' },
+    { name: 'Estiramiento de isquiotibiales de pie', nameEn: 'Standing Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿', howTo: 'Extiende una pierna al frente con el talón en el piso. Inclínate desde las caderas con la espalda recta hasta sentir el estiramiento detrás de la pierna. 30s por lado.', howToEn: 'Extend one leg forward with heel on floor. Hinge from hips with flat back until you feel stretch behind the leg. 30s per side.' },
+    { name: 'Estiramiento 90/90 de caderas', nameEn: '90/90 Hip Stretch', sets: '30s', detail: 'c/l', emoji: '🧘🏼', howTo: 'Sentado, pierna delantera doblada 90 grados al frente, pierna trasera doblada 90 grados al lado. Inclínate hacia adelante sobre la pierna delantera. 30s por lado.', howToEn: 'Seated, front leg bent 90 degrees forward, back leg bent 90 degrees to the side. Lean forward over front leg. 30s per side.' },
+    { name: 'Estiramiento de pantorrillas en pared', nameEn: 'Wall Calf Stretch', sets: '30s', detail: 'c/l', emoji: '🧱', howTo: 'Manos en la pared, una pierna atrás con el talón en el piso. Empuja la cadera hacia adelante hasta sentir el estiramiento en la pantorrilla. 30s por pierna.', howToEn: 'Hands on wall, one leg back with heel on floor. Push hip forward until you feel the calf stretch. 30s per leg.' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼', howTo: 'De rodillas, siéntate sobre los talones. Extiende los brazos hacia adelante en el piso. Baja el pecho y relaja la espalda. Respira profundo 45s.', howToEn: 'Kneeling, sit back on heels. Extend arms forward on floor. Lower chest and relax your back. Breathe deeply for 45s.' },
   ],
   'Upper B': [
-    { name: 'Estiramiento de dorsales', nameEn: 'Lat Doorway Stretch', sets: '30s', detail: 'c/l', emoji: '🚪' },
-    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '10 reps', detail: '', emoji: '🐱' },
-    { name: 'Estiramiento de tríceps sobre cabeza', nameEn: 'Overhead Tricep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼' },
-    { name: 'Rotación espinal sentado', nameEn: 'Seated Spinal Twist', sets: '30s', detail: 'c/l', emoji: '🔄' },
-    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼' },
+    { name: 'Estiramiento de dorsales', nameEn: 'Lat Doorway Stretch', sets: '30s', detail: 'c/l', emoji: '🚪', howTo: 'Agarra el marco de una puerta con una mano arriba. Inclina el cuerpo alejándote hasta sentir el estiramiento en el costado. 30s por lado.', howToEn: 'Grab a door frame with one hand above. Lean body away until you feel the stretch on your side. 30s per side.' },
+    { name: 'Cat-Cow', nameEn: 'Cat-Cow', sets: '10 reps', detail: '', emoji: '🐱', howTo: 'En cuatro puntos, arquea la espalda hacia arriba (gato) y luego baja el abdomen hacia el piso (vaca). Mueve lento sincronizando con la respiración.', howToEn: 'On all fours, arch your back up (cat) then drop belly toward floor (cow). Move slowly syncing with breath.' },
+    { name: 'Estiramiento de tríceps sobre cabeza', nameEn: 'Overhead Tricep Stretch', sets: '30s', detail: 'c/l', emoji: '💪🏼', howTo: 'Levanta un brazo y dobla el codo llevando la mano detrás de la cabeza. Con la otra mano, presiona el codo hacia abajo. 30s por lado.', howToEn: 'Raise one arm and bend elbow bringing hand behind head. With the other hand, press elbow down. 30s per side.' },
+    { name: 'Rotación espinal sentado', nameEn: 'Seated Spinal Twist', sets: '30s', detail: 'c/l', emoji: '🔄', howTo: 'Sentado con las piernas extendidas, cruza una pierna sobre la otra. Gira el torso hacia la rodilla doblada usando el codo como apoyo. 30s por lado.', howToEn: 'Seated with legs extended, cross one leg over the other. Rotate torso toward the bent knee using elbow for leverage. 30s per side.' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼', howTo: 'De rodillas, siéntate sobre los talones. Extiende los brazos hacia adelante en el piso. Baja el pecho y relaja la espalda. Respira profundo 45s.', howToEn: 'Kneeling, sit back on heels. Extend arms forward on floor. Lower chest and relax your back. Breathe deeply for 45s.' },
   ],
   'Lower B': [
-    { name: 'Estiramiento de isquiotibiales sentado', nameEn: 'Seated Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿' },
-    { name: 'Postura de paloma', nameEn: 'Pigeon Pose', sets: '30s', detail: 'c/l', emoji: '🐦' },
-    { name: 'Estiramiento de flexores de cadera', nameEn: 'Kneeling Hip Flexor Stretch', sets: '30s', detail: 'c/l', emoji: '🧎🏼' },
-    { name: 'Perro boca abajo', nameEn: 'Downward Dog', sets: '30s', detail: '', emoji: '🐕' },
-    { name: 'Rodilla al pecho acostado', nameEn: 'Knee-to-Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🛌' },
+    { name: 'Estiramiento de isquiotibiales sentado', nameEn: 'Seated Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿', howTo: 'Sentado con una pierna extendida, inclínate hacia adelante desde las caderas hacia los pies. Mantén la espalda recta. 30s por pierna.', howToEn: 'Seated with one leg extended, lean forward from hips toward your feet. Keep back straight. 30s per leg.' },
+    { name: 'Postura de paloma', nameEn: 'Pigeon Pose', sets: '30s', detail: 'c/l', emoji: '🐦', howTo: 'Desde cuatro puntos, lleva una rodilla al frente y extiende la otra pierna atrás. Baja el torso hacia el piso. Siente el estiramiento en el glúteo. 30s por lado.', howToEn: 'From all fours, bring one knee forward and extend other leg back. Lower torso toward floor. Feel stretch in glute. 30s per side.' },
+    { name: 'Estiramiento de flexores de cadera', nameEn: 'Kneeling Hip Flexor Stretch', sets: '30s', detail: 'c/l', emoji: '🧎🏼', howTo: 'Rodilla de atrás en el piso, pie delantero al frente. Empuja las caderas hacia adelante manteniendo el torso recto. 30s por lado.', howToEn: 'Back knee on floor, front foot forward. Push hips forward keeping torso upright. 30s per side.' },
+    { name: 'Perro boca abajo', nameEn: 'Downward Dog', sets: '30s', detail: '', emoji: '🐕', howTo: 'Manos y pies en el piso, empuja las caderas hacia arriba formando una "V" invertida. Presiona los talones hacia el piso. Mantén 30s.', howToEn: 'Hands and feet on floor, push hips up forming an inverted "V". Press heels toward floor. Hold 30s.' },
+    { name: 'Rodilla al pecho acostado', nameEn: 'Knee-to-Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🛌', howTo: 'Acostado boca arriba, lleva una rodilla al pecho y abrázala con ambas manos. Mantén la otra pierna extendida. 30s por lado.', howToEn: 'Lying face up, bring one knee to chest and hug it with both hands. Keep other leg extended. 30s per side.' },
   ],
 };
 
@@ -4932,6 +4934,8 @@ const FOOD_LIBRARY_DEFAULT = [
   { id: 'huevo', icon: '🥚', name: 'Huevo entero', portion: '1 unidad', protein: 6, cal: 70, carbs: 1, fat: 5 },
   { id: 'jamon', icon: '🥓', name: 'Jamón de pavo', portion: '3 rebanadas', protein: 10, cal: 60, carbs: 2, fat: 1 },
   { id: 'chicken_can', icon: '🍗', name: 'Pollo en lata (lata completa)', portion: '1 lata (12.5oz)', protein: 60, cal: 270, carbs: 6, fat: 6 },
+  { id: 'pan_palta_jamon_medio', icon: '🥑', name: 'Pan con palta y jamón (medio)', portion: '½ pan', protein: 5, cal: 180, carbs: 22, fat: 9 },
+  { id: 'pan_palta_jamon_completo', icon: '🥑', name: 'Pan con palta y jamón (completo)', portion: '1 pan', protein: 10, cal: 360, carbs: 44, fat: 18 },
   // Suplementos
   { id: 'whey', icon: '🥤', name: 'Whey scoop', portion: '1 scoop', protein: 25, cal: 120, carbs: 3, fat: 1 },
   { id: 'built_bar', icon: '🍫', name: 'Protein Bar Built', portion: '1 barra', protein: 17, cal: 180, carbs: 22, fat: 6 },
@@ -5727,6 +5731,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   });
   const warmupExercises = WARMUP_ROUTINES[routine.name] || [];
   const stretchExercises = STRETCHING_ROUTINES[routine.name] || [];
+  const [expandedWarmup, setExpandedWarmup] = useState(null);
+  const [expandedStretch, setExpandedStretch] = useState(null);
 
   function toggleWarmup(idx) {
     const next = warmupDone.includes(idx) ? warmupDone.filter(i => i !== idx) : [...warmupDone, idx];
@@ -5803,6 +5809,23 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   function completeExercise(exIdx) {
     const es = exerciseStates[exIdx];
     const newSets = es.sets.map(set => ({ ...set, done: true }));
+    onExerciseUpdate(exIdx, { ...es, sets: newSets });
+  }
+
+  function updateLiveSet(exIdx, si, field, val) {
+    const es = exerciseStates[exIdx];
+    const newSets = es.sets.map((s, i) => i === si ? { ...s, [field]: val } : s);
+    onExerciseUpdate(exIdx, { ...es, sets: newSets });
+    if (newSets[si].done && field === 'weight' && val > 0) {
+      saveRecord(exercises[exIdx].id, val, newSets[si].reps || 0, localDate(), unitPref);
+    }
+  }
+
+  function fillLiveSets(exIdx) {
+    const es = exerciseStates[exIdx];
+    const first = es.sets[0];
+    if (!first || !first.weight) return;
+    const newSets = es.sets.map(s => s.done || s.weight ? s : { ...s, weight: first.weight, reps: first.reps || 0 });
     onExerciseUpdate(exIdx, { ...es, sets: newSets });
   }
 
@@ -5978,40 +6001,62 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         </div>
       </div>
 
-      ${warmupExercises.length > 0 && warmupDone.length < warmupExercises.length && !allDone ? html`
-        <div className="px-5 pt-4 fade-up">
-          <div className="flex items-center gap-2 mb-2">
-            <span style=${{ fontSize: 14 }}>🔥</span>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
-          </div>
-          <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
-            <div style=${{ padding: '12px 16px', borderBottom: '1px solid ' + T.border, background: T.amberDim + '40' }}>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
-              <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${t(routine.focus)}</div>
+      ${warmupExercises.length > 0 && !workoutStartTime && !allDone ? html`
+        ${warmupDone.length < warmupExercises.length ? html`
+          <div className="px-5 pt-4 fade-up">
+            <div className="flex items-center gap-2 mb-2">
+              <span style=${{ fontSize: 14 }}>🔥</span>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
             </div>
-            <div style=${{ padding: '8px 12px 12px' }}>
-              ${warmupExercises.map((w, wi) => html`
-                <button key=${wi} onClick=${() => toggleWarmup(wi)}
-                  className="w-full flex items-center gap-3 py-2.5 press-scale"
-                  style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                  <div style=${{
-                    width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
-                  }}>
-                    ${warmupDone.includes(wi)
-                      ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                      : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
-                    }
+            <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
+              <div style=${{ padding: '12px 16px', borderBottom: '1px solid ' + T.border, background: T.amberDim + '40' }}>
+                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
+                <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${t(routine.focus)}</div>
+              </div>
+              <div style=${{ padding: '8px 12px 12px' }}>
+                ${warmupExercises.map((w, wi) => html`
+                  <div key=${wi} className="flex items-center gap-3 py-2.5"
+                    style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                    <button onClick=${() => toggleWarmup(wi)} className="press-scale" style=${{ flexShrink: 0 }}>
+                      <div style=${{
+                        width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s'
+                      }}>
+                        ${warmupDone.includes(wi)
+                          ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                          : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
+                        }
+                      </div>
+                    </button>
+                    <div className="flex-1 min-w-0" onClick=${() => setExpandedWarmup(expandedWarmup === wi ? null : wi)} style=${{ cursor: 'pointer' }}>
+                      <div className="flex items-center justify-between">
+                        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                      </div>
+                      ${expandedWarmup === wi && w.howTo ? html`
+                        <div style=${{ fontSize: 12, color: T.sub, lineHeight: 1.5, paddingTop: 6 }}>${LANG === 'en' ? w.howToEn : w.howTo}</div>
+                      ` : ''}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
-                  </div>
-                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
-                </button>
-              `)}
+                `)}
+              </div>
             </div>
           </div>
-        </div>
+        ` : html`
+          <div className="px-5 pt-4 fade-up">
+            <div className="ds-card text-center" style=${{ padding: 24, border: '1px solid ' + T.green + '30' }}>
+              <span style=${{ fontSize: 32 }}>✅</span>
+              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginTop: 8 }}>${t('¿Listo para entrenar?')}</div>
+              <div style=${{ fontSize: 12, color: T.sub, marginTop: 4, marginBottom: 16 }}>${t('Calentamiento completado')}</div>
+              <button onClick=${onStartTimer}
+                className="inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl press-scale"
+                style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Comenzar')}</span>
+              </button>
+            </div>
+          </div>
+        `}
       ` : ''}
 
       ${allDone ? html`
@@ -6066,28 +6111,49 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <div className="slide-down" style=${{ paddingTop: 4 }}>
                 <div style=${{ fontSize: 11, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>${t('Enfría y estira los músculos trabajados')}</div>
                 ${stretchExercises.map((st, si) => html`
-                  <button key=${si} onClick=${() => toggleStretch(si)}
-                    className="w-full flex items-center gap-3 py-2.5 press-scale"
+                  <div key=${si} className="flex items-center gap-3 py-2.5"
                     style=${{ borderBottom: si < stretchExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: stretchDone.includes(si) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                    <div style=${{
-                      width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: stretchDone.includes(si) ? T.green : T.input, transition: 'all 0.15s', flexShrink: 0
-                    }}>
-                      ${stretchDone.includes(si)
-                        ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                        : html`<span style=${{ fontSize: 14 }}>${st.emoji}</span>`
-                      }
+                    <button onClick=${() => toggleStretch(si)} className="press-scale" style=${{ flexShrink: 0 }}>
+                      <div style=${{
+                        width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: stretchDone.includes(si) ? T.green : T.input, transition: 'all 0.15s'
+                      }}>
+                        ${stretchDone.includes(si)
+                          ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                          : html`<span style=${{ fontSize: 14 }}>${st.emoji}</span>`
+                        }
+                      </div>
+                    </button>
+                    <div className="flex-1 min-w-0" onClick=${() => setExpandedStretch(expandedStretch === si ? null : si)} style=${{ cursor: 'pointer' }}>
+                      <div className="flex items-center justify-between">
+                        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
+                        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
+                      </div>
+                      ${expandedStretch === si && st.howTo ? html`
+                        <div style=${{ fontSize: 12, color: T.sub, lineHeight: 1.5, paddingTop: 6 }}>${LANG === 'en' ? st.howToEn : st.howTo}</div>
+                      ` : ''}
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
-                    </div>
-                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
-                  </button>
+                  </div>
                 `)}
               </div>
             `}
           </div>
         `}
+        ${stretchDone.length === stretchExercises.length && stretchExercises.length > 0 && workoutStartTime ? html`
+          <div className="px-5 pt-4 fade-up">
+            <div className="ds-card text-center" style=${{ padding: 24, border: '1px solid ' + T.accent + '30' }}>
+              <span style=${{ fontSize: 32 }}>🧘🏼</span>
+              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginTop: 8 }}>${t('¿Listo para terminar?')}</div>
+              <div style=${{ fontSize: 12, color: T.sub, marginTop: 4, marginBottom: 16 }}>${t('Estiramientos completados')}</div>
+              <button onClick=${onStopTimer}
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl press-scale"
+                style=${{ background: T.accent }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Terminar entreno')}</span>
+              </button>
+            </div>
+          </div>
+        ` : ''}
       ` : html`
         <!-- Current Exercise -->
         ${currentEx && html`
@@ -6109,25 +6175,56 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                 </div>
               ` : ''}
               <div style=${{ padding: '12px 14px 14px' }}>
+                ${currentState.sets[0] && currentState.sets[0].weight > 0 && currentState.sets.some(s => !s.done && !s.weight) ? html`
+                  <button onClick=${() => fillLiveSets(currentIdx)}
+                    className="w-full flex items-center justify-center gap-1.5 mb-2 py-2 rounded-xl press-scale"
+                    style=${{ background: T.accentDim, color: T.accent, fontSize: 11, fontWeight: 700, border: '1px solid ' + T.accent + '15' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    ${t('Rellenar sets')} (${currentState.sets[0].weight} ${unitPref} × ${currentState.sets[0].reps || currentEx.reps})
+                  </button>
+                ` : ''}
                 <div className="space-y-2">
                   ${currentState.sets.map((set, si) => html`
-                    <button key=${si} onClick=${() => toggleSet(currentIdx, si)}
-                      className="w-full flex items-center gap-3 press-scale"
-                      style=${{ background: set.done ? T.greenDim : T.input, borderRadius: 12, padding: '11px 14px', transition: 'all 0.15s', border: set.done ? '1px solid ' + T.green + '30' : '1px solid transparent' }}>
-                      <div style=${{
-                        width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: set.done ? T.green : T.elevated, transition: 'all 0.15s'
-                      }}>
-                        ${set.done
-                          ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                          : html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted }}>${si + 1}</span>`
-                        }
+                    <div key=${si} className="flex items-center gap-2"
+                      style=${{ background: set.done ? T.greenDim : T.input, border: set.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px' }}>
+                      <button onClick=${() => toggleSet(currentIdx, si)} className="press-scale" style=${{ flexShrink: 0 }}>
+                        <div style=${{
+                          width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: set.done ? T.green : T.elevated, transition: 'all 0.15s'
+                        }}>
+                          ${set.done
+                            ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                            : html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted }}>${si + 1}</span>`
+                          }
+                        </div>
+                      </button>
+                      <span className="text-xs font-semibold w-10" style=${{ color: T.muted }}>Set ${si + 1}</span>
+                      <div className="flex items-center gap-1 flex-1">
+                        <input type="number" placeholder="0" value=${set.weight || ''}
+                          onChange=${e => updateLiveSet(currentIdx, si, 'weight', Number(e.target.value))}
+                          onClick=${e => e.stopPropagation()}
+                          className="w-16 text-center text-sm font-semibold rounded-lg py-1.5"
+                          style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
+                        <span className="text-xs" style=${{ color: T.muted }}>${unitPref}</span>
                       </div>
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, flex: 1, textAlign: 'left', color: set.done ? T.green : T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.3px' }}>
-                        ${set.weight ? set.weight + ' ' + unitPref : '\u2014'}
-                      </span>
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 600, color: T.muted }}>${set.reps || currentEx.reps} reps</span>
-                    </button>
+                      <div className="flex items-center gap-1">
+                        <input type="number" placeholder=${currentEx.reps} value=${set.reps || ''}
+                          onChange=${e => updateLiveSet(currentIdx, si, 'reps', Number(e.target.value))}
+                          onClick=${e => e.stopPropagation()}
+                          className="w-12 text-center text-sm font-semibold rounded-lg py-1.5"
+                          style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
+                        <span className="text-xs" style=${{ color: T.muted }}>reps</span>
+                      </div>
+                      ${set.done ? html`
+                        <button onClick=${(e) => { e.stopPropagation(); const rpes = [null,6,7,8,9,10]; const cur = set.rpe || null; const idx = rpes.indexOf(cur); const next = rpes[(idx + 1) % rpes.length]; updateLiveSet(currentIdx, si, 'rpe', next); }}
+                          className="press-scale" style=${{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 6, minWidth: 28, textAlign: 'center',
+                            background: !set.rpe ? T.elevated : set.rpe <= 7 ? T.greenDim : set.rpe <= 8 ? T.amberDim : T.red + '18',
+                            color: !set.rpe ? T.muted : set.rpe <= 7 ? T.green : set.rpe <= 8 ? T.amber : T.red,
+                            border: '1px solid ' + (!set.rpe ? T.border : 'transparent') }}>
+                          ${set.rpe ? 'RPE ' + set.rpe : 'RPE'}
+                        </button>
+                      ` : ''}
+                    </div>
                   `)}
                 </div>
                 ${!currentState.sets.every(s => s.done) && html`
