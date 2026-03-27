@@ -6908,16 +6908,25 @@ function App() {
       const saved = localStorage.getItem(mealsKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Migrate old format: add category field, auto-confirm non-whey meals
+        // Migrate old format: drop unconfirmed template meals, keep confirmed ones
         const needsMigration = parsed.some(m => !m.category);
         if (needsMigration) {
-          const migrated = parsed.map(m => {
-            if (!m.category) {
-              const isWhey = m.name && m.name.toLowerCase().includes('whey');
-              return { ...m, category: isWhey ? 'whey' : 'other', confirmed: isWhey ? m.confirmed : true };
+          const migrated = [];
+          let hasWhey = false;
+          parsed.forEach(m => {
+            const isWhey = m.name && m.name.toLowerCase().includes('whey');
+            if (isWhey) {
+              hasWhey = true;
+              migrated.push({ ...m, category: 'whey' });
+            } else if (m.confirmed) {
+              // Keep meals the user actually confirmed eating
+              migrated.push({ ...m, category: 'other' });
             }
-            return m;
+            // Drop unconfirmed template meals — they were just placeholders
           });
+          if (!hasWhey) {
+            migrated.unshift(DEFAULT_MEALS[0]);
+          }
           localStorage.setItem(mealsKey, JSON.stringify(migrated));
           return migrated;
         }
