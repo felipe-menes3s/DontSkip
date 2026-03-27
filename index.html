@@ -112,8 +112,19 @@ body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color:
 @keyframes pulse-subtle { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 .gif-placeholder { animation: pulse-subtle 2s ease-in-out infinite; }
 
-/* Safe area top bar */
-.safe-top-bar { position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 9990; pointer-events: none; transition: background 0.3s; }
+/* Safe area top bar — CSS-only via body::before (always present, no React needed) */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  z-index: 9990;
+  pointer-events: none;
+  transition: background 0.3s;
+  background: var(--ds-bg, #f4f6f9);
+}
 
 /* Tab bar */
 .tab-bar { padding-bottom: calc(8px + var(--safe-bottom)); }
@@ -214,6 +225,21 @@ import {
 const html = htm.bind(React.createElement);
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
+// ErrorBoundary to catch React render errors with useful details
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('ErrorBoundary caught:', error, info); }
+  render() {
+    if (this.state.error) {
+      return html`<div style=${{ padding: 20, color: 'red', whiteSpace: 'pre-wrap', fontSize: 13 }}>
+        <b>Error:</b> ${this.state.error.message}${'\n'}${this.state.error.stack || ''}
+      </div>`;
+    }
+    return this.props.children;
+  }
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // THEME TOKENS
@@ -267,8 +293,7 @@ function applyThemeCSS(mode) {
   document.documentElement.style.setProperty('--ds-input-focus', t.accentGlow);
   document.documentElement.style.setProperty('--ds-input-border', t.accent);
   document.documentElement.style.setProperty('--ds-card-shadow', mode === 'light' ? '0 1px 3px rgba(0,0,0,0.04)' : '0 1px 4px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)');
-  const bar = document.querySelector('.safe-top-bar');
-  if (bar) bar.style.background = t.bg;
+  document.documentElement.style.setProperty('--ds-bg', t.bg);
 }
 
 applyThemeCSS(getInitialTheme());
@@ -3682,23 +3707,25 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
         </div>
       </div>
 
-      <${WeekCalendar} days=${days} selectedIdx=${selectedIdx} onSelect=${setSelectedIdx} />
+      <${ErrorBoundary}>
+        <${WeekCalendar} days=${days} selectedIdx=${selectedIdx} onSelect=${setSelectedIdx} />
 
-      <div className="px-0">
-        <div className="px-5 mb-2">
-          <${SectionHeader} title="${dayLabel(selected.dayKey)} \u00B7 ${t(selected.routine.name)}" />
+        <div className="px-0">
+          <div className="px-5 mb-2">
+            <${SectionHeader} title="${dayLabel(selected.dayKey)} \u00B7 ${t(selected.routine.name)}" />
+          </div>
+          <${RoutineCard} routine=${selected.routine} dayLabel=${dayLabel(selected.dayKey)} />
         </div>
-        <${RoutineCard} routine=${selected.routine} dayLabel=${dayLabel(selected.dayKey)} />
-      </div>
 
-      <${WeeklyVolumeReport} />
-      <${WeekSummary} />
-      <${MuscleMap} />
-      <${StreakCalendar} />
-      <${ExerciseCatalog} unitPref=${'lbs'} />
-      <${NextWeekPreview} />
+        <${WeeklyVolumeReport} />
+        <${WeekSummary} />
+        <${MuscleMap} />
+        <${StreakCalendar} />
+        <${ExerciseCatalog} unitPref=${'lbs'} />
+        <${NextWeekPreview} />
 
-      <div className="bottom-spacer" />
+        <div className="bottom-spacer" />
+      </${ErrorBoundary}>
     </div>
   `;
 }
@@ -6881,7 +6908,6 @@ function App() {
         <div className="splash-text" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.9)', letterSpacing: '-1px' }}>DontSkip</div>
       </div>
     `}
-    <div className="safe-top-bar" style=${{ background: T.bg }} />
     <div className="max-w-lg mx-auto min-h-screen" style=${{ paddingTop: 'var(--safe-top)' }}
       onTouchStart=${handleTouchStart} onTouchEnd=${handleTouchEnd}>
 
