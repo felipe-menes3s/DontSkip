@@ -704,9 +704,9 @@ const ROUTINES = {
       { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: 'gifs/deadlift.gif', videoId: 'op9kVnSso6Q' },
       { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif', videoId: '2C-uNgKwPLE' },
       { id: 'seated_curl', name: 'Curl Femoral Sentado', nameEn: 'Seated Leg Curl', desc: 'Sentado, flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/seated_curl.gif', videoId: 'Orxowest56U' },
-      { id: 'hip_thrust', name: 'Hip Thrust', nameEn: 'Barbell Hip Thrust', desc: 'Espalda en banco, empuja cadera hacia arriba', sets: 3, reps: '10', muscle: 'Glúteos', gif: 'gifs/hip_thrust.gif', videoId: 'SEdqd1n0cvg' },
+      { id: 'glute_kickback', name: 'Glute Kickback Machine', nameEn: 'Glute Kickback Machine', desc: 'Recostado boca abajo en la máquina, empuja el rodillo hacia arriba con el talón apretando el glúteo. Rodilla doblada 90 grados. Controla la bajada.', sets: 3, reps: '12 c/p', muscle: 'Glúteos', gif: 'gifs/glute_kickback.gif', videoId: '2UQ15qXPIk4' },
       { id: 'calf_raise_b', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
-      { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
+      { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales. Alternativa en máquina: usa la máquina de abdominales del gym siguiendo el mismo rango de movimiento.', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
     ]
   },
   saturday: { name: 'Cardio', focus: 'LISS o HIIT (opcional)', rest: true, cardio: true },
@@ -931,7 +931,7 @@ const STARTING_WEIGHTS = {
   deadlift: { kg: 40, lbs: 88, note: 'Barra + 10kg cada lado' },
   bulgarian: { kg: 10, lbs: 22, note: '10kg cada mancuerna' },
   seated_curl: { kg: 22, lbs: 48, note: 'Stack 22kg' },
-  hip_thrust: { kg: 20, lbs: 44, note: 'Barra + discos ligeros' },
+  glute_kickback: { kg: 20, lbs: 44, note: 'Stack máquina' },
   calf_raise_b: { kg: 40, lbs: 88, note: 'Misma carga que peso muerto' },
   crunch: { kg: 0, lbs: 0, note: 'Peso corporal' },
 };
@@ -1551,17 +1551,17 @@ function WeekStrip() {
 // Rest time by exercise type (seconds)
 // Compound heavy: 150s, Compound moderate: 120s, Isolation: 75s, Core: 60s
 const REST_TIMES = {
-  bench_press: 150, squat: 150, deadlift: 150, ohp: 150, hip_thrust: 150,
+  bench_press: 150, squat: 150, deadlift: 150, ohp: 150,
   incline_press: 120, leg_press: 120, lat_pulldown: 120, cable_row: 120, bulgarian: 120, db_row: 120,
   lateral_raise: 75, bicep_curl: 75, hammer_curl: 75, leg_ext: 75, leg_curl: 75,
-  calf_raise_a: 75, calf_raise_b: 75, rear_delt: 75, tricep_push: 75, skull_crush: 75, seated_curl: 75,
+  calf_raise_a: 75, calf_raise_b: 75, rear_delt: 75, tricep_push: 75, skull_crush: 75, seated_curl: 75, glute_kickback: 75,
   plank: 60, crunch: 60,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
 
 // Weight increment by exercise type (lbs)
 const WEIGHT_INCREMENTS = {
-  squat: 10, deadlift: 10, leg_press: 10, hip_thrust: 10,
+  squat: 10, deadlift: 10, leg_press: 10, glute_kickback: 10,
   bench_press: 5, incline_press: 5, ohp: 5, lat_pulldown: 5, cable_row: 5, db_row: 5, bulgarian: 5,
   lateral_raise: 5, bicep_curl: 5, hammer_curl: 5, leg_ext: 5, leg_curl: 5,
   calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, seated_curl: 5,
