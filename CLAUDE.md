@@ -51,7 +51,7 @@ Mobile-first fitness tracking web app for personal use. Tracks workouts, meals, 
 ### Navigation — 5 Tabs (consolidated from 7 on 2026-03-23)
 1. **Live** — Real-time workout session, timer, exercise tracking, mood check-in, 1RM badge per exercise
 2. **Hoy** — Daily dashboard: animated StatCards, meals timeline, water counter
-3. **Comidas** — Donut chart, food verifier, food library, meal builder
+3. **Comidas** — Free-form food diary: only Whey default, add by category (Desayuno/Almuerzo/Cena/Snack), remove items, save templates. Donut chart, food verifier, food library
 4. **Progreso** — Segmented control: Progreso (share card, photos, achievements) / Semana (calendar, muscle map, volume, catalog with 1RM)
 5. **Jarvis** — Full-screen AI assistant tab (10 intents, 8 quick buttons)
 
@@ -71,7 +71,8 @@ Hidden: **Perfil** (accessed via gear icon ⚙️ in Hoy header) — settings, e
 - `ds_workout_{todayKey}_{date}` — exercise states (sets, weights, reps, done, rpe, note)
 - `ds_water_{date}` — water ml consumed
 - `ds_water_{date}_log` — water addition history (for undo)
-- `ds_meals_{date}` — meals with confirmed status
+- `ds_meals_{date}` — meals array `[{ time, name, icon, category, confirmed, items }]`
+- `ds_meal_templates` — saved meal templates `[{ id, name, category, items }]`
 - `ds_workout_celebrated_{date}` — celebration modal shown flag
 - `ds_records` — personal records per exercise `{ [id]: { weight, reps, date, unit } }`
 - `ds_progress_photos` — base64 photos array (max 12)
