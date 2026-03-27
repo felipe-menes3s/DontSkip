@@ -298,6 +298,20 @@ function applyThemeCSS(mode) {
 
 applyThemeCSS(getInitialTheme());
 
+// Force safe area measurement — env() inside CSS variables can return 0 on some iOS versions
+(function() {
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    var test = document.createElement('div');
+    test.style.cssText = 'position:fixed;top:0;left:0;width:1px;padding-top:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(test);
+    var h = test.offsetHeight;
+    document.body.removeChild(test);
+    // If env() returned 0, use 47px fallback (standard iPhone safe area)
+    var val = h > 0 ? h + 'px' : '47px';
+    document.documentElement.style.setProperty('--safe-top', val);
+  }
+})();
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // i18n — INTERNATIONALIZATION
