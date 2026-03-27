@@ -113,7 +113,7 @@ body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color:
 .gif-placeholder { animation: pulse-subtle 2s ease-in-out infinite; }
 
 /* Safe area top bar */
-.safe-top-bar { position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 90; transition: background 0.3s; }
+.safe-top-bar { position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 9990; pointer-events: none; transition: background 0.3s; }
 
 /* Tab bar */
 .tab-bar { padding-bottom: calc(8px + var(--safe-bottom)); }
@@ -267,6 +267,8 @@ function applyThemeCSS(mode) {
   document.documentElement.style.setProperty('--ds-input-focus', t.accentGlow);
   document.documentElement.style.setProperty('--ds-input-border', t.accent);
   document.documentElement.style.setProperty('--ds-card-shadow', mode === 'light' ? '0 1px 3px rgba(0,0,0,0.04)' : '0 1px 4px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)');
+  const bar = document.querySelector('.safe-top-bar');
+  if (bar) bar.style.background = t.bg;
 }
 
 applyThemeCSS(getInitialTheme());
