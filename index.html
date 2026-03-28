@@ -486,6 +486,16 @@ const EN = {
   'Descarga en': 'Deload in', 'semanas': 'weeks',
   // ── RoutineCard cardio ──
   'Stretching y movilidad activa': 'Active stretching & mobility',
+  'Elige tu cardio de hoy': 'Choose your cardio today',
+  'Enfría y estira después de tu sesión': 'Cool down and stretch after your session',
+  'Composición corporal': 'Body Composition',
+  'Actualizar composición': 'Update composition',
+  'Excelente': 'Excellent', 'Bien': 'Good', 'Promedio': 'Average', 'Alto': 'High',
+  'Saludable': 'Healthy', 'Bajo': 'Low',
+  'Grasa Visceral': 'Visceral Fat', 'Edad Metabólica': 'Metabolic Age',
+  'Masa Muscular': 'Muscle Mass', 'Grasa Corporal': 'Body Fat',
+  'Comparativa': 'Comparison', 'Línea Base': 'Baseline', 'Última': 'Latest', 'Delta': 'Delta',
+  'vs línea base': 'vs baseline',
   // ── ExerciseCatalog day names ──
   'Lunes — Upper A': 'Monday — Upper A', 'Martes — Lower A': 'Tuesday — Lower A',
   'Jueves — Upper B': 'Thursday — Upper B', 'Viernes — Lower B': 'Friday — Lower B',
@@ -715,6 +725,12 @@ const ROUTINES = {
   sunday: { name: 'Descanso', focus: 'Descanso total', rest: true },
 };
 
+const CARDIO_OPTIONS = [
+  { key: 'walk', name: 'Caminata', nameEn: 'Walk', emoji: '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F', desc: '30 min a buen ritmo', descEn: '30 min brisk walk', gif: 'gifs/walk.gif' },
+  { key: 'incline_walk', name: 'Caminata en subida', nameEn: 'Incline Walk', emoji: '\u26F0\uFE0F', desc: '30 min inclinación 10-15%', descEn: '30 min at 10-15% incline', gif: 'gifs/incline_walk.gif' },
+  { key: 'bike', name: 'Bicicleta', nameEn: 'Cycling', emoji: '\uD83D\uDEB4\uD83C\uDFFB\u200D\u2642\uFE0F', desc: '30 min estática o al aire libre', descEn: '30 min stationary or outdoor', gif: 'gifs/bike.gif' },
+];
+
 // ── Warmup & Stretching ──────────────────────────────────────────────
 const WARMUP_ROUTINES = {
   'Upper A': [
@@ -744,6 +760,27 @@ const WARMUP_ROUTINES = {
     { name: 'Puente de glúteos', nameEn: 'Glute Bridges', sets: '2×15', detail: '', emoji: '🍑', howTo: 'Acostado boca arriba, rodillas dobladas, pies en el piso. Empuja las caderas hacia arriba apretando los glúteos arriba. Baja lento sin tocar el piso.', howToEn: 'Lying face up, knees bent, feet on floor. Push hips up squeezing glutes at top. Lower slowly without touching floor.' },
     { name: 'Barrido de isquiotibiales', nameEn: 'Hamstring Sweeps', sets: '2×8', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, extiende una pierna al frente con el talón en el piso. Inclínate hacia adelante desde las caderas hasta sentir el estiramiento detrás de la pierna. Regresa. 8 por lado.', howToEn: 'Stand, extend one leg forward with heel on floor. Hinge forward from hips until you feel stretch behind the leg. Return. 8 per side.' },
     { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, levanta una rodilla al frente y rota la cadera hacia afuera haciendo un círculo. 10 por dirección, luego cambia de pierna.', howToEn: 'Standing, lift one knee forward and rotate hip outward making a circle. 10 per direction, then switch legs.' },
+  ],
+  'Cardio:walk': [
+    { name: 'Rotación de tobillos', nameEn: 'Ankle Circles', sets: '2×10', detail: 'c/l', emoji: '🦶🏻', howTo: 'De pie en una pierna, rota el tobillo del otro pie en círculos. 10 en cada dirección, luego cambia.', howToEn: 'Standing on one leg, rotate the other ankle in circles. 10 each direction, then switch.' },
+    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×10', detail: 'c/l', emoji: '🦿', howTo: 'Apóyate en una pared. Balancea una pierna hacia adelante y atrás de forma controlada. 10 por pierna.', howToEn: 'Hold onto a wall. Swing one leg forward and back in a controlled motion. 10 per leg.' },
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, levanta una rodilla al frente y rota la cadera hacia afuera haciendo un círculo. 10 por dirección.', howToEn: 'Standing, lift one knee forward and rotate hip outward making a circle. 10 per direction.' },
+    { name: 'Marcha en el lugar', nameEn: 'Marching in Place', sets: '1 min', detail: '', emoji: '🚶🏻', howTo: 'Marcha en el lugar levantando las rodillas al nivel de la cadera. Mantén un ritmo constante por 1 minuto.', howToEn: 'March in place lifting knees to hip level. Keep a steady pace for 1 minute.' },
+    { name: 'Elevación de talones', nameEn: 'Calf Raises', sets: '2×15', detail: '', emoji: '🦵🏻', howTo: 'De pie, eleva los talones lo más alto posible. Baja lento. 15 repeticiones.', howToEn: 'Standing, raise heels as high as possible. Lower slowly. 15 reps.' },
+  ],
+  'Cardio:incline_walk': [
+    { name: 'Rotación de tobillos', nameEn: 'Ankle Circles', sets: '2×10', detail: 'c/l', emoji: '🦶🏻', howTo: 'De pie en una pierna, rota el tobillo del otro pie en círculos. 10 en cada dirección, luego cambia.', howToEn: 'Standing on one leg, rotate the other ankle in circles. 10 each direction, then switch.' },
+    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×12', detail: 'c/l', emoji: '🦿', howTo: 'Apóyate en una pared. Balancea una pierna hacia adelante y atrás de forma controlada. 12 por pierna.', howToEn: 'Hold onto a wall. Swing one leg forward and back in a controlled motion. 12 per leg.' },
+    { name: 'Sentadilla sin peso', nameEn: 'Bodyweight Squats', sets: '2×10', detail: '', emoji: '🦵🏻', howTo: 'Pies al ancho de los hombros. Baja como si te sentaras. Sube apretando glúteos.', howToEn: 'Feet shoulder-width apart. Lower as if sitting. Rise squeezing glutes.' },
+    { name: 'Elevación de talones', nameEn: 'Calf Raises', sets: '2×15', detail: '', emoji: '🦵🏻', howTo: 'De pie, eleva los talones lo más alto posible. Baja lento. Prepara las pantorrillas para la inclinación.', howToEn: 'Standing, raise heels as high as possible. Lower slowly. Prepares calves for the incline.' },
+    { name: 'Rodillas altas', nameEn: 'High Knees', sets: '30s', detail: '', emoji: '🏃🏻', howTo: 'Corre en el lugar llevando las rodillas al pecho. Mantén ritmo rápido por 30 segundos.', howToEn: 'Run in place bringing knees to chest. Keep a fast pace for 30 seconds.' },
+  ],
+  'Cardio:bike': [
+    { name: 'Rotación de caderas', nameEn: 'Hip Circles', sets: '2×10', detail: 'c/dirección', emoji: '🔄', howTo: 'De pie, levanta una rodilla al frente y rota la cadera hacia afuera. 10 por dirección, luego cambia.', howToEn: 'Standing, lift one knee forward and rotate hip outward. 10 per direction, then switch.' },
+    { name: 'Balanceo de piernas', nameEn: 'Leg Swings', sets: '2×10', detail: 'c/l', emoji: '🦿', howTo: 'Apóyate en una pared. Balancea una pierna hacia adelante y atrás. 10 por pierna.', howToEn: 'Hold onto a wall. Swing one leg forward and back. 10 per leg.' },
+    { name: 'Sentadilla sin peso', nameEn: 'Bodyweight Squats', sets: '2×12', detail: '', emoji: '🦵🏻', howTo: 'Pies al ancho de los hombros. Baja como si te sentaras. Sube apretando glúteos.', howToEn: 'Feet shoulder-width apart. Lower as if sitting. Rise squeezing glutes.' },
+    { name: 'Elevación de rodillas', nameEn: 'Knee Raises', sets: '2×15', detail: '', emoji: '🦶🏻', howTo: 'De pie, levanta una rodilla al pecho y bájala. Alterna piernas. 15 por pierna.', howToEn: 'Standing, lift one knee to chest and lower. Alternate legs. 15 per leg.' },
+    { name: 'Rotación de tobillos', nameEn: 'Ankle Circles', sets: '2×10', detail: 'c/l', emoji: '🦶🏻', howTo: 'Rota cada tobillo en círculos. 10 en cada dirección por pie.', howToEn: 'Rotate each ankle in circles. 10 each direction per foot.' },
   ],
 };
 
@@ -776,6 +813,27 @@ const STRETCHING_ROUTINES = {
     { name: 'Perro boca abajo', nameEn: 'Downward Dog', sets: '30s', detail: '', emoji: '🐕', howTo: 'Manos y pies en el piso, empuja las caderas hacia arriba formando una "V" invertida. Presiona los talones hacia el piso. Mantén 30s.', howToEn: 'Hands and feet on floor, push hips up forming an inverted "V". Press heels toward floor. Hold 30s.' },
     { name: 'Rodilla al pecho acostado', nameEn: 'Knee-to-Chest Stretch', sets: '30s', detail: 'c/l', emoji: '🛌', howTo: 'Acostado boca arriba, lleva una rodilla al pecho y abrázala con ambas manos. Mantén la otra pierna extendida. 30s por lado.', howToEn: 'Lying face up, bring one knee to chest and hug it with both hands. Keep other leg extended. 30s per side.' },
   ],
+  'Cardio:walk': [
+    { name: 'Estiramiento de pantorrillas', nameEn: 'Calf Stretch', sets: '30s', detail: 'c/l', emoji: '🧱', howTo: 'Manos en la pared, una pierna atrás con el talón en el piso. Empuja la cadera hacia adelante. 30s por pierna.', howToEn: 'Hands on wall, one leg back with heel on floor. Push hip forward. 30s per leg.' },
+    { name: 'Estiramiento de isquiotibiales', nameEn: 'Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿', howTo: 'Extiende una pierna al frente con el talón en el piso. Inclínate desde las caderas con la espalda recta. 30s por lado.', howToEn: 'Extend one leg forward with heel on floor. Hinge from hips with flat back. 30s per side.' },
+    { name: 'Estiramiento de cuádriceps', nameEn: 'Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, dobla una rodilla llevando el talón al glúteo. Sujeta el pie con la mano. 30s por pierna.', howToEn: 'Standing, bend one knee bringing heel to glute. Hold foot with hand. 30s per leg.' },
+    { name: 'Estiramiento de flexores de cadera', nameEn: 'Hip Flexor Stretch', sets: '30s', detail: 'c/l', emoji: '🧎🏼', howTo: 'Rodilla trasera en el piso, pie delantero al frente. Empuja las caderas hacia adelante. 30s por lado.', howToEn: 'Back knee on floor, front foot forward. Push hips forward. 30s per side.' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼', howTo: 'De rodillas, siéntate sobre los talones. Extiende los brazos hacia adelante. Respira profundo 45s.', howToEn: 'Kneeling, sit back on heels. Extend arms forward. Breathe deeply for 45s.' },
+  ],
+  'Cardio:incline_walk': [
+    { name: 'Estiramiento profundo de pantorrillas', nameEn: 'Deep Calf Stretch', sets: '30s', detail: 'c/l', emoji: '🧱', howTo: 'Manos en la pared, pierna atrás con rodilla recta. Presiona el talón al piso y empuja la cadera. 30s por pierna.', howToEn: 'Hands on wall, leg back with straight knee. Press heel to floor and push hip. 30s per leg.' },
+    { name: 'Estiramiento de isquiotibiales de pie', nameEn: 'Standing Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿', howTo: 'Extiende una pierna al frente con el talón en el piso. Inclínate desde las caderas. 30s por lado.', howToEn: 'Extend one leg forward with heel on floor. Hinge from hips. 30s per side.' },
+    { name: 'Estiramiento de cuádriceps', nameEn: 'Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, dobla una rodilla llevando el talón al glúteo. 30s por pierna.', howToEn: 'Standing, bend one knee bringing heel to glute. 30s per leg.' },
+    { name: 'Estiramiento de glúteos', nameEn: 'Glute Stretch', sets: '30s', detail: 'c/l', emoji: '🍑', howTo: 'Sentado, cruza un tobillo sobre la rodilla opuesta. Inclínate hacia adelante hasta sentir el estiramiento. 30s por lado.', howToEn: 'Seated, cross one ankle over opposite knee. Lean forward until you feel the stretch. 30s per side.' },
+    { name: 'Perro boca abajo', nameEn: 'Downward Dog', sets: '30s', detail: '', emoji: '🐕', howTo: 'Manos y pies en el piso, empuja las caderas hacia arriba formando una V invertida. Presiona talones al piso.', howToEn: 'Hands and feet on floor, push hips up forming inverted V. Press heels to floor.' },
+  ],
+  'Cardio:bike': [
+    { name: 'Estiramiento de cuádriceps de pie', nameEn: 'Standing Quad Stretch', sets: '30s', detail: 'c/l', emoji: '🦵🏻', howTo: 'De pie, dobla una rodilla llevando el talón al glúteo. Sujeta el pie con la mano. 30s por pierna.', howToEn: 'Standing, bend one knee bringing heel to glute. Hold foot with hand. 30s per leg.' },
+    { name: 'Estiramiento de flexores de cadera', nameEn: 'Hip Flexor Stretch', sets: '30s', detail: 'c/l', emoji: '🧎🏼', howTo: 'Rodilla trasera en el piso, pie delantero al frente. Empuja las caderas hacia adelante. 30s por lado.', howToEn: 'Back knee on floor, front foot forward. Push hips forward. 30s per side.' },
+    { name: 'Estiramiento de isquiotibiales', nameEn: 'Hamstring Stretch', sets: '30s', detail: 'c/l', emoji: '🦿', howTo: 'Extiende una pierna al frente con el talón en el piso. Inclínate desde las caderas. 30s por lado.', howToEn: 'Extend one leg forward with heel on floor. Hinge from hips. 30s per side.' },
+    { name: 'Estiramiento de piriforme', nameEn: 'Piriformis Stretch', sets: '30s', detail: 'c/l', emoji: '🍑', howTo: 'Acostado boca arriba, cruza un tobillo sobre la rodilla opuesta. Jala la pierna de abajo hacia el pecho. 30s por lado.', howToEn: 'Lying face up, cross one ankle over opposite knee. Pull bottom leg toward chest. 30s per side.' },
+    { name: 'Postura del niño', nameEn: "Child's Pose", sets: '45s', detail: '', emoji: '🙏🏼', howTo: 'De rodillas, siéntate sobre los talones. Extiende los brazos hacia adelante. Respira profundo 45s.', howToEn: 'Kneeling, sit back on heels. Extend arms forward. Breathe deeply for 45s.' },
+  ],
 };
 
 // ── Meals ──────────────────────────────────────────────────────────────
@@ -792,6 +850,37 @@ const MEAL_CATEGORIES = [
   { key: 'almuerzo', name: 'Almuerzo', nameEn: 'Lunch', icon: '\uD83C\uDF71', defaultTime: '12:30 PM' },
   { key: 'cena', name: 'Cena', nameEn: 'Dinner', icon: '\uD83C\uDF7D\uFE0F', defaultTime: '7:00 PM' },
   { key: 'snack', name: 'Snack', nameEn: 'Snack', icon: '\uD83C\uDF6A', defaultTime: '' },
+];
+
+// ── Baseline & Goals ─────────────────────────────────────────────────
+const BASELINE = {
+  date: '2026-03-26',
+  kg: 73.3,
+  bodyFat: 17.3,
+  muscleMass: 57.5,
+  visceralFat: 7,
+  bmr: 1665,
+  metabolicAge: 32,
+  cuello: 38, pecho: 99, brazo: 31, cintura: 95, cadera: 99, muslo: 52,
+};
+const BODY_GOALS = {
+  bodyFat: 12,
+  muscleMass: 63.5,
+  targetDate: '2026-09-26',
+};
+const MOTIVATION_QUOTES = [
+  { es: 'La consistencia vence al talento. Cada día cuenta.', en: 'Consistency beats talent. Every day counts.' },
+  { es: 'No se trata de ser perfecto, se trata de no rendirse.', en: "It's not about being perfect, it's about not giving up." },
+  { es: '6 meses pasan igual, mejor que pasen con progreso.', en: '6 months pass anyway, better they pass with progress.' },
+  { es: 'Tu cuerpo puede. Es tu mente la que necesitas convencer.', en: 'Your body can. It\'s your mind you need to convince.' },
+  { es: 'El dolor de hoy es la fuerza del mañana.', en: 'Today\'s pain is tomorrow\'s strength.' },
+  { es: 'Cada repetición te acerca a tu mejor versión.', en: 'Every rep brings you closer to your best self.' },
+  { es: 'No cuentes los días. Haz que los días cuenten.', en: 'Don\'t count the days. Make the days count.' },
+  { es: 'Los resultados vienen de lo que haces consistentemente.', en: 'Results come from what you do consistently.' },
+  { es: 'Disciplina es elegir entre lo que quieres ahora y lo que más quieres.', en: 'Discipline is choosing between what you want now and what you want most.' },
+  { es: 'El único mal entrenamiento es el que no hiciste.', en: 'The only bad workout is the one you didn\'t do.' },
+  { es: 'Progreso, no perfección.', en: 'Progress, not perfection.' },
+  { es: 'Confía en el proceso. Los resultados llegarán.', en: 'Trust the process. Results will come.' },
 ];
 
 const FOOD_ICONS = [
@@ -2374,7 +2463,11 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
 // ── Workout Card ───────────────────────────────────────────────────────
 
 function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpdate }) {
+  const [wcCardio, setWcCardio] = useState(() => {
+    try { return localStorage.getItem('ds_cardio_choice_' + localDate()) || ''; } catch { return ''; }
+  });
   if (routine.rest) {
+    const wcSelected = routine.cardio ? CARDIO_OPTIONS.find(o => o.key === wcCardio) : null;
     return html`
       <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
         <div className="text-center py-4">
@@ -2390,28 +2483,34 @@ function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpd
             </svg>
           `}
           <div className="text-lg font-bold" style=${{ color: T.text }}>${t(routine.name)}</div>
-          <div className="text-sm mt-1" style=${{ color: T.sub }}>${t(routine.focus)}</div>
+          <div className="text-sm mt-1" style=${{ color: T.sub }}>${routine.cardio ? t('Elige tu cardio de hoy') : t(routine.focus)}</div>
           ${routine.cardio && html`
-            <div className="mt-4 flex justify-center">
-              <img src="gifs/cardio.gif" alt="Cardio"
-                loading="lazy"
-                style=${{ width: 200, height: 200, objectFit: 'contain', display: 'block' }}
-                onError=${(e) => { e.target.style.display = 'none'; }} />
+            <div className="mt-4" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              ${CARDIO_OPTIONS.map(opt => html`
+                <button key=${opt.key} onClick=${() => { setWcCardio(opt.key); localStorage.setItem('ds_cardio_choice_' + localDate(), opt.key); haptic([10]); }}
+                  className="press-scale"
+                  style=${{
+                    padding: '12px 4px 8px', borderRadius: 14, textAlign: 'center',
+                    background: wcCardio === opt.key ? T.accentDim : T.elevated,
+                    border: '2px solid ' + (wcCardio === opt.key ? T.accent : T.border),
+                    transition: 'all 0.2s',
+                  }}>
+                  <div style=${{ fontSize: 22, marginBottom: 4 }}>${opt.emoji}</div>
+                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: wcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+                    ${LANG === 'en' ? opt.nameEn : opt.name}
+                  </div>
+                </button>
+              `)}
             </div>
-            <div className="space-y-2 text-left max-w-xs mx-auto">
-              <div className="flex items-center gap-2 text-xs" style=${{ color: T.sub }}>
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style=${{ background: T.greenDim, color: T.green }}>A</span>
-                ${LANG === 'en' ? '30 min LISS (incline walk, bike)' : '30 min LISS (caminata inclinada, bici)'}
+            ${wcSelected ? html`
+              <div className="mt-3 flex justify-center">
+                <img src=${wcSelected.gif} alt=${wcSelected.nameEn}
+                  loading="lazy"
+                  style=${{ width: 160, height: 160, objectFit: 'contain', display: 'block', borderRadius: 12 }}
+                  onError=${(e) => { e.target.src = 'gifs/cardio.gif'; e.target.onerror = () => { e.target.style.display = 'none'; }; }} />
               </div>
-              <div className="flex items-center gap-2 text-xs" style=${{ color: T.sub }}>
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style=${{ background: T.accentDim, color: T.accent }}>B</span>
-                ${LANG === 'en' ? '20 min HIIT (intervals)' : '20 min HIIT (intervalos)'}
-              </div>
-              <div className="flex items-center gap-2 text-xs" style=${{ color: T.sub }}>
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style=${{ background: T.amberDim, color: T.amber }}>C</span>
-                ${t('Movilidad + stretching')}
-              </div>
-            </div>
+              <div style=${{ fontSize: 12, color: T.sub, marginTop: 6 }}>${LANG === 'en' ? wcSelected.descEn : wcSelected.desc}</div>
+            ` : ''}
           `}
         </div>
       </div>
@@ -3125,11 +3224,14 @@ function WeekCalendar({ days, selectedIdx, onSelect }) {
 }
 
 function RoutineCard({ routine, dayLabel }) {
+  const [rcCardio, setRcCardio] = useState(() => {
+    try { return localStorage.getItem('ds_cardio_choice_' + localDate()) || ''; } catch { return ''; }
+  });
   if (routine.rest && !routine.cardio) {
     return html`
       <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 24 }}>
         <div className="text-center">
-          <div style=${{ fontSize: 40, marginBottom: 8 }}>\uD83D\uDE34</div>
+          <div style=${{ fontSize: 40, marginBottom: 8 }}>${'\uD83D\uDE34'}</div>
           <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Descanso')}</div>
           <div style=${{ fontSize: 14, color: T.sub }}>${t(routine.focus)}</div>
           <div className="mt-3 px-4 py-2 rounded-xl inline-block" style=${{ background: T.elevated, fontSize: 13, color: T.muted }}>
@@ -3143,23 +3245,26 @@ function RoutineCard({ routine, dayLabel }) {
     return html`
       <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 24 }}>
         <div className="text-center">
-          <div style=${{ fontSize: 40, marginBottom: 8 }}>\uD83C\uDFC3</div>
+          <div style=${{ fontSize: 40, marginBottom: 8 }}>${'\uD83C\uDFC3'}</div>
           <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Cardio')}</div>
-          <div style=${{ fontSize: 14, color: T.sub }}>${t(routine.focus)}</div>
+          <div style=${{ fontSize: 14, color: T.sub, marginBottom: 4 }}>${t('Elige tu cardio de hoy')}</div>
         </div>
-        <div className="mt-4 space-y-2">
-          ${[
-            { emoji: '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'LISS', desc: t('30 min caminata inclinada o bicicleta') },
-            { emoji: '\u26A1', label: 'HIIT', desc: t('20 min intervalos de alta intensidad') },
-            { emoji: '\uD83E\uDDD8\uD83C\uDFFB\u200D\u2642\uFE0F', label: 'Recovery', desc: t('Stretching y movilidad activa') },
-          ].map((opt, i) => html`
-            <div key=${i} className="flex items-center gap-3 px-4 py-3 rounded-xl" style=${{ background: T.elevated }}>
-              <span style=${{ fontSize: 18 }}>${opt.emoji}</span>
-              <div>
-                <div style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${opt.label}</div>
-                <div style=${{ fontSize: 12, color: T.muted }}>${opt.desc}</div>
+        <div className="mt-2" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          ${CARDIO_OPTIONS.map(opt => html`
+            <button key=${opt.key} onClick=${() => { setRcCardio(opt.key); localStorage.setItem('ds_cardio_choice_' + localDate(), opt.key); haptic([10]); }}
+              className="press-scale"
+              style=${{
+                padding: '14px 6px 10px', borderRadius: 14, textAlign: 'center',
+                background: rcCardio === opt.key ? T.accentDim : T.elevated,
+                border: '2px solid ' + (rcCardio === opt.key ? T.accent : T.border),
+                transition: 'all 0.2s',
+              }}>
+              <div style=${{ fontSize: 24, marginBottom: 4 }}>${opt.emoji}</div>
+              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: rcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+                ${LANG === 'en' ? opt.nameEn : opt.name}
               </div>
-            </div>
+              <div style=${{ fontSize: 9, color: T.muted, marginTop: 2 }}>30 min</div>
+            </button>
           `)}
         </div>
       </div>
@@ -3704,8 +3809,20 @@ function MetricsCard({ unitPref, onSaved }) {
   const [weightVal, setWeightVal] = useState('');
   const [weightUnit, setWeightUnit] = useState(unitPref);
   const [measureUnit, setMeasureUnit] = useState('cm');
+  const [showBodyComp, setShowBodyComp] = useState(false);
+  const [bodyFatVal, setBodyFatVal] = useState('');
+  const [muscleMassVal, setMuscleMassVal] = useState('');
+  const [visceralFatVal, setVisceralFatVal] = useState('');
+  const [bmrVal, setBmrVal] = useState('');
+  const [metAgeVal, setMetAgeVal] = useState('');
   const [lastEntry, setLastEntry] = useState(() => {
+    // Seed baseline if not present
     const log = getWeightLog();
+    if (!log.some(e => e.date === BASELINE.date)) {
+      const entry = { ...BASELINE };
+      log.unshift(entry);
+      localStorage.setItem('ds_weight_log', JSON.stringify(log));
+    }
     return log.length ? log[log.length - 1] : null;
   });
   const [chartPart, setChartPart] = useState(null);
@@ -3726,13 +3843,24 @@ function MetricsCard({ unitPref, onSaved }) {
       const v = parseFloat(inputVal);
       if (v > 0) entry[selectedPart] = measureUnit === 'in' ? Math.round(inToCm(v) * 10) / 10 : Math.round(v * 10) / 10;
     }
-    if (!entry.kg && !Object.keys(entry).some(k => BODY_PARTS.map(b => b.key).includes(k) && entry[k])) return;
+    // Body composition fields
+    if (bodyFatVal) entry.bodyFat = parseFloat(bodyFatVal);
+    if (muscleMassVal) {
+      const mm = parseFloat(muscleMassVal);
+      entry.muscleMass = weightUnit === 'lbs' ? lbsToKg(mm) : mm;
+    }
+    if (visceralFatVal) entry.visceralFat = parseInt(visceralFatVal);
+    if (bmrVal) entry.bmr = parseInt(bmrVal);
+    if (metAgeVal) entry.metabolicAge = parseInt(metAgeVal);
+    const hasBodyComp = bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal;
+    if (!entry.kg && !hasBodyComp && !Object.keys(entry).some(k => BODY_PARTS.map(b => b.key).includes(k) && entry[k])) return;
     if (!entry.kg && lastEntry) entry.kg = lastEntry.kg;
     saveWeightEntry(entry);
     setLastEntry(entry);
     setWeightVal(''); setInputVal(''); setSelectedPart(null);
+    setBodyFatVal(''); setMuscleMassVal(''); setVisceralFatVal(''); setBmrVal(''); setMetAgeVal(''); setShowBodyComp(false);
     if (onSaved) onSaved();
-  }, [weightVal, inputVal, selectedPart, weightUnit, measureUnit, lastEntry, onSaved]);
+  }, [weightVal, inputVal, selectedPart, weightUnit, measureUnit, lastEntry, onSaved, bodyFatVal, muscleMassVal, visceralFatVal, bmrVal, metAgeVal]);
 
   const log = getWeightLog();
   const chipStyle = (active) => ({
@@ -3829,9 +3957,41 @@ function MetricsCard({ unitPref, onSaved }) {
         </div>
       `}
 
-      <button onClick=${handleSave} disabled=${!weightVal && !inputVal}
+      <!-- Body Composition toggle -->
+      <button onClick=${() => setShowBodyComp(!showBodyComp)} className="w-full press-scale mb-3"
+        style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: '10px 0', borderRadius: 12, background: T.accentDim,
+          border: '1px solid ' + T.accent + '25' }}>
+        <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCA'}</span>
+        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent }}>
+          ${LANG === 'en' ? 'Update composition' : 'Actualizar composición'}
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showBodyComp ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      ${showBodyComp && html`
+        <div className="mb-3 slide-down" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          ${[
+            { label: 'Body Fat (%)', val: bodyFatVal, set: setBodyFatVal, ph: '17.3' },
+            { label: 'Muscle Mass (' + weightUnit + ')', val: muscleMassVal, set: setMuscleMassVal, ph: weightUnit === 'lbs' ? '126.8' : '57.5' },
+            { label: 'Visceral Fat', val: visceralFatVal, set: setVisceralFatVal, ph: '7' },
+            { label: 'BMR (kcal)', val: bmrVal, set: setBmrVal, ph: '1665' },
+            { label: LANG === 'en' ? 'Metabolic Age' : 'Edad Metabólica', val: metAgeVal, set: setMetAgeVal, ph: '32' },
+          ].map((field, fi) => html`
+            <div key=${fi} style=${fi === 4 ? { gridColumn: '1 / -1' } : {}}>
+              <label style=${{ fontSize: 9, fontWeight: 600, color: T.muted, display: 'block', marginBottom: 2 }}>${field.label}</label>
+              <input type="number" placeholder=${field.ph} value=${field.val}
+                onInput=${e => field.set(e.target.value)}
+                className="w-full text-sm font-semibold rounded-xl py-2 px-3 text-center"
+                style=${{ background: T.elevated, border: '1px solid ' + T.accent + '20', color: T.text, fontSize: 13 }} />
+            </div>
+          `)}
+        </div>
+      `}
+
+      <button onClick=${handleSave} disabled=${!weightVal && !inputVal && !bodyFatVal && !muscleMassVal && !visceralFatVal && !bmrVal && !metAgeVal}
         className="w-full py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.97]"
-        style=${{ background: (weightVal || inputVal) ? T.accent : T.muted, color: '#fff', opacity: (weightVal || inputVal) ? 1 : 0.4 }}>
+        style=${{ background: (weightVal || inputVal || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal) ? T.accent : T.muted, color: '#fff', opacity: (weightVal || inputVal || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal) ? 1 : 0.4 }}>
         ${t('Guardar medición')}
       </button>
 
@@ -4292,6 +4452,273 @@ function ProgressPhotos() {
   `;
 }
 
+function BodyCompCards() {
+  const log = getWeightLog();
+  const latest = [...log].reverse().find(e => e.bodyFat != null || e.muscleMass != null || e.visceralFat != null || e.metabolicAge != null) || {};
+  const hasNew = latest.date && latest.date !== BASELINE.date;
+
+  const kgToLbs = (v) => Math.round(v * 2.20462 * 10) / 10;
+  const USER_AGE = 34;
+
+  // Helper: get badge
+  function bfBadge(v) {
+    if (v < 10) return { label: t('Excelente'), color: '#1a9e5c' };
+    if (v <= 15) return { label: t('Bien'), color: '#3b6fd4' };
+    if (v <= 20) return { label: t('Promedio'), color: '#e8793a' };
+    return { label: t('Alto'), color: '#e05252' };
+  }
+  function mmBadge(lbs) {
+    if (lbs >= 140) return { label: t('Excelente'), color: '#1a9e5c' };
+    if (lbs >= 130) return { label: t('Bien'), color: '#3b6fd4' };
+    return { label: t('Promedio'), color: '#e8793a' };
+  }
+  function vfBadge(v) {
+    if (v <= 9) return { label: t('Saludable'), color: '#1a9e5c' };
+    return { label: t('Alto'), color: '#e05252' };
+  }
+  function maBadge(v) {
+    if (v < USER_AGE) return { label: t('Excelente'), color: '#1a9e5c' };
+    if (v <= USER_AGE) return { label: t('Bien'), color: '#3b6fd4' };
+    return { label: t('Alto'), color: '#e8793a' };
+  }
+
+  // Current values
+  const bfVal = hasNew && latest.bodyFat != null ? latest.bodyFat : BASELINE.bodyFat;
+  const mmValKg = hasNew && latest.muscleMass != null ? latest.muscleMass : BASELINE.muscleMass;
+  const mmValLbs = kgToLbs(mmValKg);
+  const vfVal = hasNew && latest.visceralFat != null ? latest.visceralFat : BASELINE.visceralFat;
+  const maVal = hasNew && latest.metabolicAge != null ? latest.metabolicAge : BASELINE.metabolicAge;
+
+  // Deltas
+  const bfDelta = hasNew && latest.bodyFat != null ? Math.round((latest.bodyFat - BASELINE.bodyFat) * 10) / 10 : null;
+  const mmDelta = hasNew && latest.muscleMass != null ? Math.round((kgToLbs(latest.muscleMass) - kgToLbs(BASELINE.muscleMass)) * 10) / 10 : null;
+  const vfDelta = hasNew && latest.visceralFat != null ? latest.visceralFat - BASELINE.visceralFat : null;
+  const maDelta = hasNew && latest.metabolicAge != null ? latest.metabolicAge - BASELINE.metabolicAge : null;
+  const weightDelta = hasNew && latest.kg ? Math.round((latest.kg - BASELINE.kg) * 10) / 10 : null;
+  const cinturaDelta = hasNew && latest.cintura ? Math.round((latest.cintura - BASELINE.cintura) * 10) / 10 : null;
+  const bmrDelta = hasNew && latest.bmr ? latest.bmr - BASELINE.bmr : null;
+
+  // Progress bars (0-100)
+  const bfGoal = BODY_GOALS.bodyFat; // 12
+  const bfProg = Math.max(0, Math.min(100, Math.round(((BASELINE.bodyFat - bfVal) / (BASELINE.bodyFat - bfGoal)) * 100)));
+  const mmGoalLbs = kgToLbs(BODY_GOALS.muscleMass); // ~140
+  const mmBaselineLbs = kgToLbs(BASELINE.muscleMass);
+  const mmProg = Math.max(0, Math.min(100, Math.round(((mmValLbs - mmBaselineLbs) / (mmGoalLbs - mmBaselineLbs)) * 100)));
+  const vfGoal = 5;
+  const vfProg = Math.max(0, Math.min(100, Math.round(((BASELINE.visceralFat - vfVal) / (BASELINE.visceralFat - vfGoal)) * 100)));
+
+  function deltaTag(delta, inverted) {
+    if (delta == null || delta === 0) return '';
+    const improved = inverted ? delta < 0 : delta > 0;
+    const worsened = inverted ? delta > 0 : delta < 0;
+    const sign = delta > 0 ? '+' : '';
+    const color = improved ? '#1a9e5c' : worsened ? '#e05252' : T.muted;
+    const arrow = improved ? '\u2193' : worsened ? '\u2191' : '';
+    return html`<span style=${{ fontSize: 11, fontWeight: 700, color, marginLeft: 6 }}>${arrow} ${sign}${delta}</span>`;
+  }
+
+  function renderCard(cfg) {
+    const badge = cfg.badge;
+    return html`
+      <div style=${{ padding: 18, borderRadius: 20, marginBottom: 10, background: cfg.bg }}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2.5">
+            <div style=${{ width: 32, height: 32, borderRadius: 10, background: cfg.accent + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style=${{ fontSize: 16 }}>${cfg.icon}</span>
+            </div>
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${cfg.label}</span>
+          </div>
+          <div style=${{ fontSize: 10, fontWeight: 700, color: badge.color, padding: '2px 8px', borderRadius: 8, background: badge.color + '15' }}>${badge.label}</div>
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 32, fontWeight: 900, color: T.text, lineHeight: 1 }}>${cfg.value}</span>
+          <span style=${{ fontSize: 13, fontWeight: 600, color: T.muted }}>${cfg.unit}</span>
+          ${cfg.delta != null ? deltaTag(cfg.delta, cfg.inverted) : ''}
+        </div>
+        ${cfg.bar ? html`
+          <div className="flex items-center gap-2 mt-3">
+            <div style=${{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+              <div style=${{ height: '100%', borderRadius: 3, width: Math.max(cfg.bar.pct, 2) + '%', background: cfg.accent, transition: 'width 0.6s ease' }} />
+            </div>
+            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, whiteSpace: 'nowrap' }}>${cfg.bar.goalLabel}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Comparison table
+  const [showTable, setShowTable] = useState(false);
+  const latestDate = hasNew ? latest.date : null;
+  const latestDateStr = latestDate ? new Date(latestDate + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
+
+  const tableRows = [
+    { label: t('Peso'), base: BASELINE.kg + ' kg', curr: hasNew && latest.kg ? latest.kg + ' kg' : '\u2014', delta: weightDelta, unit: 'kg', inverted: true },
+    { label: 'Body Fat', base: BASELINE.bodyFat + '%', curr: hasNew && latest.bodyFat != null ? latest.bodyFat + '%' : '\u2014', delta: bfDelta, unit: '%', inverted: true },
+    { label: t('Masa Muscular'), base: kgToLbs(BASELINE.muscleMass) + ' lbs', curr: hasNew && latest.muscleMass != null ? kgToLbs(latest.muscleMass) + ' lbs' : '\u2014', delta: mmDelta, unit: 'lbs', inverted: false },
+    { label: t('Cintura'), base: BASELINE.cintura + ' cm', curr: hasNew && latest.cintura ? latest.cintura + ' cm' : '\u2014', delta: cinturaDelta, unit: 'cm', inverted: true },
+    { label: t('Grasa Visceral'), base: String(BASELINE.visceralFat), curr: hasNew && latest.visceralFat != null ? String(latest.visceralFat) : '\u2014', delta: vfDelta, unit: '', inverted: true },
+    { label: 'BMR', base: BASELINE.bmr.toLocaleString() + ' kcal', curr: hasNew && latest.bmr ? latest.bmr.toLocaleString() + ' kcal' : '\u2014', delta: bmrDelta, unit: 'kcal', inverted: false },
+    { label: t('Edad Metabólica'), base: BASELINE.metabolicAge + (LANG === 'en' ? ' yrs' : ' a\u00F1os'), curr: hasNew && latest.metabolicAge != null ? latest.metabolicAge + (LANG === 'en' ? ' yrs' : ' a\u00F1os') : '\u2014', delta: maDelta, unit: '', inverted: true },
+  ];
+
+  return html`
+    <div className="fade-up mx-5 mb-4">
+      <div className="flex items-center gap-2 mb-3" style=${{ paddingLeft: 2 }}>
+        <span style=${{ fontSize: 16 }}>${'\uD83E\uDDBE'}</span>
+        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text }}>${t('Composición corporal')}</span>
+      </div>
+
+      ${renderCard({
+        icon: '\uD83D\uDD25', label: t('Grasa Corporal'), bg: 'rgba(232,121,58,0.08)',
+        accent: '#e8793a', badge: bfBadge(bfVal),
+        value: bfVal, unit: '%', delta: bfDelta, inverted: true,
+        bar: { pct: bfProg, goalLabel: (LANG === 'en' ? 'Goal ' : 'Meta ') + bfGoal + '%' },
+      })}
+
+      ${renderCard({
+        icon: '\uD83D\uDCAA\uD83C\uDFFC', label: t('Masa Muscular'), bg: 'rgba(59,111,212,0.08)',
+        accent: '#3b6fd4', badge: mmBadge(mmValLbs),
+        value: mmValLbs, unit: 'lbs', delta: mmDelta, inverted: false,
+        bar: { pct: mmProg, goalLabel: (LANG === 'en' ? 'Goal ' : 'Meta ') + mmGoalLbs + ' lbs' },
+      })}
+
+      ${renderCard({
+        icon: '\u2764\uFE0F', label: t('Grasa Visceral'), bg: 'rgba(224,82,82,0.08)',
+        accent: '#e05252', badge: vfBadge(vfVal),
+        value: vfVal, unit: '', delta: vfDelta, inverted: true,
+        bar: { pct: vfProg, goalLabel: (LANG === 'en' ? 'Goal <' : 'Meta <') + vfGoal },
+      })}
+
+      ${renderCard({
+        icon: '\u23F0', label: t('Edad Metabólica'), bg: 'rgba(26,158,92,0.08)',
+        accent: '#1a9e5c', badge: maBadge(maVal),
+        value: maVal, unit: LANG === 'en' ? 'years' : 'a\u00F1os', delta: maDelta, inverted: true,
+        bar: null,
+      })}
+
+      <!-- Comparison Table -->
+      <button onClick=${() => setShowTable(!showTable)} className="w-full press-scale"
+        style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px', borderRadius: 16,
+          background: T.card, border: '1px solid ' + T.border, marginTop: 4 }}>
+        <div className="flex items-center gap-2">
+          <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCA'}</span>
+          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Comparativa')}</span>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showTable ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      ${showTable ? html`
+        <div className="slide-down" style=${{ marginTop: 8, borderRadius: 20, overflow: 'hidden', border: '1px solid ' + T.border, background: T.card }}>
+          <div style=${{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.2fr 0.8fr', padding: '10px 14px', background: T.elevated }}>
+            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}></span>
+            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>${t('Línea Base')}</span>
+            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>${t('Última')}</span>
+            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>${t('Delta')}</span>
+          </div>
+          ${tableRows.map((row, ri) => {
+            const dColor = row.delta == null ? T.muted : (row.inverted ? (row.delta < 0 ? '#1a9e5c' : row.delta > 0 ? '#e05252' : T.muted) : (row.delta > 0 ? '#1a9e5c' : row.delta < 0 ? '#e05252' : T.muted));
+            const dText = row.delta == null ? '\u2014' : row.delta === 0 ? '0' : (row.delta > 0 ? '+' : '') + row.delta + (row.unit ? ' ' + row.unit : '');
+            return html`
+              <div key=${ri} style=${{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.2fr 0.8fr', padding: '9px 14px', background: ri % 2 === 0 ? 'transparent' : T.elevated + '60', borderTop: '1px solid ' + T.border + '40' }}>
+                <span style=${{ fontSize: 12, fontWeight: 600, color: T.text }}>${row.label}</span>
+                <span style=${{ fontSize: 11, fontWeight: 600, color: T.sub, textAlign: 'right' }}>${row.base}</span>
+                <span style=${{ fontSize: 11, fontWeight: 600, color: T.sub, textAlign: 'right' }}>${row.curr}</span>
+                <span style=${{ fontSize: 11, fontWeight: 700, color: dColor, textAlign: 'right' }}>${dText}</span>
+              </div>
+            `;
+          })}
+          <div style=${{ padding: '8px 14px', borderTop: '1px solid ' + T.border + '40', textAlign: 'center' }}>
+            <span style=${{ fontSize: 10, color: T.muted }}>${LANG === 'en' ? 'Baseline: 26 Mar 2026' : 'Línea base: 26 Mar 2026'}${latestDate ? (LANG === 'en' ? ' · Latest: ' : ' · Última: ') + latestDateStr : ''}</span>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function GoalsCard() {
+  const log = getWeightLog();
+  // Find latest entry with body composition data
+  const latestBF = [...log].reverse().find(e => e.bodyFat != null);
+  const latestMM = [...log].reverse().find(e => e.muscleMass != null);
+
+  const bfCurrent = latestBF ? latestBF.bodyFat : BASELINE.bodyFat;
+  const mmCurrentKg = latestMM ? latestMM.muscleMass : BASELINE.muscleMass;
+  const mmCurrentLbs = Math.round(mmCurrentKg * 2.20462 * 10) / 10;
+
+  // Progress calculations
+  const bfProgress = Math.max(0, Math.min(100, Math.round(((BASELINE.bodyFat - bfCurrent) / (BASELINE.bodyFat - BODY_GOALS.bodyFat)) * 100)));
+  const mmProgress = Math.max(0, Math.min(100, Math.round(((mmCurrentKg - BASELINE.muscleMass) / (BODY_GOALS.muscleMass - BASELINE.muscleMass)) * 100)));
+
+  const mmBaselineLbs = Math.round(BASELINE.muscleMass * 2.20462 * 10) / 10;
+  const mmGoalLbs = Math.round(BODY_GOALS.muscleMass * 2.20462 * 10) / 10;
+
+  // Daily motivation quote
+  const motivIdx = localDate().split('-').reduce((acc, part) => acc + parseInt(part), 0) % MOTIVATION_QUOTES.length;
+  const quote = LANG === 'en' ? MOTIVATION_QUOTES[motivIdx].en : MOTIVATION_QUOTES[motivIdx].es;
+
+  const barTrack = { height: 8, borderRadius: 4, background: T.input, overflow: 'hidden', flex: 1 };
+  const barFill = (pct, color) => ({ height: '100%', borderRadius: 4, width: Math.max(pct, 2) + '%', background: color, transition: 'width 0.6s ease' });
+
+  return html`
+    <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20, border: '2px solid ' + T.accent + '30' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span style=${{ fontSize: 18 }}>${'\uD83C\uDFAF'}</span>
+        <span style=${{ fontSize: 16, fontWeight: 800, color: T.text, fontFamily: 'Outfit, sans-serif' }}>
+          ${LANG === 'en' ? 'My Goals — 6 months' : 'Mis metas — 6 meses'}
+        </span>
+      </div>
+
+      <!-- Body Fat -->
+      <div style=${{ marginBottom: 16 }}>
+        <div className="flex items-center justify-between mb-1">
+          <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>Body Fat</span>
+          <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${BASELINE.bodyFat}% ${'\u2192'} ${BODY_GOALS.bodyFat}%</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div style=${barTrack}>
+            <div style=${barFill(bfProgress, T.green)} />
+          </div>
+          <span style=${{ fontSize: 11, fontWeight: 700, color: bfProgress > 0 ? T.green : T.muted, minWidth: 32, textAlign: 'right' }}>${bfProgress}%</span>
+        </div>
+        <div style=${{ fontSize: 10, color: T.sub, marginTop: 3 }}>
+          ${LANG === 'en' ? 'Current' : 'Actual'}: ${bfCurrent}%${latestBF && latestBF.date !== BASELINE.date ? ' (' + latestBF.date.slice(5) + ')' : ''}
+        </div>
+      </div>
+
+      <!-- Muscle Mass -->
+      <div style=${{ marginBottom: 16 }}>
+        <div className="flex items-center justify-between mb-1">
+          <span style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>Muscle Mass</span>
+          <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${mmBaselineLbs} ${'\u2192'} ${mmGoalLbs} lbs</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div style=${barTrack}>
+            <div style=${barFill(mmProgress, T.accent)} />
+          </div>
+          <span style=${{ fontSize: 11, fontWeight: 700, color: mmProgress > 0 ? T.accent : T.muted, minWidth: 32, textAlign: 'right' }}>${mmProgress}%</span>
+        </div>
+        <div style=${{ fontSize: 10, color: T.sub, marginTop: 3 }}>
+          ${LANG === 'en' ? 'Current' : 'Actual'}: ${mmCurrentLbs} lbs${latestMM && latestMM.date !== BASELINE.date ? ' (' + latestMM.date.slice(5) + ')' : ''}
+        </div>
+      </div>
+
+      <!-- Target date -->
+      <div className="flex items-center gap-1.5 mb-3" style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>
+        <span>${'\uD83D\uDCC5'}</span>
+        <span>${LANG === 'en' ? 'Target: September 2026' : 'Meta: Septiembre 2026'}</span>
+      </div>
+
+      <!-- Motivation quote -->
+      <div style=${{ padding: '10px 14px', borderRadius: 12, background: T.accentDim, fontStyle: 'italic' }}>
+        <span style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>${'\u201C'}${quote}${'\u201D'}</span>
+      </div>
+    </div>
+  `;
+}
+
 function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const handleSaved = useCallback(() => setRefreshKey(k => k + 1), []);
@@ -4335,6 +4762,8 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
         <div className="stagger" key="progreso">
           <${WeeklyShareCard} key=${'ws' + refreshKey} />
           <${MetricsCard} key=${'m' + refreshKey} unitPref=${unitPref} onSaved=${handleSaved} />
+          <${BodyCompCards} key=${'bc' + refreshKey} />
+          <${GoalsCard} key=${'g' + refreshKey} />
           <${ProgressPhotos} key=${'p' + refreshKey} />
           <${WeightChart} key=${'w' + refreshKey} />
           <${RecordsCard} key=${'r' + refreshKey} unitPref=${unitPref} />
@@ -4877,7 +5306,7 @@ const FOOD_LIBRARY_DEFAULT = [
   { id: 'pan_palta_jamon_medio', icon: '🥑', name: 'Pan con palta y jamón (medio)', portion: '½ pan', protein: 5, cal: 180, carbs: 22, fat: 9 },
   { id: 'pan_palta_jamon_completo', icon: '🥑', name: 'Pan con palta y jamón (completo)', portion: '1 pan', protein: 10, cal: 360, carbs: 44, fat: 18 },
   // Suplementos
-  { id: 'whey', icon: '🥤', name: 'Whey scoop', portion: '1 scoop', protein: 25, cal: 120, carbs: 3, fat: 1 },
+  { id: 'whey', icon: '🥤', name: 'Whey scoop', portion: '1 scoop', protein: 24, cal: 120, carbs: 4, fat: 1.5 },
   { id: 'built_bar', icon: '🍫', name: 'Protein Bar Built', portion: '1 barra', protein: 17, cal: 180, carbs: 22, fat: 6 },
   { id: 'leche_nurri', icon: '🥛', name: 'Leche Nurri Chocolate', portion: '1 lata', protein: 30, cal: 170, carbs: 6, fat: 3 },
   // Carbohidratos
@@ -5781,6 +6210,10 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
 
   const [confirmStop, setConfirmStop] = useState(false);
   const [expandedNext, setExpandedNext] = useState(false);
+  const [cardioChoice, setCardioChoice] = useState(() => {
+    if (!routine.cardio) return '';
+    try { return localStorage.getItem('ds_cardio_choice_' + localDate()) || ''; } catch { return ''; }
+  });
   const [showWarmup, setShowWarmup] = useState(true);
   const [warmupDone, setWarmupDone] = useState(() => {
     try { const v = JSON.parse(localStorage.getItem('ds_warmup_' + localDate()) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
@@ -5789,8 +6222,9 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   const [stretchDone, setStretchDone] = useState(() => {
     try { const v = JSON.parse(localStorage.getItem('ds_stretch_' + localDate()) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
   });
-  const warmupExercises = WARMUP_ROUTINES[routine.name] || [];
-  const stretchExercises = STRETCHING_ROUTINES[routine.name] || [];
+  const warmupKey = routine.cardio && cardioChoice ? 'Cardio:' + cardioChoice : routine.name;
+  const warmupExercises = WARMUP_ROUTINES[warmupKey] || [];
+  const stretchExercises = STRETCHING_ROUTINES[warmupKey] || [];
   const [expandedWarmup, setExpandedWarmup] = useState(null);
   const [expandedStretch, setExpandedStretch] = useState(null);
 
@@ -5804,6 +6238,16 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
     const next = stretchDone.includes(idx) ? stretchDone.filter(i => i !== idx) : [...stretchDone, idx];
     setStretchDone(next);
     try { localStorage.setItem('ds_stretch_' + localDate(), JSON.stringify(next)); } catch {}
+    haptic([10]);
+  }
+
+  function pickCardio(key) {
+    setCardioChoice(key);
+    localStorage.setItem('ds_cardio_choice_' + localDate(), key);
+    setWarmupDone([]);
+    setStretchDone([]);
+    localStorage.setItem('ds_warmup_' + localDate(), '[]');
+    localStorage.setItem('ds_stretch_' + localDate(), '[]');
     haptic([10]);
   }
 
@@ -5889,8 +6333,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
     onExerciseUpdate(exIdx, { ...es, sets: newSets });
   }
 
-  // Rest day
-  if (routine.rest) {
+  // Rest day (non-cardio)
+  if (routine.rest && !routine.cardio) {
     return html`
       <div className="stagger">
         <div className="px-5 pt-2 pb-3 flex items-center justify-between">
@@ -5907,8 +6351,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           ${showHIIT ? html`
             <${HIITTimer} onClose=${() => setShowHIIT(false)} />
           ` : html`
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 48, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>${routine.cardio ? 'CARDIO' : (LANG === 'en' ? 'REST DAY' : 'DÍA DE DESCANSO')}</div>
-            <div style=${{ fontSize: 14, color: T.sub, lineHeight: 1.5 }}>${routine.cardio ? (LANG === 'en' ? 'Cardio day — LISS or HIIT' : 'Día de cardio — LISS o HIIT') : t('No hay entrenamiento programado hoy.') + html`<br/>` + t('Recuperación activa o descanso total.')}</div>
+            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 48, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>${LANG === 'en' ? 'REST DAY' : 'DÍA DE DESCANSO'}</div>
+            <div style=${{ fontSize: 14, color: T.sub, lineHeight: 1.5 }}>${t('No hay entrenamiento programado hoy.')}${html`<br/>`}${t('Recuperación activa o descanso total.')}</div>
             <button onClick=${() => setShowHIIT(true)}
               className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl press-scale"
               style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
@@ -5917,6 +6361,164 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             </button>
           `}
         </div>
+        <div className="bottom-spacer" />
+      </div>
+    `;
+  }
+
+  // Cardio day
+  if (routine.cardio) {
+    const selectedOption = CARDIO_OPTIONS.find(o => o.key === cardioChoice);
+    return html`
+      <div className="stagger">
+        <div className="px-5 pt-2 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
+            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <${LangToggle} onToggle=${onLangToggle} />
+            <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
+          </div>
+        </div>
+
+        ${showHIIT ? html`
+          <div className="text-center px-5" style=${{ paddingTop: 20 }}>
+            <${HIITTimer} onClose=${() => setShowHIIT(false)} />
+          </div>
+        ` : html`
+          <div className="text-center px-5" style=${{ paddingTop: 12, paddingBottom: 4 }}>
+            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 36, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 8 }}>CARDIO</div>
+            <div style=${{ fontSize: 13, color: T.sub }}>${t('Elige tu cardio de hoy')}</div>
+          </div>
+
+          <div className="px-5 mb-4">
+            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              ${CARDIO_OPTIONS.map(opt => html`
+                <button key=${opt.key} onClick=${() => pickCardio(opt.key)}
+                  className="press-scale"
+                  style=${{
+                    padding: '16px 6px 12px', borderRadius: 16, textAlign: 'center',
+                    background: cardioChoice === opt.key ? T.accentDim : T.elevated,
+                    border: '2px solid ' + (cardioChoice === opt.key ? T.accent : T.border),
+                    transition: 'all 0.2s',
+                  }}>
+                  <div style=${{ fontSize: 28, marginBottom: 6 }}>${opt.emoji}</div>
+                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, color: cardioChoice === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+                    ${LANG === 'en' ? opt.nameEn : opt.name}
+                  </div>
+                  <div style=${{ fontSize: 9, color: T.muted, marginTop: 2 }}>30 min</div>
+                </button>
+              `)}
+            </div>
+          </div>
+
+          ${selectedOption ? html`
+            ${warmupExercises.length > 0 ? html`
+              <div className="px-5 mb-4 fade-up">
+                <div className="flex items-center gap-2 mb-2">
+                  <span style=${{ fontSize: 14 }}>${'\uD83D\uDD25'}</span>
+                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
+                </div>
+                <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
+                  <div style=${{ padding: '8px 12px 12px' }}>
+                    ${warmupExercises.map((w, wi) => html`
+                      <div key=${wi} className="flex items-center gap-3 py-2.5"
+                        style=${{ borderBottom: wi < warmupExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: warmupDone.includes(wi) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                        <button onClick=${() => toggleWarmup(wi)} className="press-scale" style=${{ flexShrink: 0 }}>
+                          <div style=${{
+                            width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: warmupDone.includes(wi) ? T.green : T.input, transition: 'all 0.15s'
+                          }}>
+                            ${warmupDone.includes(wi)
+                              ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                              : html`<span style=${{ fontSize: 14 }}>${w.emoji}</span>`
+                            }
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0" onClick=${() => setExpandedWarmup(expandedWarmup === wi ? null : wi)} style=${{ cursor: 'pointer' }}>
+                          <div className="flex items-center justify-between">
+                            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                          </div>
+                          ${expandedWarmup === wi && w.howTo ? html`
+                            <div style=${{ fontSize: 12, color: T.sub, lineHeight: 1.5, paddingTop: 6 }}>${LANG === 'en' ? w.howToEn : w.howTo}</div>
+                          ` : ''}
+                        </div>
+                      </div>
+                    `)}
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            <div className="px-5 mb-4 fade-up">
+              <div className="ds-card text-center" style=${{ padding: 20 }}>
+                <img src=${selectedOption.gif} alt=${selectedOption.nameEn}
+                  loading="lazy"
+                  style=${{ width: 180, height: 180, objectFit: 'contain', display: 'block', margin: '0 auto 12px', borderRadius: 12 }}
+                  onError=${(e) => { e.target.src = 'gifs/cardio.gif'; e.target.onerror = () => { e.target.style.display = 'none'; }; }} />
+                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginBottom: 4 }}>${LANG === 'en' ? selectedOption.nameEn : selectedOption.name}</div>
+                <div style=${{ fontSize: 13, color: T.sub }}>${LANG === 'en' ? selectedOption.descEn : selectedOption.desc}</div>
+              </div>
+            </div>
+
+            ${stretchExercises.length > 0 ? html`
+              <div className="px-5 mb-4 fade-up">
+                <button onClick=${() => setShowStretching(!showStretching)}
+                  className="w-full flex items-center justify-between py-3 press-scale"
+                  style=${{ borderBottom: '1px solid ' + T.border }}>
+                  <div className="flex items-center gap-2">
+                    <span style=${{ fontSize: 16 }}>${'\uD83E\uDDD8\uD83C\uDFFC'}</span>
+                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
+                    <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${stretchDone.length}/${stretchExercises.length}</span>
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showStretching ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                ${showStretching ? html`
+                  <div className="slide-down" style=${{ paddingTop: 4 }}>
+                    <div style=${{ fontSize: 11, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>${t('Enfría y estira después de tu sesión')}</div>
+                    ${stretchExercises.map((st, si) => html`
+                      <div key=${si} className="flex items-center gap-3 py-2.5"
+                        style=${{ borderBottom: si < stretchExercises.length - 1 ? '1px solid ' + T.border + '60' : 'none', opacity: stretchDone.includes(si) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                        <button onClick=${() => toggleStretch(si)} className="press-scale" style=${{ flexShrink: 0 }}>
+                          <div style=${{
+                            width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: stretchDone.includes(si) ? T.green : T.input, transition: 'all 0.15s'
+                          }}>
+                            ${stretchDone.includes(si)
+                              ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                              : html`<span style=${{ fontSize: 14 }}>${st.emoji}</span>`
+                            }
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0" onClick=${() => setExpandedStretch(expandedStretch === si ? null : si)} style=${{ cursor: 'pointer' }}>
+                          <div className="flex items-center justify-between">
+                            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
+                            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
+                          </div>
+                          ${expandedStretch === si && st.howTo ? html`
+                            <div style=${{ fontSize: 12, color: T.sub, lineHeight: 1.5, paddingTop: 6 }}>${LANG === 'en' ? st.howToEn : st.howTo}</div>
+                          ` : ''}
+                        </div>
+                      </div>
+                    `)}
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+          ` : ''}
+
+          <div className="text-center mt-2">
+            <button onClick=${() => setShowHIIT(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl press-scale"
+              style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
+            </button>
+          </div>
+        `}
+
         <div className="bottom-spacer" />
       </div>
     `;
