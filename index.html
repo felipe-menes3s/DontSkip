@@ -1842,7 +1842,8 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const goalReached = value >= max && max > 0;
 
-  const sz = 110, sw = 7, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
+  const sz = 120, sw = 9, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
+  const valColor = gradientColors ? gradientColors[1] : color;
   const off = circ * (1 - pct);
 
   return html`
@@ -1862,7 +1863,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="flex items-baseline">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: color, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: valColor, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
               <span style=${{ fontSize: 11, fontWeight: 500, color: T.muted, marginLeft: 1 }}>/</span>
             </div>
             <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, marginTop: 2 }}>${max}${unit}</div>
