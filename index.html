@@ -1849,12 +1849,12 @@ function HIITTimer({ onClose }) {
 
 // ── Stat Card ─────────────────────────────────────────────────────────
 
-function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay }) {
+function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay, gradientId, gradientColors }) {
   const animVal = useCountUp(value, 700);
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const goalReached = value >= max && max > 0;
 
-  const sz = 88, sw = 6, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
+  const sz = 110, sw = 7, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
   const off = circ * (1 - pct);
 
   return html`
@@ -1866,14 +1866,15 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
       <div className="flex justify-center">
         <div className="relative" style=${{ width: sz, height: sz }}>
           <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
+            ${gradientId && gradientColors ? html`<defs><linearGradient id=${gradientId} x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color=${gradientColors[0]} /><stop offset="100%" stop-color=${gradientColors[1]} /></linearGradient></defs>` : ''}
             <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${T.input} strokeWidth=${sw} />
-            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${color} strokeWidth=${sw}
+            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${gradientId ? 'url(#' + gradientId + ')' : color} strokeWidth=${sw}
               strokeDasharray=${circ} strokeDashoffset=${off} strokeLinecap="round"
               className="ring-circle" style=${{ transitionDelay: (delay || 0) + 'ms' }} />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="flex items-baseline">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: color, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: color, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
               <span style=${{ fontSize: 11, fontWeight: 500, color: T.muted, marginLeft: 1 }}>/</span>
             </div>
             <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, marginTop: 2 }}>${max}${unit}</div>
@@ -1968,10 +1969,10 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
 
   return html`
     <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} />
-      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} />
-      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} />
-      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} />
+      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} gradientId="gProt" gradientColors=${['#5c9fd4','#274472']} />
+      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} gradientId="gCal" gradientColors=${['#e8793a','#b84a0a']} />
+      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} gradientId="gWat" gradientColors=${['#5bbfe8','#0d6e9a']} />
+      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#4ec88a','#0d6b3a']} />
     </div>
   `;
 }
