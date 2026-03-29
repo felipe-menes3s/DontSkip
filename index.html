@@ -25,7 +25,8 @@ tailwind.config = {
 </script>
 <style>
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-body { font-family: 'Outfit', system-ui, sans-serif; background: #f4f6f9; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
+html, body { background: var(--ds-bg, #f4f6f9); }
+body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
 /* Count-up animation for stats */
 @keyframes countPulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
 .count-up { animation: countPulse 0.1s ease-out; }
@@ -119,8 +120,8 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: calc(var(--safe-top) + 1px);
-  z-index: 99;
+  height: var(--safe-top);
+  z-index: 9999;
   pointer-events: none;
   transition: background 0.3s;
   background: var(--ds-bg, #f4f6f9);
@@ -1848,85 +1849,45 @@ function HIITTimer({ onClose }) {
 
 // ── Stat Card ─────────────────────────────────────────────────────────
 
-function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay, compact, sparkData }) {
+function StatCard({ icon, label, value, max, unit, color, colorDim, context, delay }) {
   const animVal = useCountUp(value, 700);
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const goalReached = value >= max && max > 0;
-  const ringColor = goalReached ? T.green : color;
 
-  // Sparkline — mini 7-day trend line
-  const sparkline = sparkData && sparkData.length > 1 ? (() => {
-    const pts = sparkData;
-    const maxV = Math.max(...pts, 1);
-    const h = 20, w = 50;
-    const path = pts.map((v, i) => {
-      const x = (i / (pts.length - 1)) * w;
-      const y = h - (v / maxV) * h;
-      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
-    }).join(' ');
-    return html`<svg width=${w} height=${h} style=${{ opacity: 0.5, flexShrink: 0 }}><path d=${path} fill="none" stroke=${ringColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>`;
-  })() : null;
-
-  if (compact) {
-    const csz = 44, csw = 4, cr = (csz - csw) / 2, ccirc = 2 * Math.PI * cr;
-    const coff = ccirc * (1 - pct);
-    return html`
-      <div style=${{ padding: '12px 14px', borderRadius: 16, background: colorDim, flex: 1 }}>
-        <div className="flex items-center gap-3">
-          <div className="relative flex-shrink-0" style=${{ width: csz, height: csz }}>
-            <svg width=${csz} height=${csz} style=${{ transform: 'rotate(-90deg)' }}>
-              <circle cx=${csz / 2} cy=${csz / 2} r=${cr} fill="none" stroke=${T.bg} strokeWidth=${csw} />
-              <circle cx=${csz / 2} cy=${csz / 2} r=${cr} fill="none" stroke=${ringColor} strokeWidth=${csw}
-                strokeDasharray=${ccirc} strokeDashoffset=${coff} strokeLinecap="round"
-                className="ring-circle" style=${{ transitionDelay: (delay || 0) + 'ms' }} />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              ${goalReached ? html`<${CheckCircle} size=${18} weight="fill" color=${T.green} />` : icon}
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div style=${{ fontSize: 10, fontWeight: 600, color: T.text, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>${label}</div>
-            <div className="flex items-baseline gap-1">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>${animVal}</span>
-              <span style=${{ fontSize: 10, fontWeight: 500, color: T.muted }}>/ ${max}${unit}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  const sz = 64, sw = 5, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
+  const sz = 88, sw = 6, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
   const off = circ * (1 - pct);
 
   return html`
-    <div style=${{ padding: '18px 16px', borderRadius: 20, background: colorDim, position: 'relative', overflow: 'hidden' }}>
-      <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
-        <div style=${{ fontSize: 11, fontWeight: 600, color: T.text, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
-        ${sparkline}
+    <div style=${{ padding: '14px 16px 16px', borderRadius: 20, background: T.card, position: 'relative', boxShadow: 'var(--ds-card-shadow)' }}>
+      <div className="flex items-center justify-between" style=${{ marginBottom: 8 }}>
+        <div style=${{ fontSize: 10, fontWeight: 700, color: T.sub, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
+        ${icon}
       </div>
-      <div className="flex items-center gap-4">
-        <div className="relative flex-shrink-0" style=${{ width: sz, height: sz }}>
+      <div className="flex justify-center">
+        <div className="relative" style=${{ width: sz, height: sz }}>
           <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
-            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${T.bg} strokeWidth=${sw} />
-            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${ringColor} strokeWidth=${sw}
+            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${T.input} strokeWidth=${sw} />
+            <circle cx=${sz / 2} cy=${sz / 2} r=${r} fill="none" stroke=${color} strokeWidth=${sw}
               strokeDasharray=${circ} strokeDashoffset=${off} strokeLinecap="round"
               className="ring-circle" style=${{ transitionDelay: (delay || 0) + 'ms' }} />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            ${goalReached ? html`<${CheckCircle} size=${24} weight="fill" color=${T.green} />` : icon}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="flex items-baseline">
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: color, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
+              <span style=${{ fontSize: 11, fontWeight: 500, color: T.muted, marginLeft: 1 }}>/</span>
+            </div>
+            <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, marginTop: 2 }}>${max}${unit}</div>
           </div>
-        </div>
-        <div>
-          <div className="flex items-baseline gap-1.5">
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 36, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1.1, letterSpacing: '-1.5px', display: 'inline-block' }}>${animVal}</span>
-            <span style=${{ fontSize: 13, fontWeight: 500, color: T.muted }}>/ ${max}${unit}</span>
-          </div>
-          ${context && html`
-            <div style=${{ fontSize: 11, fontWeight: 600, color: context.color || T.sub, marginTop: 5 }}>${context.text}</div>
-          `}
         </div>
       </div>
+      ${goalReached ? html`
+        <div style=${{ position: 'absolute', bottom: 10, right: 12 }}>
+          <${CheckCircle} size=${16} weight="fill" color=${T.green} />
+        </div>
+      ` : ''}
+      ${context ? html`
+        <div style=${{ fontSize: 11, fontWeight: 600, color: context.color || T.sub, marginTop: 8, textAlign: 'center' }}>${context.text}</div>
+      ` : ''}
     </div>
   `;
 }
@@ -1997,40 +1958,20 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
   const waterGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
 
-  // Sparkline data — last 7 days
-  const sparklines = useMemo(() => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) days.push(localDate(new Date(Date.now() - i * 86400000)));
-    const prot = [], cal = [], wat = [];
-    days.forEach(d => {
-      try {
-        const m = JSON.parse(localStorage.getItem('ds_meals_' + d) || '[]');
-        const confirmed = m.filter(x => x.confirmed);
-        prot.push(confirmed.reduce((s, x) => s + x.items.reduce((a, i) => a + (i.protein || 0), 0), 0));
-        cal.push(confirmed.reduce((s, x) => s + x.items.reduce((a, i) => a + (i.cal || 0), 0), 0));
-      } catch { prot.push(0); cal.push(0); }
-      try { wat.push(Math.floor((Number(localStorage.getItem('ds_water_' + d)) || 0) / WATER_GLASS_ML)); } catch { wat.push(0); }
-    });
-    // Today's values override last element
-    prot[6] = protein; cal[6] = calories; wat[6] = waterGlasses;
-    return { prot, cal, wat };
-  }, [protein, calories, waterGlasses]);
-
   const proteinCtx = null;
   const caloriesCtx = null;
   const waterCtx = waterGlasses >= waterGoalGlasses ? { text: '\u2713 ' + t('Meta cumplida'), color: T.green } : null;
 
-  let gymCtx;
+  let gymCtx = null;
   if (gymTotal === 0) gymCtx = { text: t('Día de descanso'), color: T.sub };
   else if (gymDone === gymTotal) gymCtx = { text: '\u2713 ' + t('Entrenamiento completado'), color: T.green };
-  else gymCtx = { text: gymDone + ' ' + t('ejercicios completados'), color: T.sub };
 
   return html`
     <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-      <${StatCard} icon=${html`<${Barbell} size=${28} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} colorDim=${T.copperDim} context=${proteinCtx} delay=${0} sparkData=${sparklines.prot} />
-      <${StatCard} icon=${html`<${FireSimple} size=${28} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} colorDim=${T.amberDim} context=${caloriesCtx} delay=${150} sparkData=${sparklines.cal} />
-      <${StatCard} icon=${html`<${Drop} size=${28} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} colorDim=${T.waterDim} context=${waterCtx} delay=${300} sparkData=${sparklines.wat} />
-      <${StatCard} icon=${html`<${Lightning} size=${28} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} colorDim=${T.accentDim} context=${gymCtx} delay=${450} />
+      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} />
+      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} />
+      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} />
+      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} />
     </div>
   `;
 }
@@ -6164,9 +6105,12 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       if (isPaused) setElapsed(pausedElapsed);
       return;
     }
-    setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000)), 1000);
-    return () => clearInterval(id);
+    const calc = () => setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
+    calc();
+    const id = setInterval(calc, 1000);
+    const onVis = () => { if (document.visibilityState === 'visible') calc(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, [workoutStartTime, isPaused, pausedElapsed]);
 
   const [confirmStop, setConfirmStop] = useState(false);
@@ -6768,7 +6712,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <span style=${{ fontSize: 32 }}>🧘🏼</span>
               <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginTop: 8 }}>${t('¿Listo para terminar?')}</div>
               <div style=${{ fontSize: 12, color: T.sub, marginTop: 4, marginBottom: 16 }}>${t('Estiramientos completados')}</div>
-              <button onClick=${onStopTimer}
+              <button onClick=${() => { if (routine.cardio) { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} } onStopTimer(); }}
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl press-scale"
                 style=${{ background: T.accent }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
@@ -7028,8 +6972,9 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   const protein = sumMealsProp(meals, 'protein');
   const calories = sumMealsProp(meals, 'cal');
-  const gymDone = exerciseStates.filter(e => e.sets.every(s => s.done)).length;
-  const gymTotal = routine.rest ? 0 : routine.exercises.length;
+  const cardioDone = routine.cardio && (() => { try { return localStorage.getItem('ds_cardio_done_' + localDate()) === 'true'; } catch { return false; } })();
+  const gymDone = routine.cardio ? (cardioDone ? 1 : 0) : exerciseStates.filter(e => e.sets.every(s => s.done)).length;
+  const gymTotal = routine.cardio ? 1 : routine.rest ? 0 : routine.exercises.length;
 
   const streak = getStreak();
   const profileName = (() => { try { return localStorage.getItem('ds_profile_name') || 'Felipe'; } catch { return 'Felipe'; } })();
@@ -7332,9 +7277,12 @@ function FloatingTimer({ workoutStartTime, isPaused, pausedElapsed, routine, exe
       if (isPaused) setElapsed(pausedElapsed);
       return;
     }
-    setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000)), 1000);
-    return () => clearInterval(id);
+    const calc = () => setElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
+    calc();
+    const id = setInterval(calc, 1000);
+    const onVis = () => { if (document.visibilityState === 'visible') calc(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, [workoutStartTime, isPaused, pausedElapsed]);
 
   const m = Math.floor(elapsed / 60);
@@ -7353,7 +7301,7 @@ function FloatingTimer({ workoutStartTime, isPaused, pausedElapsed, routine, exe
             : html`<div className="live-dot" style=${{ width: 8, height: 8, background: '#fff' }} />`
           }
           <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>${timerStr}</span>
-          <span style=${{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>${routine.name} \u00B7 ${gymDone}/${gymTotal}</span>
+          <span style=${{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>${routine.name}${!routine.cardio ? ' \u00B7 ' + gymDone + '/' + gymTotal : ''}</span>
         </div>
         <div className="flex items-center gap-1.5" onClick=${e => e.stopPropagation()}>
           ${isPaused ? html`
@@ -7678,7 +7626,7 @@ function App() {
     <div className="max-w-lg mx-auto min-h-screen" style=${{ paddingTop: 'var(--safe-top)' }}
       onTouchStart=${handleTouchStart} onTouchEnd=${handleTouchEnd}>
 
-      ${workoutStartTime && tab !== 'live' && !routine.rest ? (() => {
+      ${workoutStartTime && tab !== 'live' && (!routine.rest || routine.cardio) ? (() => {
         const isPaused = pausedElapsed !== null;
         return html`<${FloatingTimer}
           workoutStartTime=${workoutStartTime} isPaused=${isPaused} pausedElapsed=${pausedElapsed}

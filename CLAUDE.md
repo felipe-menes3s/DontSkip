@@ -130,7 +130,7 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 10. **streak** — Current streak, best streak, total days, consistency %, PR count
 
 ## Key Components
-- **StatCard** — SVG progress ring (64px), Phosphor icon, useCountUp animation, sparkline, context line
+- **StatCard** — SVG progress ring (64px), Phosphor icon, useCountUp animation, sparkline. Labels use `T.text` (not ring color). No "vs ayer" comparisons — only gym status and water "Meta cumplida"
 - **FloatingTimer** — Global timer bar on all tabs (except Live) when workout active, play/pause/stop
 - **MealBuilder** — Food search, quantity picker, custom food addition with emoji icons
 - **ExerciseCatalog** — Expandable exercise browser by day with GIFs, YouTube links, and 1RM
@@ -183,7 +183,13 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 3. ~~Body measurements with interactive SVG body map + evolution charts~~ ✅ Done
 4. ~~HIIT / interval timer (work/rest/rounds)~~ ✅ Done
 
-## Recent Features (2026-03-26)
+## Recent Features (2026-03-28)
+- **Cardio day selection** — Saturday: pick Walk / Incline Walk / Bike, each with own GIF, warmup, stretching
+- **Body composition cards** — 4 premium cards (Body Fat, Muscle Mass, Visceral Fat, Metabolic Age) + comparison table
+- **Distinct cardio GIFs** — `walk.gif`, `incline_walk.gif`, `bike.gif` from ExerciseDB (anatomical illustration style)
+- **Dashboard cleanup** — StatCard labels in theme text color, removed "vs ayer" comparisons
+
+## Features (2026-03-26)
 - **Dynamic warmup** — 5 muscle-specific exercises before workout (per training day)
 - **Post-workout stretching** — 5 targeted stretches after completing all exercises
 - **Estimated calories burned** — MET-based calculation shown in Live tab metrics + post-workout
