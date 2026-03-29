@@ -539,7 +539,7 @@ const EN = {
   'Prepara tu cuerpo para el entrenamiento': 'Prepare your body for the workout',
   'Enfría y estira los músculos trabajados': 'Cool down and stretch the muscles worked',
   '¿Listo para entrenar?': 'Ready to train?', 'Calentamiento completado': 'Warmup complete',
-  '¿Listo para terminar?': 'Ready to finish?', 'Estiramientos completados': 'Stretching complete', 'Terminar entreno': 'Finish workout',
+  '¿Listo para terminar?': 'Ready to finish?', 'Estiramientos completados': 'Stretching complete', 'Terminar entreno': 'Finish workout', 'Completar cardio': 'Complete cardio', 'Cardio completado': 'Cardio completed',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
   'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
@@ -2353,7 +2353,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
 
 // ── Workout Card ───────────────────────────────────────────────────────
 
-function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpdate }) {
+function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpdate, cardioDone, onCardioDone }) {
   const [wcCardio, setWcCardio] = useState(() => {
     try { return localStorage.getItem('ds_cardio_choice_' + localDate()) || ''; } catch { return ''; }
   });
@@ -2402,6 +2402,23 @@ function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpd
               </div>
               <div style=${{ fontSize: 12, color: T.sub, marginTop: 6 }}>${LANG === 'en' ? wcSelected.descEn : wcSelected.desc}</div>
             ` : ''}
+          `}
+          ${routine.cardio && html`
+            <div style=${{ marginTop: 16 }}>
+              ${cardioDone ? html`
+                <div className="flex items-center justify-center gap-2 py-3 rounded-2xl"
+                  style=${{ background: T.greenDim, border: '1px solid ' + T.green + '30' }}>
+                  <${CheckCircle} size=${18} weight="fill" color=${T.green} />
+                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.green }}>${t('Cardio completado')}</span>
+                </div>
+              ` : html`
+                <button onClick=${onCardioDone}
+                  className="w-full py-3 rounded-2xl press-scale"
+                  style=${{ background: T.accent, border: 'none' }}>
+                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>${t('Completar cardio')}</span>
+                </button>
+              `}
+            </div>
           `}
         </div>
       </div>
@@ -6961,9 +6978,17 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
   const protein = sumMealsProp(meals, 'protein');
   const calories = sumMealsProp(meals, 'cal');
-  const cardioDone = routine.cardio && (() => { try { return localStorage.getItem('ds_cardio_done_' + localDate()) === 'true'; } catch { return false; } })();
+  const [cardioDone, setCardioDone] = useState(() => {
+    if (!routine.cardio) return false;
+    try { return localStorage.getItem('ds_cardio_done_' + localDate()) === 'true'; } catch { return false; }
+  });
   const gymDone = routine.cardio ? (cardioDone ? 1 : 0) : exerciseStates.filter(e => e.sets.every(s => s.done)).length;
   const gymTotal = routine.cardio ? 1 : routine.rest ? 0 : routine.exercises.length;
+  function handleCardioDone() {
+    try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {}
+    setCardioDone(true);
+    haptic([10, 30, 10]);
+  }
 
   const streak = getStreak();
   const profileName = (() => { try { return localStorage.getItem('ds_profile_name') || 'Felipe'; } catch { return 'Felipe'; } })();
@@ -7095,6 +7120,8 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             onUnitToggle=${onUnitToggle}
             exercises=${exerciseStates}
             onExerciseUpdate=${onExerciseUpdate}
+            cardioDone=${cardioDone}
+            onCardioDone=${handleCardioDone}
           />
         <//>
       </div>
