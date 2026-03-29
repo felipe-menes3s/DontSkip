@@ -332,7 +332,7 @@ const EN = {
   // ── StatCard labels ──
   'Proteína': 'Protein', 'Calorías': 'Calories', 'Agua': 'Water', 'Gym': 'Gym',
   // ── StatCard context ──
-  'vs ayer': 'vs yesterday', 'Meta cumplida': 'Goal reached',
+  'Meta cumplida': 'Goal reached',
   'Día de descanso': 'Rest day', 'Entrenamiento completado': 'Workout completed',
   'ejercicios completados': 'exercises completed',
   // ── DaySummary ──
@@ -1885,7 +1885,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <div style=${{ fontSize: 10, fontWeight: 600, color: ringColor, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>${label}</div>
+            <div style=${{ fontSize: 10, fontWeight: 600, color: T.text, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>${label}</div>
             <div className="flex items-baseline gap-1">
               <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: goalReached ? T.green : T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>${animVal}</span>
               <span style=${{ fontSize: 10, fontWeight: 500, color: T.muted }}>/ ${max}${unit}</span>
@@ -1902,7 +1902,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
   return html`
     <div style=${{ padding: '18px 16px', borderRadius: 20, background: colorDim, position: 'relative', overflow: 'hidden' }}>
       <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
-        <div style=${{ fontSize: 11, fontWeight: 600, color: ringColor, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
+        <div style=${{ fontSize: 11, fontWeight: 600, color: T.text, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
         ${sparkline}
       </div>
       <div className="flex items-center gap-4">
@@ -2016,48 +2016,9 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
     return { prot, cal, wat };
   }, [protein, calories, waterGlasses]);
 
-  // Context: compare with yesterday
-  const yesterday = localDate(new Date(Date.now() - 86400000));
-
-  let proteinCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + PROTEIN_GOAL + (LANG === 'en' ? 'g daily' : 'g diarios'), color: T.sub };
-  try {
-    const ym = JSON.parse(localStorage.getItem('ds_meals_' + yesterday) || '[]');
-    const yProt = ym.filter(m => m.confirmed).reduce((s, m) => s + m.items.reduce((a, i) => a + (i.protein || 0), 0), 0);
-    if (yProt > 0) {
-      const diff = protein - yProt;
-      proteinCtx = diff >= 0
-        ? { text: '\u2191 ' + diff + 'g ' + t('vs ayer'), color: T.sub }
-        : { text: '\u2193 ' + Math.abs(diff) + 'g ' + t('vs ayer'), color: T.amber };
-    }
-  } catch {}
-
-  let caloriesCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + CALORIES_GOAL.toLocaleString() + ' kcal', color: T.sub };
-  try {
-    const ym = JSON.parse(localStorage.getItem('ds_meals_' + yesterday) || '[]');
-    const yCal = ym.filter(m => m.confirmed).reduce((s, m) => s + m.items.reduce((a, i) => a + (i.cal || 0), 0), 0);
-    if (yCal > 0) {
-      const diff = calories - yCal;
-      caloriesCtx = diff >= 0
-        ? { text: '\u2191 ' + diff + ' ' + t('vs ayer'), color: T.sub }
-        : { text: '\u2193 ' + Math.abs(diff) + ' ' + t('vs ayer'), color: T.amber };
-    }
-  } catch {}
-
-  let waterCtx = { text: (LANG === 'en' ? 'Goal: ' : 'Meta: ') + waterGoalGlasses + ' ' + t('vasos'), color: T.sub };
-  if (waterGlasses >= waterGoalGlasses) {
-    waterCtx = { text: '\u2713 ' + t('Meta cumplida'), color: T.green };
-  } else {
-    try {
-      const yW = Number(localStorage.getItem('ds_water_' + yesterday)) || 0;
-      if (yW > 0) {
-        const yGlasses = Math.floor(yW / WATER_GLASS_ML);
-        const diff = waterGlasses - yGlasses;
-        waterCtx = diff >= 0
-          ? { text: '\u2191 ' + diff + ' ' + t('vasos') + ' ' + t('vs ayer'), color: T.sub }
-          : { text: '\u2193 ' + Math.abs(diff) + ' ' + t('vasos') + ' ' + t('vs ayer'), color: T.amber };
-      }
-    } catch {}
-  }
+  const proteinCtx = null;
+  const caloriesCtx = null;
+  const waterCtx = waterGlasses >= waterGoalGlasses ? { text: '\u2713 ' + t('Meta cumplida'), color: T.green } : null;
 
   let gymCtx;
   if (gymTotal === 0) gymCtx = { text: t('Día de descanso'), color: T.sub };
