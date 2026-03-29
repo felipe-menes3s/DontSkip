@@ -113,19 +113,7 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 @keyframes pulse-subtle { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 .gif-placeholder { animation: pulse-subtle 2s ease-in-out infinite; }
 
-/* Safe area top bar — CSS-only via body::before (always present, no React needed) */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--safe-top);
-  z-index: 9999;
-  pointer-events: none;
-  transition: background 0.3s;
-  background: var(--ds-bg, #f4f6f9);
-}
+/* Safe area top bar — real DOM element injected below */
 
 /* Tab bar */
 .tab-bar { padding-bottom: calc(8px + var(--safe-bottom)); }
@@ -7624,6 +7612,7 @@ function App() {
         <div className="splash-text" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.9)', letterSpacing: '-1px' }}>DontSkip</div>
       </div>
     `}
+    <div id="safe-bar" style=${{ position: 'fixed', top: 0, left: 0, right: 0, height: 'var(--safe-top)', zIndex: 9999, pointerEvents: 'none', background: T.bg, transition: 'background 0.3s' }} />
     <div className="max-w-lg mx-auto min-h-screen" style=${{ paddingTop: 'var(--safe-top)' }}
       onTouchStart=${handleTouchStart} onTouchEnd=${handleTouchEnd}>
 
