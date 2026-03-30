@@ -183,7 +183,15 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 3. ~~Body measurements with interactive SVG body map + evolution charts~~ ✅ Done
 4. ~~HIIT / interval timer (work/rest/rounds)~~ ✅ Done
 
-## Recent Features (2026-03-28)
+## Recent Features (2026-03-30)
+- **Warmup/Stretching GIFs** — 36 exercise GIFs from ExerciseDB for all warmup and stretching exercises (66 total instances). Displayed 120×120px when exercise is expanded. Leg Swings excluded (no quality match).
+- **StatCard gradient rings** — Large 120px SVG rings with linear gradient arcs (blue/orange/cyan/green). Number value inside ring matches gradient color.
+- **Safe area bar fix** — Replaced CSS `body::before` with real `<div id="safe-bar">` fixed element for reliable PWA safe area
+- **Timer persistence** — `visibilitychange` listener recalculates elapsed time when phone unlocked (iOS fix)
+- **Saturday cardio completion** — "Completar cardio" button on Hoy tab, no timer required. `ds_cardio_done_{date}` flag.
+- **Warmup bug fix** — Warmup now shows while exercises remain unchecked (not tied to timer state)
+
+## Features (2026-03-28)
 - **Cardio day selection** — Saturday: pick Walk / Incline Walk / Bike, each with own GIF, warmup, stretching
 - **Body composition cards** — 4 premium cards (Body Fat, Muscle Mass, Visceral Fat, Metabolic Age) + comparison table
 - **Distinct cardio GIFs** — `walk.gif`, `incline_walk.gif`, `bike.gif` from ExerciseDB (anatomical illustration style)

@@ -298,6 +298,9 @@ applyThemeCSS(getInitialTheme());
     // If env() returned 0, use 47px fallback (standard iPhone safe area)
     var val = h > 0 ? h + 'px' : '47px';
     document.documentElement.style.setProperty('--safe-top', val);
+  } else {
+    // Non-standalone: ensure --safe-top is 0
+    document.documentElement.style.setProperty('--safe-top', '0px');
   }
 })();
 
@@ -540,6 +543,7 @@ const EN = {
   'Enfría y estira los músculos trabajados': 'Cool down and stretch the muscles worked',
   '¿Listo para entrenar?': 'Ready to train?', 'Calentamiento completado': 'Warmup complete',
   '¿Listo para terminar?': 'Ready to finish?', 'Estiramientos completados': 'Stretching complete', 'Terminar entreno': 'Finish workout', 'Completar cardio': 'Complete cardio', 'Cardio completado': 'Cardio completed',
+  '¿Entrenamiento terminado?': 'Workout done?', 'ejercicios completados': 'exercises completed', 'Sí, terminé': "Yes, I'm done", 'Revisar sets': 'Review sets', '¿Estirar después?': 'Stretch after?', 'Sí, estirar': 'Yes, stretch', 'No, terminar': 'No, finish',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
   'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
@@ -1842,7 +1846,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const goalReached = value >= max && max > 0;
 
-  const sz = 120, sw = 9, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
+  const sz = 120, sw = 14, r = (sz - sw) / 2, circ = 2 * Math.PI * r;
   const valColor = gradientColors ? gradientColors[1] : color;
   const off = circ * (1 - pct);
 
@@ -6163,6 +6167,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   }, [workoutStartTime, isPaused, pausedElapsed]);
 
   const [confirmStop, setConfirmStop] = useState(false);
+  const [confirmedDone, setConfirmedDone] = useState(false);
   const [expandedNext, setExpandedNext] = useState(false);
   const [cardioChoice, setCardioChoice] = useState(() => {
     if (!routine.cardio) return '';
@@ -6662,7 +6667,29 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         </div>
       ` : ''}
 
-      ${allDone ? html`
+      ${allDone && !confirmedDone ? html`
+        <!-- Phase 1: Confirm workout done -->
+        <div className="text-center px-5 fade-up" style=${{ paddingTop: 36 }}>
+          <div className="ds-card" style=${{ padding: 28, border: '1px solid ' + T.green + '30' }}>
+            <span style=${{ fontSize: 48 }}>\uD83D\uDCAA\uD83C\uDFFC</span>
+            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginTop: 12, marginBottom: 4 }}>${t('¿Entrenamiento terminado?')}</div>
+            <div style=${{ fontSize: 13, color: T.sub, marginBottom: 20 }}>${gymTotal} ${t('ejercicios completados')} \u00B7 ${completedSets} sets</div>
+            <div className="flex gap-3 justify-center">
+              <button onClick=${() => setConfirmedDone(true)}
+                className="px-6 py-3 rounded-2xl press-scale"
+                style=${{ background: T.green, border: 'none' }}>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Sí, terminé')}</span>
+              </button>
+              <button onClick=${() => { const lastDoneIdx = exerciseStates.map((e,i) => e.sets.every(s => s.done) ? i : -1).filter(i => i >= 0).pop(); if (lastDoneIdx >= 0) { const es = exerciseStates[lastDoneIdx]; const lastSetIdx = es.sets.length - 1; onExerciseUpdate(lastDoneIdx, { ...es, sets: es.sets.map((s,i) => i === lastSetIdx ? { ...s, done: false } : s) }); } }}
+                className="px-6 py-3 rounded-2xl press-scale"
+                style=${{ background: T.input, border: '1px solid ' + T.border }}>
+                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700, color: T.sub }}>${t('Revisar sets')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ` : allDone && confirmedDone ? html`
+        <!-- Phase 2: Completion view -->
         <div className="text-center px-5 fade-up" style=${{ paddingTop: 36 }}>
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke=${T.green} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="celebrate" style=${{ display: 'inline-block', marginBottom: 16 }}>
             <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
@@ -6677,34 +6704,48 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.amber }}>~${calcCaloriesBurned(elapsed, getUserWeightKg())} kcal ${t('quemadas')}</span>
             </div>
           `}
-          <button onClick=${() => {
-            const calsBurned = calcCaloriesBurned(elapsed, getUserWeightKg());
-            const lines = [
-              t('Entrenamiento completado'),
-              routine.name + ' \u2014 ' + t(routine.focus),
-              gymTotal + ' ' + t('ejercicios') + ' \u00B7 ' + completedSets + ' sets',
-              totalVolume > 0 ? formatVolume(totalVolume) + ' ' + unitPref + ' ' + t('volumen total') : '',
-              Math.floor(elapsed / 60) > 0 ? Math.floor(elapsed / 60) + ' ' + t('minutos') : '',
-              calsBurned > 0 ? '~' + calsBurned + ' kcal' : '',
-              '#DontSkip'
-            ].filter(Boolean).join('\n');
-            if (navigator.share) navigator.share({ text: lines }).catch(() => {});
-            else navigator.clipboard.writeText(lines).then(() => alert(t('Copiado')));
-          }}
-            className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-xl press-scale"
-            style=${{ background: T.elevated, color: T.sub, fontSize: 13, fontWeight: 700, border: '1px solid ' + T.border }}>
-            <${ShareFat} size=${14} weight="duotone" />
-            ${t('Compartir')}
-          </button>
         </div>
 
+        ${workoutStartTime ? html`
+          <div className="px-5 pt-5 fade-up">
+            <button onClick=${() => { if (routine.cardio) { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} } onStopTimer(); }}
+              className="w-full py-3.5 rounded-2xl press-scale flex items-center justify-center gap-2"
+              style=${{ background: T.accent, border: 'none' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Terminar entreno')}</span>
+            </button>
+          </div>
+        ` : html`
+          <div className="px-5 pt-5 fade-up">
+            <button onClick=${() => {
+              const calsBurned = calcCaloriesBurned(elapsed, getUserWeightKg());
+              const lines = [
+                t('Entrenamiento completado'),
+                routine.name + ' \u2014 ' + t(routine.focus),
+                gymTotal + ' ' + t('ejercicios') + ' \u00B7 ' + completedSets + ' sets',
+                totalVolume > 0 ? formatVolume(totalVolume) + ' ' + unitPref + ' ' + t('volumen total') : '',
+                Math.floor(elapsed / 60) > 0 ? Math.floor(elapsed / 60) + ' ' + t('minutos') : '',
+                calsBurned > 0 ? '~' + calsBurned + ' kcal' : '',
+                '#DontSkip'
+              ].filter(Boolean).join('\n');
+              if (navigator.share) navigator.share({ text: lines }).catch(() => {});
+              else navigator.clipboard.writeText(lines).then(() => alert(t('Copiado')));
+            }}
+              className="w-full py-3 rounded-2xl press-scale flex items-center justify-center gap-2"
+              style=${{ background: T.elevated, color: T.sub, fontSize: 13, fontWeight: 700, border: '1px solid ' + T.border }}>
+              <${ShareFat} size=${14} weight="duotone" />
+              ${t('Compartir')}
+            </button>
+          </div>
+        `}
+
         ${stretchExercises.length > 0 && html`
-          <div className="px-5 pt-6 fade-up" style=${{ animationDelay: '0.3s' }}>
+          <div className="px-5 pt-5 fade-up" style=${{ animationDelay: '0.3s' }}>
             <button onClick=${() => setShowStretching(!showStretching)}
               className="w-full flex items-center justify-between py-3 press-scale"
               style=${{ borderBottom: '1px solid ' + T.border }}>
               <div className="flex items-center gap-2">
-                <span style=${{ fontSize: 16 }}>🧘🏼</span>
+                <span style=${{ fontSize: 16 }}>\uD83E\uDDD8\uD83C\uDFFC</span>
                 <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
                 <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${stretchDone.length}/${stretchExercises.length}</span>
               </div>
@@ -6743,21 +6784,6 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             `}
           </div>
         `}
-        ${stretchDone.length === stretchExercises.length && stretchExercises.length > 0 && workoutStartTime ? html`
-          <div className="px-5 pt-4 fade-up">
-            <div className="ds-card text-center" style=${{ padding: 24, border: '1px solid ' + T.accent + '30' }}>
-              <span style=${{ fontSize: 32 }}>🧘🏼</span>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginTop: 8 }}>${t('¿Listo para terminar?')}</div>
-              <div style=${{ fontSize: 12, color: T.sub, marginTop: 4, marginBottom: 16 }}>${t('Estiramientos completados')}</div>
-              <button onClick=${() => { if (routine.cardio) { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} } onStopTimer(); }}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl press-scale"
-                style=${{ background: T.accent }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Terminar entreno')}</span>
-              </button>
-            </div>
-          </div>
-        ` : ''}
       ` : html`
         <!-- Current Exercise -->
         ${currentEx && html`
