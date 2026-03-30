@@ -331,7 +331,7 @@ const EN = {
   '¡Casi lo logras! Un esfuerzo más': 'Almost there! One more push',
   '¡Día perfecto! Lo diste todo 💪🏼': 'Perfect day! You gave it all 💪🏼',
   // ── Supplements ──
-  'Suplementos': 'Supplements', 'Creatina': 'Creatine', '5g diarios': '5g daily', 'Post-gym': 'Post-gym',
+  'Suplementos': 'Supplements', 'Creatina': 'Creatine', '5g diarios': '5g daily', 'Post-gym': 'Post-gym', '2 softgels · almuerzo': '2 softgels · lunch', 'Por qué tomo estos suplementos': 'Why I take these supplements', 'Creatina Monohidratada': 'Creatine Monohydrate',
   // ── RestTimer ──
   'Descanso': 'Rest', 'Saltar': 'Skip',
   // ── Notification ──
@@ -1893,6 +1893,9 @@ function SupplementsCheck() {
   const [whey, setWhey] = useState(() => {
     try { return localStorage.getItem('ds_whey_' + date) === 'true'; } catch { return false; }
   });
+  const [omega3, setOmega3] = useState(() => {
+    try { return localStorage.getItem('ds_omega3_' + date) === 'true'; } catch { return false; }
+  });
 
   function toggleCreatine() {
     const next = !creatine;
@@ -1904,8 +1907,27 @@ function SupplementsCheck() {
     setWhey(next);
     try { localStorage.setItem('ds_whey_' + date, String(next)); } catch {}
   }
+  function toggleOmega3() {
+    const next = !omega3;
+    setOmega3(next);
+    try { localStorage.setItem('ds_omega3_' + date, String(next)); } catch {}
+  }
 
-  const allDone = creatine && whey;
+  const allDone = creatine && whey && omega3;
+
+  const suppBtn = (checked, onToggle, emoji, label, sub) => html`
+    <button onClick=${onToggle}
+      className="flex-1 flex items-center gap-2 py-2 px-2.5 rounded-xl transition-all active:scale-[0.97]"
+      style=${{ background: checked ? T.greenDim : T.input, border: '1px solid ' + (checked ? T.green + '30' : 'transparent'), minWidth: 0 }}>
+      <div style=${{ width: 18, height: 18, borderRadius: 5, border: checked ? 'none' : '2px solid ' + T.muted + '50', background: checked ? T.green : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+        ${checked && html`<svg className="check-draw" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`}
+      </div>
+      <div style=${{ minWidth: 0 }}>
+        <div style=${{ fontSize: 12, fontWeight: 700, color: checked ? T.green : T.text, lineHeight: 1, transition: 'color 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>${emoji} ${label}</div>
+        <div style=${{ fontSize: 9, fontWeight: 500, color: T.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>${sub}</div>
+      </div>
+    </button>
+  `;
 
   return html`
     <div className="fade-up" style=${{ marginBottom: 12, padding: '10px 14px', borderRadius: 14, background: T.card, border: '1px solid ' + T.border }}>
@@ -1914,28 +1936,9 @@ function SupplementsCheck() {
         <span style=${{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: T.muted, textTransform: 'uppercase' }}>${t('Suplementos')}</span>
       </div>
       <div className="flex gap-2">
-        <button onClick=${toggleCreatine}
-          className="flex-1 flex items-center gap-2.5 py-2 px-3 rounded-xl transition-all active:scale-[0.97]"
-          style=${{ background: creatine ? T.greenDim : T.input, border: '1px solid ' + (creatine ? T.green + '30' : 'transparent') }}>
-          <div style=${{ width: 20, height: 20, borderRadius: 6, border: creatine ? 'none' : '2px solid ' + T.muted + '50', background: creatine ? T.green : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-            ${creatine && html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`}
-          </div>
-          <div>
-            <div style=${{ fontSize: 13, fontWeight: 700, color: creatine ? T.green : T.text, lineHeight: 1, transition: 'color 0.2s' }}>🍳 ${t('Creatina')}</div>
-            <div style=${{ fontSize: 10, fontWeight: 500, color: T.muted, marginTop: 2 }}>${t('5g diarios')}</div>
-          </div>
-        </button>
-        <button onClick=${toggleWhey}
-          className="flex-1 flex items-center gap-2.5 py-2 px-3 rounded-xl transition-all active:scale-[0.97]"
-          style=${{ background: whey ? T.greenDim : T.input, border: '1px solid ' + (whey ? T.green + '30' : 'transparent') }}>
-          <div style=${{ width: 20, height: 20, borderRadius: 6, border: whey ? 'none' : '2px solid ' + T.muted + '50', background: whey ? T.green : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-            ${whey && html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`}
-          </div>
-          <div>
-            <div style=${{ fontSize: 13, fontWeight: 700, color: whey ? T.green : T.text, lineHeight: 1, transition: 'color 0.2s' }}>🥤 Whey</div>
-            <div style=${{ fontSize: 10, fontWeight: 500, color: T.muted, marginTop: 2 }}>Post-gym</div>
-          </div>
-        </button>
+        ${suppBtn(creatine, toggleCreatine, '\uD83C\uDF73', t('Creatina'), t('5g diarios'))}
+        ${suppBtn(whey, toggleWhey, '\uD83E\uDD64', 'Whey', 'Post-gym')}
+        ${suppBtn(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels \xB7 almuerzo'))}
       </div>
     </div>
   `;
@@ -4769,6 +4772,8 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
     location.reload();
   }, []);
 
+  const [expandedSuppInfo, setExpandedSuppInfo] = useState(null);
+
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem('ds_notes') || ''; } catch { return ''; }
   });
@@ -5083,9 +5088,46 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
           </div>
         </div>
 
+        <!-- Card: Por qué tomo estos suplementos -->
+        <div className="ds-card" style=${{ padding: 20 }}>
+          ${sectionTitle('\uD83D\uDC8A ' + t('Por qué tomo estos suplementos'))}
+          ${[
+            { emoji: '\uD83E\uDD64', name: 'Whey Protein', nameEn: 'Whey Protein',
+              es: 'El Whey es prote\u00edna de suero de leche de absorci\u00f3n r\u00e1pida. Despu\u00e9s del gym, tus m\u00fasculos est\u00e1n en modo de reparaci\u00f3n y necesitan amino\u00e1cidos urgente. El Whey los entrega en 30-60 minutos \u2014 m\u00e1s r\u00e1pido que cualquier comida. Cada scoop aporta 24g de prote\u00edna de alta calidad, lo que representa el 16% de tu meta diaria en un solo vaso. Sin \u00e9l, el entrenamiento construye menos m\u00fasculo porque el cuerpo no tiene los materiales para reparar las fibras da\u00f1adas.',
+              en: 'Whey is fast-absorbing whey protein. After the gym, your muscles are in repair mode and urgently need amino acids. Whey delivers them in 30-60 minutes \u2014 faster than any meal. Each scoop provides 24g of high-quality protein, representing 16% of your daily goal in a single glass. Without it, training builds less muscle because the body lacks the materials to repair damaged fibers.' },
+            { emoji: '\uD83D\uDC8A', name: 'Creatina Monohidratada', nameEn: 'Creatine Monohydrate',
+              es: 'La creatina es el suplemento m\u00e1s estudiado en la historia del fitness \u2014 m\u00e1s de 500 estudios cient\u00edficos respaldan su efectividad. Lo que hace es simple: recarga m\u00e1s r\u00e1pido el ATP, que es la energ\u00eda inmediata de tus m\u00fasculos. Resultado: puedes hacer una rep m\u00e1s, levantar 2-3 kg m\u00e1s, aguantar mejor el \u00faltimo set. A largo plazo eso se traduce en m\u00e1s fuerza y m\u00e1s masa muscular. Los 5g diarios son la dosis exacta que la ciencia recomienda, y se toman todos los d\u00edas \u2014 incluso en descanso \u2014 para mantener los m\u00fasculos saturados.',
+              en: 'Creatine is the most studied supplement in fitness history \u2014 over 500 scientific studies back its effectiveness. What it does is simple: it recharges ATP faster, which is your muscles\u2019 immediate energy source. Result: you can do one more rep, lift 2-3 kg more, push through the last set. Long term, that translates to more strength and muscle mass. The 5g daily dose is exactly what science recommends, taken every day \u2014 even on rest days \u2014 to keep muscles saturated.' },
+            { emoji: '\uD83D\uDC1F', name: 'Omega 3 (Nordic Naturals)', nameEn: 'Omega 3 (Nordic Naturals)',
+              es: 'El Omega 3 es una grasa esencial que el cuerpo no puede producir solo \u2014 tiene que venir de la dieta o suplementos. Sus dos componentes activos (EPA y DHA) hacen tres cosas clave para alguien que entrena: primero, reducen la inflamaci\u00f3n muscular post-entreno, lo que significa menos dolor y recuperaci\u00f3n m\u00e1s r\u00e1pida entre sesiones. Segundo, mejoran la sensibilidad a la insulina, ayudando a que los carbohidratos se usen como energ\u00eda en vez de almacenarse como grasa \u2014 ideal para recomposici\u00f3n corporal. Tercero, protegen las articulaciones que van a trabajar mucho en el gym a largo plazo. Los 2 softgels al d\u00eda aportan 1,280mg de EPA+DHA, la dosis con mayor evidencia cient\u00edfica.',
+              en: 'Omega 3 is an essential fat the body cannot produce on its own \u2014 it must come from diet or supplements. Its two active components (EPA and DHA) do three key things for someone who trains: first, they reduce post-workout muscle inflammation, meaning less soreness and faster recovery between sessions. Second, they improve insulin sensitivity, helping carbohydrates be used as energy instead of stored as fat \u2014 ideal for body recomposition. Third, they protect the joints that will work hard in the gym long term. The 2 softgels per day provide 1,280mg of EPA+DHA, the dose with the strongest scientific evidence.' },
+          ].map((item, idx) => {
+            const isOpen = expandedSuppInfo === idx;
+            function handleToggle() { setExpandedSuppInfo(isOpen ? null : idx); }
+            return html`
+              <div key=${idx} style=${{ borderBottom: idx < 2 ? '1px solid ' + T.border : 'none' }}>
+                <button onClick=${handleToggle}
+                  className="w-full flex items-center justify-between py-3 press-scale"
+                  style=${{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                  <div className="flex items-center gap-2">
+                    <span style=${{ fontSize: 18 }}>${item.emoji}</span>
+                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.text }}>${LANG === 'en' ? item.nameEn : item.name}</span>
+                  </div>
+                  <span style=${{ fontSize: 12, color: T.muted, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>\u25BC</span>
+                </button>
+                ${isOpen ? html`
+                  <div style=${{ fontSize: 13, color: T.sub, lineHeight: 1.7, paddingBottom: 14, paddingLeft: 30 }}>
+                    ${LANG === 'en' ? item.en : item.es}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          })}
+        </div>
+
         <!-- Card 7: Exportar datos -->
         <div className="ds-card" style=${{ padding: 20 }}>
-          ${sectionTitle('📤 ' + t('Exportar datos'))}
+          ${sectionTitle('\uD83D\uDCE4 ' + t('Exportar datos'))}
           <button onClick=${() => {
             const rows = [t('Fecha,Proteína (g),Calorías,Agua (ml),Ejercicios completados')];
             for (let i = 30; i >= 0; i--) {
