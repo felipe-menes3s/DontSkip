@@ -547,7 +547,7 @@ const EN = {
   'Editar comida': 'Edit meal', 'Eliminar comida': 'Delete meal', '¿Eliminar esta comida?': 'Delete this meal?',
   'Ícono': 'Icon', 'Nuevo alimento': 'New food', 'Crear alimento': 'Create food', 'Crear alimento personalizado': 'Create custom food',
   'Recientes': 'Recent', 'Biblioteca': 'Library', 'Guardar cambios': 'Save changes', 'Agregar': 'Add',
-  'con creatina 5g': 'with creatine 5g', '¿Qué tipo de comida?': 'What type of meal?',
+  'con leche y creatina 5g': 'with milk and creatine 5g', '¿Qué tipo de comida?': 'What type of meal?',
   'Leche entera': 'Whole milk',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
@@ -1858,7 +1858,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
   return html`
     <div style=${{ padding: '14px 16px 16px', borderRadius: 20, background: T.card, position: 'relative', boxShadow: 'var(--ds-card-shadow)' }}>
       <div className="flex items-center justify-between" style=${{ marginBottom: 8 }}>
-        <div style=${{ fontSize: 10, fontWeight: 700, color: T.sub, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
+        <div style=${{ fontSize: 10, fontWeight: 700, color: T.text, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${label}</div>
         ${icon}
       </div>
       <div className="flex justify-center">
@@ -1970,10 +1970,10 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
 
   return html`
     <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} gradientId="gProt" gradientColors=${['#5c9fd4','#274472']} />
-      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} gradientId="gCal" gradientColors=${['#e8793a','#b84a0a']} />
-      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} gradientId="gWat" gradientColors=${['#5bbfe8','#0d6e9a']} />
-      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#4ec88a','#0d6b3a']} />
+      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} gradientId="gProt" gradientColors=${['#93c5fd','#274472']} />
+      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} gradientId="gCal" gradientColors=${['#fdba74','#b84a0a']} />
+      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} gradientId="gWat" gradientColors=${['#67e8f9','#0891b2']} />
+      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#86efac','#0d6b3a']} />
     </div>
   `;
 }
@@ -6060,7 +6060,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                     <span style=${{ fontSize: 22 }}>${meal.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
-                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con creatina 5g')}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con leche y creatina 5g')}</div>
                     </div>
                     <button onClick=${() => onMealConfirm(i)}
                       className="py-2 px-4 rounded-xl text-xs font-bold press-scale"
@@ -6079,7 +6079,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                     <span style=${{ fontSize: 22 }}>${meal.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
-                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con creatina 5g')}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con leche y creatina 5g')}</div>
                     </div>
                     <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg" style=${{ background: T.greenDim, color: T.green }}>
                       <svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -7802,9 +7802,9 @@ function App() {
   return html`
     ${showSplash && html`
       <div className="splash-screen fixed inset-0 z-[100] flex flex-col items-center justify-center"
-        style=${{ background: 'linear-gradient(135deg, #1a3a5c, #0f2338)' }}>
+        style=${{ background: '#ffffff' }}>
         <img src="logo-icon.png" alt="" className="splash-logo" style=${{ height: 80, width: 'auto', marginBottom: 16 }} />
-        <div className="splash-text" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.9)', letterSpacing: '-1px' }}>DontSkip</div>
+        <div className="splash-text" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: '#274472', letterSpacing: '-1px' }}>DontSkip</div>
       </div>
     `}
     <div id="safe-bar" style=${{ position: 'fixed', top: 0, left: 0, right: 0, height: 'var(--safe-top)', zIndex: 9999, pointerEvents: 'none', background: T.bg, transition: 'background 0.3s' }} />
