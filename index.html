@@ -544,6 +544,11 @@ const EN = {
   '¿Listo para entrenar?': 'Ready to train?', 'Calentamiento completado': 'Warmup complete',
   '¿Listo para terminar?': 'Ready to finish?', 'Estiramientos completados': 'Stretching complete', 'Terminar entreno': 'Finish workout', 'Completar cardio': 'Complete cardio', 'Cardio completado': 'Cardio completed',
   '¿Entrenamiento terminado?': 'Workout done?', 'ejercicios completados': 'exercises completed', 'Sí, terminé': "Yes, I'm done", 'Revisar sets': 'Review sets', '¿Estirar después?': 'Stretch after?', 'Sí, estirar': 'Yes, stretch', 'No, terminar': 'No, finish',
+  'Editar comida': 'Edit meal', 'Eliminar comida': 'Delete meal', '¿Eliminar esta comida?': 'Delete this meal?',
+  'Ícono': 'Icon', 'Nuevo alimento': 'New food', 'Crear alimento': 'Create food', 'Crear alimento personalizado': 'Create custom food',
+  'Recientes': 'Recent', 'Biblioteca': 'Library', 'Guardar cambios': 'Save changes', 'Agregar': 'Add',
+  'con creatina 5g': 'with creatine 5g', '¿Qué tipo de comida?': 'What type of meal?',
+  'Leche entera': 'Whole milk',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
   'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
@@ -833,8 +838,8 @@ const STRETCHING_ROUTINES = {
 
 const DEFAULT_MEALS = [
   { time: '7:05 AM', name: 'Whey Post-Gym', icon: '\uD83E\uDD64', category: 'whey', items: [
-    { name: 'Whey Protein (1 scoop)', cal: 130, protein: 27, carbs: 3, fat: 1 },
-    { name: 'Agua', cal: 0, protein: 0, carbs: 0, fat: 0 },
+    { name: 'Whey Protein (1 scoop)', icon: '🥤', cal: 130, protein: 27, carbs: 3, fat: 1 },
+    { name: 'Leche entera (1 vaso)', icon: '🥛', cal: 150, protein: 8, carbs: 12, fat: 8 },
   ], confirmed: false },
 ];
 
@@ -5303,6 +5308,43 @@ const FOOD_LIBRARY_DEFAULT = [
   { id: 'leche_choco', icon: '🥛', name: 'Leche de chocolate', portion: '1 vaso', protein: 8, cal: 190, carbs: 26, fat: 5 },
 ];
 
+const FOOD_EMOJIS = [
+  '🍗', '🥩', '🐟', '🥚', '🥛', '🧀', '🍞', '🥐', '🍝', '🍚',
+  '🫓', '🥔', '🥗', '🥬', '🍅', '🥑', '🍌', '🍎', '🍊', '🥤',
+  '🍫', '🍪', '🍕', '🍔', '🌮', '🥪', '🍜', '🥣', '🍰', '🫘',
+  '🌽', '🥕', '🍇', '🫐', '🍓', '🥥', '☕', '🍽️',
+];
+
+function getRecentFoods() {
+  const foods = new Map();
+  const today = new Date();
+  for (let d = 0; d < 7; d++) {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() - d);
+    const key = 'ds_meals_' + localDate(dt);
+    try {
+      const mealsData = JSON.parse(localStorage.getItem(key) || '[]');
+      mealsData.forEach(m => {
+        if (m.confirmed) m.items.forEach(item => {
+          if (!foods.has(item.name)) {
+            foods.set(item.name, {
+              id: 'recent_' + foods.size,
+              name: item.name,
+              icon: item.icon || foodIcon(item.name),
+              portion: '1 porción',
+              protein: item.protein || 0,
+              cal: item.cal || 0,
+              carbs: item.carbs || 0,
+              fat: item.fat || 0,
+            });
+          }
+        });
+      });
+    } catch {}
+  }
+  return Array.from(foods.values());
+}
+
 
 // ── Food Verifier ──────────────────────────────────────────────────────
 
@@ -5532,233 +5574,284 @@ function FoodLibrary({ foodLibrary, onAddFood }) {
 
 // ── Comidas Tab ─────────────────────────────────────────────────────────
 
-function MealBuilder({ foodLibrary, onSave, onCancel, onAddFood, templates, onDeleteTemplate }) {
-  const [query, setQuery] = useState('');
+function MealEditorModal({ visible, category, initialItems, foodLibrary, onSave, onClose, onAddFood, templates, onDeleteTemplate }) {
   const [selected, setSelected] = useState([]);
-  const [qtyPick, setQtyPick] = useState(null); // food being quantity-picked
-  const [addingCustom, setAddingCustom] = useState(false);
+  const [query, setQuery] = useState('');
+  const [qtyPick, setQtyPick] = useState(null);
+  const [showCustom, setShowCustom] = useState(false);
+  const [customEmoji, setCustomEmoji] = useState('\u{1F37D}\uFE0F');
   const [customName, setCustomName] = useState('');
   const [customPortion, setCustomPortion] = useState('');
   const [customCal, setCustomCal] = useState('');
   const [customProtein, setCustomProtein] = useState('');
+  const [foodTab, setFoodTab] = useState('library');
 
-  const filtered = query.trim()
-    ? foodLibrary.filter(f => f.name.toLowerCase().includes(query.toLowerCase().trim()))
-    : foodLibrary;
+  const recentFoods = useMemo(() => visible ? getRecentFoods() : [], [visible]);
 
-  const totalCal = selected.reduce((s, i) => s + i.cal, 0);
-  const totalP = selected.reduce((s, i) => s + i.protein, 0);
+  useEffect(() => {
+    if (visible) {
+      setSelected(initialItems ? initialItems.map(it => ({ ...it })) : []);
+      setQuery(''); setQtyPick(null); setShowCustom(false); setFoodTab('library');
+      setCustomEmoji('\u{1F37D}\uFE0F'); setCustomName(''); setCustomPortion(''); setCustomCal(''); setCustomProtein('');
+    }
+  }, [visible]);
 
+  if (!visible) return null;
+
+  const currentList = foodTab === 'recent' ? recentFoods : foodLibrary;
+  const filtered = query.trim() ? currentList.filter(f => f.name.toLowerCase().includes(query.toLowerCase().trim())) : currentList;
+  const totalCal = selected.reduce((s, i) => s + (i.cal || 0), 0);
+  const totalP = selected.reduce((s, i) => s + (i.protein || 0), 0);
   const qtyOptions = [0.5, 1, 1.5, 2, 3];
 
   function addItem(food, qty) {
     const cal = Math.round(food.cal * qty);
     const protein = Math.round(food.protein * qty);
+    const carbs = Math.round((food.carbs || 0) * qty);
+    const fat = Math.round((food.fat || 0) * qty);
     const label = qty === 1 ? food.name : food.name + ' (x' + qty + ')';
-    setSelected(prev => [...prev, { name: label, cal, protein, carbs: Math.round((food.carbs || 0) * qty), fat: Math.round((food.fat || 0) * qty) }]);
+    const icon = food.icon || foodIcon(food.name);
+    setSelected(prev => [...prev, { name: label, icon, cal, protein, carbs, fat }]);
     setQtyPick(null);
   }
-
-  function removeItem(idx) {
-    setSelected(prev => prev.filter((_, i) => i !== idx));
-  }
+  function removeItem(idx) { setSelected(prev => prev.filter((_, i) => i !== idx)); }
 
   function handleAddCustom() {
     const n = customName.trim();
-    const p = customPortion.trim() || '1 porción';
+    const p = customPortion.trim() || '1 porci\u00F3n';
     const cal = parseInt(customCal) || 0;
     const protein = parseInt(customProtein) || 0;
     if (!n || cal <= 0) return;
-    const food = { id: 'custom_' + Date.now(), name: n, portion: p, protein, cal };
+    const food = { id: 'custom_' + Date.now(), icon: customEmoji, name: n, portion: p, protein, cal, carbs: 0, fat: 0 };
     if (onAddFood) onAddFood(food);
-    setSelected(prev => [...prev, { name: n, cal, protein, carbs: 0, fat: 0 }]);
-    setAddingCustom(false);
-    setCustomName(''); setCustomPortion(''); setCustomCal(''); setCustomProtein('');
-    setQuery('');
+    setSelected(prev => [...prev, { name: n, icon: customEmoji, cal, protein, carbs: 0, fat: 0 }]);
+    setShowCustom(false);
+    setCustomEmoji('\u{1F37D}\uFE0F'); setCustomName(''); setCustomPortion(''); setCustomCal(''); setCustomProtein('');
   }
 
   function handleUseTemplate(tpl) {
-    setSelected(prev => [...prev, ...tpl.items.map(it => ({ ...it }))]);
+    setSelected(prev => [...prev, ...tpl.items.map(it => ({ ...it, icon: it.icon || foodIcon(it.name) }))]);
   }
 
   return html`
-    <div className="fade-up" style=${{ padding: '0 0 4px' }}>
+    <div style=${{ position: 'fixed', inset: 0, zIndex: 9000, background: T.bg, display: 'flex', flexDirection: 'column', paddingTop: 'var(--safe-top)' }} className="fade-up">
 
-      <!-- Templates -->
-      ${templates && templates.length > 0 && selected.length === 0 && html`
-        <div className="mb-3">
-          <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>\uD83D\uDCCB ${LANG === 'en' ? 'My templates' : 'Mis plantillas'}</div>
-          <div className="space-y-1.5">
-            ${templates.map(tpl => html`
-              <div key=${tpl.id} className="flex items-center gap-2">
-                <button onClick=${() => handleUseTemplate(tpl)}
-                  className="flex-1 flex items-center gap-2 py-2 px-3 rounded-lg press-scale text-left"
-                  style=${{ background: T.input, border: '1px solid ' + T.border }}>
-                  <span className="text-xs font-semibold truncate" style=${{ color: T.text }}>${tpl.name}</span>
-                  <span className="text-xs flex-shrink-0" style=${{ color: T.muted }}>${tpl.items.reduce((s, it) => s + it.protein, 0)}g P \u00B7 ${tpl.items.reduce((s, it) => s + it.cal, 0)} cal</span>
-                </button>
-                ${onDeleteTemplate && html`
-                  <button onClick=${() => onDeleteTemplate(tpl.id)} className="press-scale" style=${{ color: T.muted, padding: 4 }}>
-                    <${X} size=${12} weight="bold" />
-                  </button>
-                `}
-              </div>
-            `)}
+      <div style=${{ padding: '14px 20px', borderBottom: '1px solid ' + T.border, flexShrink: 0 }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span style=${{ fontSize: 22 }}>${category?.icon || '\u{1F37D}\uFE0F'}</span>
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: T.text }}>${LANG === 'en' ? (category?.nameEn || category?.name) : category?.name}</span>
           </div>
-        </div>
-      `}
-
-      <!-- Selected items -->
-      ${selected.length > 0 && html`
-        <div className="mb-3">
-          <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>${t('Tu comida')}</div>
-          <div className="rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
-            ${selected.map((item, i) => html`
-              <div key=${i} className="flex items-center py-2 px-3"
-                style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none' }}>
-                <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${foodIcon(item.name)}</span>${item.name}</span>
-                <span className="w-12 text-center text-xs font-mono font-semibold" style=${{ color: T.accent }}>${item.protein}g</span>
-                <span className="w-14 text-center text-xs font-mono font-semibold" style=${{ color: T.amber }}>${item.cal}</span>
-                <button onClick=${() => removeItem(i)} className="ml-1 p-1 rounded-lg" style=${{ color: T.red }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-            `)}
-            <div className="flex items-center py-2 px-3" style=${{ background: T.input, borderTop: '1px solid ' + T.border }}>
-              <span className="flex-1 text-xs font-bold" style=${{ color: T.sub }}>${t('Total')}</span>
-              <span className="w-12 text-center text-xs font-mono font-bold" style=${{ color: T.accent }}>${totalP}g</span>
-              <span className="w-14 text-center text-xs font-mono font-bold" style=${{ color: T.amber }}>${totalCal}</span>
-              <div style=${{ width: 20 }} />
-            </div>
-          </div>
-        </div>
-      `}
-
-      <!-- Quantity picker overlay -->
-      ${qtyPick && html`
-        <div className="mb-3 rounded-xl fade-up" style=${{ padding: 14, background: T.elevated, border: '1px solid ' + T.border }}>
-          <div className="text-xs font-bold mb-1" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${qtyPick.icon || foodIcon(qtyPick.name)}</span>${qtyPick.name}</div>
-          <div className="text-xs mb-3" style=${{ color: T.muted }}>${qtyPick.portion} \u00B7 ${qtyPick.cal} cal \u00B7 ${qtyPick.protein}g P</div>
-          <div className="text-xs font-semibold mb-2" style=${{ color: T.sub }}>${t('Cantidad')}</div>
-          <div className="flex gap-1.5 flex-wrap">
-            ${qtyOptions.map(q => html`
-              <button key=${q} onClick=${() => addItem(qtyPick, q)}
-                className="py-2 px-3 rounded-lg text-xs font-bold transition-all active:scale-[0.95]"
-                style=${{ background: q === 1 ? T.accent : T.input, color: q === 1 ? '#fff' : T.text, border: '1px solid ' + (q === 1 ? T.accent : T.border) }}>
-                ${q === 0.5 ? '½' : q === 1.5 ? '1½' : q}x
-              </button>
-            `)}
-          </div>
-          <button onClick=${() => setQtyPick(null)} className="mt-2 text-xs font-semibold" style=${{ color: T.muted }}>${t('Cancelar')}</button>
-        </div>
-      `}
-
-      <!-- Search -->
-      ${!qtyPick && html`
-        <div className="mb-2">
-          <input type="text" placeholder=${t('Buscar alimento...')} value=${query}
-            onInput=${e => setQuery(e.target.value)}
-            className="w-full py-2.5 px-3 rounded-xl text-sm"
-            style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
-        </div>
-
-        <!-- Food list -->
-        <div className="rounded-xl overflow-hidden mb-3" style=${{ border: '1px solid ' + T.border, maxHeight: 200, overflowY: 'auto' }}>
-          ${filtered.length === 0 && !addingCustom ? html`
-            <div className="py-4 text-center">
-              <div className="text-xs mb-2" style=${{ color: T.muted }}>${t('No se encontró')} "${query}"</div>
-              <button onClick=${() => { setAddingCustom(true); setCustomName(query); }}
-                className="text-xs font-bold px-3 py-1.5 rounded-lg"
-                style=${{ background: T.accentDim, color: T.accent }}>
-                + ${t('Agregar alimento personalizado')}
-              </button>
-            </div>
-          ` : filtered.map((food, i) => html`
-            <button key=${food.id || i} onClick=${() => setQtyPick(food)}
-              className="flex items-center w-full py-2.5 px-3 text-left transition-all active:scale-[0.98]"
-              style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none', background: 'transparent' }}>
-              <div className="flex-1 min-w-0 mr-2">
-                <div className="text-xs font-semibold truncate" style=${{ color: T.text }}><span style=${{ marginRight: 5 }}>${food.icon || foodIcon(food.name)}</span>${food.name}</div>
-                <div className="text-xs" style=${{ color: T.muted }}>${food.portion}</div>
-              </div>
-              <span className="text-xs font-mono font-semibold flex-shrink-0" style=${{ color: T.accent }}>${food.protein}g P</span>
-              <span className="text-xs font-mono flex-shrink-0 ml-2" style=${{ color: T.muted }}>${food.cal} cal</span>
-              <svg className="ml-2 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-          `)}
-        </div>
-
-        <!-- Add custom food inline -->
-        ${addingCustom && html`
-          <div className="rounded-xl mb-3 fade-up" style=${{ padding: 14, background: T.elevated, border: '1px solid ' + T.border }}>
-            <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>${t('Agregar alimento nuevo')}</div>
-            <div className="space-y-2 mb-3">
-              <input type="text" placeholder=${t('Nombre (ej: Sopa de pollo)')} value=${customName}
-                onInput=${e => setCustomName(e.target.value)}
-                className="w-full py-2 px-3 rounded-lg text-xs"
-                style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
-              <input type="text" placeholder=${t('Porción (ej: 1 tazón)')} value=${customPortion}
-                onInput=${e => setCustomPortion(e.target.value)}
-                className="w-full py-2 px-3 rounded-lg text-xs"
-                style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
-              <div className="flex gap-2">
-                <input type="number" placeholder=${t('Calorías')} value=${customCal}
-                  onInput=${e => setCustomCal(e.target.value)}
-                  className="flex-1 py-2 px-3 rounded-lg text-xs"
-                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
-                <input type="number" placeholder=${t('Proteína (g)')} value=${customProtein}
-                  onInput=${e => setCustomProtein(e.target.value)}
-                  className="flex-1 py-2 px-3 rounded-lg text-xs"
-                  style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick=${handleAddCustom}
-                className="flex-1 py-2 rounded-lg text-xs font-bold"
-                style=${{ background: T.accent, color: '#fff' }}>
-                ${t('Agregar y guardar en biblioteca')}
-              </button>
-              <button onClick=${() => setAddingCustom(false)}
-                className="py-2 px-3 rounded-lg text-xs font-semibold"
-                style=${{ background: T.accentDim, color: T.accent }}>
-                ${t('Cancelar')}
-              </button>
-            </div>
-          </div>
-        `}
-
-        ${!addingCustom && filtered.length > 0 && html`
-          <button onClick=${() => setAddingCustom(true)}
-            className="w-full text-center text-xs font-semibold py-2 mb-3 rounded-xl"
-            style=${{ color: T.accent, background: T.accentDim }}>
-            + ${t('Agregar alimento que no está en la lista')}
+          <button onClick=${onClose} className="press-scale"
+            style=${{ width: 36, height: 36, borderRadius: 12, background: T.input, border: '1px solid ' + T.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke=${T.sub} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
-        `}
-      `}
+        </div>
+      </div>
 
-      <!-- Actions -->
-      <div className="flex gap-2">
+      <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+
+        ${selected.length > 0 && html`
+          <div style=${{ padding: '12px 20px 0' }}>
+            <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>${t('Tu comida')}</div>
+            <div className="rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
+              ${selected.map((item, i) => html`
+                <div key=${i} className="flex items-center py-2.5 px-3"
+                  style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none' }}>
+                  <span style=${{ fontSize: 15, marginRight: 8, flexShrink: 0 }}>${item.icon || foodIcon(item.name)}</span>
+                  <span className="flex-1 text-xs truncate mr-2" style=${{ color: T.text, fontWeight: 600 }}>${item.name}</span>
+                  <span className="text-xs font-mono font-bold" style=${{ color: T.accent, width: 36, textAlign: 'right' }}>${item.protein}g</span>
+                  <span className="text-xs font-mono" style=${{ color: T.muted, width: 42, textAlign: 'right' }}>${item.cal}</span>
+                  <button onClick=${() => removeItem(i)} className="ml-2 press-scale" style=${{ color: T.red, padding: 4, flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              `)}
+              <div className="flex items-center py-2.5 px-3" style=${{ background: T.input, borderTop: '1px solid ' + T.border }}>
+                <span style=${{ fontSize: 15, marginRight: 8 }}>\u{1F4CA}</span>
+                <span className="flex-1 text-xs font-bold" style=${{ color: T.text }}>${t('Total')}</span>
+                <span className="text-xs font-mono font-bold" style=${{ color: T.accent, width: 36, textAlign: 'right' }}>${totalP}g</span>
+                <span className="text-xs font-mono font-bold" style=${{ color: T.muted, width: 42, textAlign: 'right' }}>${totalCal}</span>
+                <div style=${{ width: 22 }} />
+              </div>
+            </div>
+          </div>
+        `}
+
+        ${templates && templates.length > 0 && selected.length === 0 && html`
+          <div style=${{ padding: '12px 20px 0' }}>
+            <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>\u{1F4CB} ${LANG === 'en' ? 'My templates' : 'Mis plantillas'}</div>
+            <div className="space-y-1.5">
+              ${templates.map(tpl => html`
+                <div key=${tpl.id} className="flex items-center gap-2">
+                  <button onClick=${() => handleUseTemplate(tpl)}
+                    className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-xl press-scale text-left"
+                    style=${{ background: T.input, border: '1px solid ' + T.border }}>
+                    <span className="text-xs font-semibold truncate" style=${{ color: T.text }}>${tpl.name}</span>
+                    <span className="text-xs flex-shrink-0" style=${{ color: T.muted }}>${tpl.items.reduce((s, it) => s + it.protein, 0)}g P \u00B7 ${tpl.items.reduce((s, it) => s + it.cal, 0)} cal</span>
+                  </button>
+                  ${onDeleteTemplate && html`
+                    <button onClick=${() => onDeleteTemplate(tpl.id)} className="press-scale" style=${{ color: T.muted, padding: 4 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  `}
+                </div>
+              `)}
+            </div>
+          </div>
+        `}
+
+        ${qtyPick ? html`
+          <div style=${{ padding: '12px 20px' }}>
+            <div className="rounded-xl fade-up" style=${{ padding: 16, background: T.elevated, border: '1px solid ' + T.accent + '40' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <span style=${{ fontSize: 24 }}>${qtyPick.icon || foodIcon(qtyPick.name)}</span>
+                <div>
+                  <div className="text-sm font-bold" style=${{ color: T.text }}>${qtyPick.name}</div>
+                  <div className="text-xs" style=${{ color: T.muted }}>${qtyPick.portion} \u00B7 ${qtyPick.cal} cal \u00B7 ${qtyPick.protein}g P</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold mb-2" style=${{ color: T.sub }}>${t('Cantidad')}</div>
+              <div className="flex gap-2">
+                ${qtyOptions.map(q => html`
+                  <button key=${q} onClick=${() => addItem(qtyPick, q)}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.95]"
+                    style=${{ background: q === 1 ? T.accent : T.input, color: q === 1 ? '#fff' : T.text, border: '1px solid ' + (q === 1 ? T.accent : T.border) }}>
+                    ${q === 0.5 ? '\u00BD' : q === 1.5 ? '1\u00BD' : q}x
+                  </button>
+                `)}
+              </div>
+              <button onClick=${() => setQtyPick(null)} className="w-full mt-3 py-2 text-xs font-semibold" style=${{ color: T.muted }}>${t('Cancelar')}</button>
+            </div>
+          </div>
+        ` : html`
+          <div style=${{ padding: '12px 20px 0' }}>
+            <input type="text" placeholder=${t('Buscar alimento...')} value=${query}
+              onInput=${e => setQuery(e.target.value)}
+              className="w-full py-3 px-4 rounded-xl"
+              style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text, fontSize: 15, fontFamily: 'Outfit, sans-serif' }} />
+          </div>
+
+          <div className="flex gap-2 px-5 py-3">
+            ${[{ id: 'library', label: t('Biblioteca'), icon: '\u{1F4DA}' }, { id: 'recent', label: t('Recientes'), icon: '\u23F1' }].map(s => html`
+              <button key=${s.id} onClick=${() => setFoodTab(s.id)}
+                className="py-2 px-3.5 rounded-xl text-xs font-bold transition-all"
+                style=${{ background: foodTab === s.id ? T.accentDim : T.input,
+                  color: foodTab === s.id ? T.accent : T.muted, border: '1px solid ' + (foodTab === s.id ? T.accent + '40' : T.border) }}>
+                ${s.icon} ${s.label}
+              </button>
+            `)}
+          </div>
+
+          <div style=${{ padding: '0 20px' }}>
+            ${filtered.length === 0 && !showCustom ? html`
+              <div className="py-6 text-center rounded-xl" style=${{ background: T.input }}>
+                <div className="text-sm mb-2" style=${{ color: T.muted }}>${t('No se encontr\u00F3')} "${query}"</div>
+                <button onClick=${() => { setShowCustom(true); setCustomName(query); }}
+                  className="text-xs font-bold px-4 py-2 rounded-xl"
+                  style=${{ background: T.accentDim, color: T.accent }}>
+                  + ${t('Crear alimento')}
+                </button>
+              </div>
+            ` : html`
+              <div className="rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border, maxHeight: 280, overflowY: 'auto' }}>
+                ${filtered.map((food, i) => html`
+                  <button key=${food.id || i} onClick=${() => setQtyPick(food)}
+                    className="flex items-center w-full py-3 px-3.5 text-left transition-all active:scale-[0.98]"
+                    style=${{ borderTop: i > 0 ? '1px solid ' + T.border : 'none', background: 'transparent' }}>
+                    <span style=${{ fontSize: 18, marginRight: 10, flexShrink: 0 }}>${food.icon || foodIcon(food.name)}</span>
+                    <div className="flex-1 min-w-0 mr-2">
+                      <div className="text-sm font-semibold truncate" style=${{ color: T.text }}>${food.name}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${food.portion}</div>
+                    </div>
+                    <span className="text-xs font-mono font-bold flex-shrink-0" style=${{ color: T.accent }}>${food.protein}g</span>
+                    <span className="text-xs font-mono flex-shrink-0 ml-2" style=${{ color: T.muted }}>${food.cal}</span>
+                    <svg className="ml-2 flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                `)}
+              </div>
+            `}
+
+            ${!showCustom && filtered.length > 0 && html`
+              <button onClick=${() => setShowCustom(true)}
+                className="w-full text-center text-xs font-bold py-3 mt-3 rounded-xl"
+                style=${{ color: T.accent, background: T.accentDim }}>
+                + ${t('Crear alimento personalizado')}
+              </button>
+            `}
+
+            ${showCustom && html`
+              <div className="rounded-xl mt-3 fade-up" style=${{ padding: 16, background: T.elevated, border: '1px solid ' + T.border }}>
+                <div className="text-sm font-bold mb-3" style=${{ color: T.text }}>${t('Nuevo alimento')}</div>
+                <div className="text-xs font-semibold mb-2" style=${{ color: T.sub }}>${t('\u00CDcono')}</div>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  ${FOOD_EMOJIS.map(em => html`
+                    <button key=${em} onClick=${() => setCustomEmoji(em)}
+                      style=${{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
+                        background: customEmoji === em ? T.accentDim : T.input, border: customEmoji === em ? '2px solid ' + T.accent : '1px solid ' + T.border,
+                        transition: 'all 0.15s' }}>
+                      ${em}
+                    </button>
+                  `)}
+                </div>
+                <div className="space-y-2.5 mb-3">
+                  <input type="text" placeholder=${t('Nombre (ej: Sopa de pollo)')} value=${customName}
+                    onInput=${e => setCustomName(e.target.value)}
+                    className="w-full py-2.5 px-3 rounded-xl text-sm"
+                    style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                  <input type="text" placeholder=${t('Porci\u00F3n (ej: 1 taz\u00F3n)')} value=${customPortion}
+                    onInput=${e => setCustomPortion(e.target.value)}
+                    className="w-full py-2.5 px-3 rounded-xl text-sm"
+                    style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                  <div className="flex gap-2">
+                    <input type="number" placeholder=${t('Calor\u00EDas')} value=${customCal}
+                      onInput=${e => setCustomCal(e.target.value)}
+                      className="flex-1 py-2.5 px-3 rounded-xl text-sm"
+                      style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                    <input type="number" placeholder=${t('Prote\u00EDna (g)')} value=${customProtein}
+                      onInput=${e => setCustomProtein(e.target.value)}
+                      className="flex-1 py-2.5 px-3 rounded-xl text-sm"
+                      style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text }} />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick=${handleAddCustom}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                    style=${{ background: T.accent, color: '#fff' }}>
+                    ${t('Agregar')}
+                  </button>
+                  <button onClick=${() => setShowCustom(false)}
+                    className="py-2.5 px-4 rounded-xl text-sm font-semibold"
+                    style=${{ background: T.input, color: T.sub, border: '1px solid ' + T.border }}>
+                    ${t('Cancelar')}
+                  </button>
+                </div>
+              </div>
+            `}
+          </div>
+        `}
+
+        <div style=${{ height: 100 }} />
+      </div>
+
+      <div style=${{ padding: '12px 20px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid ' + T.border, background: T.bg, flexShrink: 0 }}>
         <button onClick=${() => { if (selected.length > 0) onSave(selected); }}
           disabled=${selected.length === 0}
-          className="flex-1 py-2.5 rounded-xl text-xs font-bold"
-          style=${{ background: selected.length > 0 ? T.accent : T.elevated, color: selected.length > 0 ? '#fff' : T.muted }}>
-          ${t('Guardar comida')} (${selected.length})
-        </button>
-        <button onClick=${onCancel}
-          className="py-2.5 px-4 rounded-xl text-xs font-semibold"
-          style=${{ background: T.accentDim, color: T.accent }}>
-          ${t('Cancelar')}
+          className="w-full py-3.5 rounded-2xl text-sm font-bold press-scale"
+          style=${{ background: selected.length > 0 ? T.accent : T.elevated, color: selected.length > 0 ? '#fff' : T.muted, fontFamily: 'Outfit, sans-serif', fontWeight: 800 }}>
+          ${initialItems ? t('Guardar cambios') : t('Guardar comida')} ${selected.length > 0 ? '(' + selected.length + ')' : ''}
         </button>
       </div>
     </div>
   `;
 }
-
-
-function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem, dark, onThemeToggle, onLangToggle }) {
+function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem, onDeleteMeal, dark, onThemeToggle, onLangToggle }) {
   const [section, setSection] = useState('hoy');
-  const [addingCategory, setAddingCategory] = useState(null); // null | category object
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editorCategory, setEditorCategory] = useState(null);
+  const [editorInitialItems, setEditorInitialItems] = useState(null);
+  const [editingMealIdx, setEditingMealIdx] = useState(null);
   const [foodLibrary, setFoodLibrary] = useState(() => {
     try {
       const saved = localStorage.getItem('ds_food_library_custom');
@@ -5796,7 +5889,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
     const defaultName = meal.items.map(it => it.name.split('(')[0].trim()).join(' + ');
     const name = prompt(LANG === 'en' ? 'Template name:' : 'Nombre de la plantilla:', defaultName);
     if (!name) return;
-    const tpl = { id: Date.now(), name, category: meal.category || 'snack', items: meal.items.map(it => ({ name: it.name, cal: it.cal, protein: it.protein, carbs: it.carbs || 0, fat: it.fat || 0 })) };
+    const tpl = { id: Date.now(), name, category: meal.category || 'snack', items: meal.items.map(it => ({ name: it.name, icon: it.icon, cal: it.cal, protein: it.protein, carbs: it.carbs || 0, fat: it.fat || 0 })) };
     const next = [...templates, tpl];
     setTemplates(next);
     try { localStorage.setItem('ds_meal_templates', JSON.stringify(next)); } catch {}
@@ -5808,19 +5901,40 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
     try { localStorage.setItem('ds_meal_templates', JSON.stringify(next)); } catch {}
   }
 
-  function handleSelectCategory(cat) {
-    setAddingCategory(cat);
+  function openNewMeal(cat) {
+    setEditorCategory(cat);
+    setEditorInitialItems(null);
+    setEditingMealIdx(null);
     setShowCategoryPicker(false);
+    setEditorVisible(true);
   }
 
-  function handleSaveMeal(items) {
-    onAddMeal(items, addingCategory);
-    setAddingCategory(null);
+  function openEditMeal(mealIdx) {
+    const meal = meals[mealIdx];
+    const cat = MEAL_CATEGORIES.find(c => c.key === meal.category) || { key: meal.category, name: meal.name, nameEn: meal.name, icon: meal.icon };
+    setEditorCategory(cat);
+    setEditorInitialItems(meal.items);
+    setEditingMealIdx(mealIdx);
+    setEditorVisible(true);
+  }
+
+  function handleEditorSave(items) {
+    if (editingMealIdx !== null) {
+      onMealEdit(editingMealIdx, items);
+    } else {
+      onAddMeal(items, editorCategory);
+    }
+    setEditorVisible(false);
+  }
+
+  function confirmDeleteMeal(idx) {
+    if (confirm(LANG === 'en' ? 'Delete this meal?' : '\u00BFEliminar esta comida?')) {
+      onDeleteMeal(idx);
+    }
   }
 
   return html`
     <div>
-      <!-- Header -->
       <div className="px-5 pt-2 pb-3 fade-up">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -5835,7 +5949,6 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
         <div className="text-sm" style=${{ color: T.muted }}>${dayLabel(getTodayKey())} \u00B7 ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'long' })}</div>
       </div>
 
-      <!-- Section pills -->
       <div className="flex gap-2 px-5 mb-4 fade-up">
         ${[{ id: 'hoy', label: t('Hoy') }, { id: 'biblioteca', label: t('Mi Biblioteca') }].map(s => html`
           <button key=${s.id} onClick=${() => setSection(s.id)}
@@ -5849,7 +5962,6 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
 
       ${section === 'hoy' ? html`
         <div className="px-4 stagger">
-          <!-- Macro donut + progress bars -->
           <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
             ${(() => {
               const confirmed = meals.filter(m => m.confirmed);
@@ -5936,13 +6048,11 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
             </div>
           </div>
 
-          <!-- Meal cards -->
           ${meals.map((meal, i) => {
             const isWhey = meal.category === 'whey';
             const mealTotalP = meal.items.reduce((s, it) => s + it.protein, 0);
             const mealTotalCal = meal.items.reduce((s, it) => s + it.cal, 0);
 
-            // Compact Whey card
             if (isWhey && !meal.confirmed) {
               return html`
                 <div key=${i} className="ds-card mb-3 fade-up" style=${{ padding: '14px 18px' }}>
@@ -5950,7 +6060,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                     <span style=${{ fontSize: 22 }}>${meal.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
-                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g ${t('prote\u00EDna')}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con creatina 5g')}</div>
                     </div>
                     <button onClick=${() => onMealConfirm(i)}
                       className="py-2 px-4 rounded-xl text-xs font-bold press-scale"
@@ -5962,7 +6072,6 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
               `;
             }
 
-            // Confirmed Whey — compact green
             if (isWhey && meal.confirmed) {
               return html`
                 <div key=${i} className="ds-card mb-3 fade-up" style=${{ padding: '14px 18px', opacity: 0.7 }}>
@@ -5970,7 +6079,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                     <span style=${{ fontSize: 22 }}>${meal.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm" style=${{ color: T.text }}>${meal.name}</div>
-                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g ${t('prote\u00EDna')}</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${mealTotalCal} kcal \u00B7 ${mealTotalP}g P \u00B7 ${t('con creatina 5g')}</div>
                     </div>
                     <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg" style=${{ background: T.greenDim, color: T.green }}>
                       <svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -5981,7 +6090,6 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
               `;
             }
 
-            // Regular meal card (Desayuno, Almuerzo, Cena, Snack)
             return html`
               <div key=${i} className="ds-card mb-3 overflow-hidden fade-up">
                 <div className="flex items-center justify-between px-5 pt-4 pb-2">
@@ -5992,26 +6100,32 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                       <div className="text-xs" style=${{ color: T.muted }}>${meal.time}</div>
                     </div>
                   </div>
-                  <span className="text-xs font-bold" style=${{ color: T.copper }}>${mealTotalP}g P \u00B7 ${mealTotalCal} kcal</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold mr-2" style=${{ color: T.copper }}>${mealTotalP}g P \u00B7 ${mealTotalCal} kcal</span>
+                    <button onClick=${() => openEditMeal(i)} className="press-scale"
+                      style=${{ width: 32, height: 32, borderRadius: 8, background: T.input, border: '1px solid ' + T.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick=${() => confirmDeleteMeal(i)} className="press-scale"
+                      style=${{ width: 32, height: 32, borderRadius: 8, background: T.input, border: '1px solid ' + T.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke=${T.red || '#e74c3c'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="px-5 pb-3">
                   ${meal.items.map((item, j) => html`
                     <div key=${j} className="flex items-center gap-2 py-1.5"
                       style=${{ borderBottom: j < meal.items.length - 1 ? '1px solid ' + T.border + '40' : 'none' }}>
-                      <span style=${{ fontSize: 14 }}>${foodIcon(item.name)}</span>
+                      <span style=${{ fontSize: 14 }}>${item.icon || foodIcon(item.name)}</span>
                       <span className="flex-1 min-w-0 truncate" style=${{ fontSize: 12, color: T.text }}>${item.name}</span>
                       <span style=${{ fontSize: 11, color: T.copper, fontWeight: 600, width: 32, textAlign: 'right' }}>${item.protein}g</span>
                       <span style=${{ fontSize: 11, color: T.muted, width: 42, textAlign: 'right' }}>${item.cal}</span>
-                      <button onClick=${() => onRemoveItem(i, j)} className="press-scale"
-                        style=${{ color: T.muted, padding: 4, marginLeft: 2 }}>
-                        <${X} size=${14} weight="bold" />
-                      </button>
                     </div>
                   `)}
                 </div>
 
-                <div className="px-5 pb-4">
+                <div className="flex items-center gap-3 px-5 pb-4">
                   <button onClick=${() => handleSaveTemplate(i)}
                     className="text-xs font-semibold press-scale"
                     style=${{ color: T.accent, padding: '4px 0' }}>
@@ -6022,36 +6136,16 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
             `;
           })}
 
-          <!-- Add meal: category picker or MealBuilder -->
-          ${addingCategory ? html`
+          ${showCategoryPicker ? html`
             <div className="ds-card mx-1 mb-4 fade-up" style=${{ padding: 16 }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span style=${{ fontSize: 16 }}>${addingCategory.icon}</span>
-                  <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? addingCategory.nameEn : addingCategory.name}</span>
-                </div>
-                <button onClick=${() => setAddingCategory(null)} className="press-scale"
-                  style=${{ fontSize: 11, fontWeight: 600, color: T.muted, padding: '2px 8px' }}>${t('Cancelar')}</button>
-              </div>
-              <${MealBuilder}
-                foodLibrary=${foodLibrary}
-                onSave=${handleSaveMeal}
-                onCancel=${() => setAddingCategory(null)}
-                onAddFood=${handleAddFood}
-                templates=${templates.filter(tp => tp.category === addingCategory.key)}
-                onDeleteTemplate=${handleDeleteTemplate}
-              />
-            </div>
-          ` : showCategoryPicker ? html`
-            <div className="ds-card mx-1 mb-4 fade-up" style=${{ padding: 16 }}>
-              <div className="flex items-center justify-between mb-3">
-                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? 'What type of meal?' : '\u00BFQu\u00E9 tipo de comida?'}</span>
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${t('\u00BFQu\u00E9 tipo de comida?')}</span>
                 <button onClick=${() => setShowCategoryPicker(false)} className="press-scale"
                   style=${{ fontSize: 11, fontWeight: 600, color: T.muted, padding: '2px 8px' }}>${t('Cancelar')}</button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 ${MEAL_CATEGORIES.map(cat => html`
-                  <button key=${cat.key} onClick=${() => handleSelectCategory(cat)}
+                  <button key=${cat.key} onClick=${() => openNewMeal(cat)}
                     className="flex items-center gap-2.5 py-3 px-4 rounded-xl press-scale transition-all active:scale-[0.97]"
                     style=${{ background: T.input, border: '1px solid ' + T.border }}>
                     <span style=${{ fontSize: 20 }}>${cat.icon}</span>
@@ -6068,28 +6162,25 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
             </button>
           `}
 
-          <!-- Food verifier -->
           <${FoodVerifier} consumedCal=${consumedCal} consumedProtein=${consumedProtein} foodLibrary=${foodLibrary} />
-
           <div className="bottom-spacer" />
         </div>
       ` : html`
         <div className="px-5">
-          <!-- Meal templates section -->
           ${templates.length > 0 && html`
             <div className="ds-card mb-4 fade-up" style=${{ padding: 16 }}>
               <div className="flex items-center gap-2 mb-3">
-                <span style=${{ fontSize: 14 }}>\uD83D\uDCCB</span>
+                <span style=${{ fontSize: 14 }}>\u{1F4CB}</span>
                 <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? 'My Templates' : 'Mis Plantillas'}</span>
               </div>
               <div className="space-y-2">
                 ${templates.map(tpl => html`
                   <div key=${tpl.id} className="flex items-center gap-2 py-2 px-3 rounded-lg"
                     style=${{ background: T.input, border: '1px solid ' + T.border }}>
-                    <span style=${{ fontSize: 14 }}>${MEAL_CATEGORIES.find(c => c.key === tpl.category)?.icon || '\uD83C\uDF7D\uFE0F'}</span>
+                    <span style=${{ fontSize: 14 }}>${MEAL_CATEGORIES.find(c => c.key === tpl.category)?.icon || '\u{1F37D}\uFE0F'}</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold truncate" style=${{ color: T.text }}>${tpl.name}</div>
-                      <div className="text-xs" style=${{ color: T.muted }}>${tpl.items.length} ${LANG === 'en' ? 'items' : 'items'} \u00B7 ${tpl.items.reduce((s, it) => s + it.protein, 0)}g P</div>
+                      <div className="text-xs" style=${{ color: T.muted }}>${tpl.items.length} items \u00B7 ${tpl.items.reduce((s, it) => s + it.protein, 0)}g P</div>
                     </div>
                     <button onClick=${() => handleDeleteTemplate(tpl.id)} className="press-scale"
                       style=${{ color: T.muted, padding: 4 }}>
@@ -6104,6 +6195,18 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
           <div className="bottom-spacer" />
         </div>
       `}
+
+      <${MealEditorModal}
+        visible=${editorVisible}
+        category=${editorCategory}
+        initialItems=${editorInitialItems}
+        foodLibrary=${foodLibrary}
+        onSave=${handleEditorSave}
+        onClose=${() => setEditorVisible(false)}
+        onAddFood=${handleAddFood}
+        templates=${editorCategory ? templates.filter(tp => tp.category === editorCategory.key) : []}
+        onDeleteTemplate=${handleDeleteTemplate}
+      />
     </div>
   `;
 }
@@ -7634,6 +7737,14 @@ function App() {
     });
   }, [saveMeals]);
 
+  const handleDeleteMeal = useCallback((mealIdx) => {
+    setMeals(prev => {
+      const next = prev.filter((_, i) => i !== mealIdx);
+      saveMeals(next);
+      return next;
+    });
+  }, [saveMeals]);
+
   const handleAddWater = useCallback((ml) => {
     setWaterMl(w => {
       const next = w + ml;
@@ -7729,7 +7840,7 @@ function App() {
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'comidas' && html`<${ComidasTab}
-        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal} onRemoveItem=${handleRemoveItem}
+        meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal} onRemoveItem=${handleRemoveItem} onDeleteMeal=${handleDeleteMeal}
         dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle}
       />`}
       ${tab === 'progreso' && html`<${ProgresoTab} dark=${theme === 'dark'} onThemeToggle=${handleThemeToggle} onLangToggle=${handleLangToggle} unitPref=${unitPref} />`}
