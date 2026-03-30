@@ -1033,8 +1033,13 @@ function getStreak() {
       const dateStr = localDate(date);
       const dk = dayKeys[date.getDay()];
       const r = ROUTINES[dk];
-      // Skip rest/cardio days — they don't break the streak
-      if (r.rest || r.cardio) { if (d > 0 || streak > 0) continue; else continue; }
+      // Rest days (non-cardio) — skip, never break streak
+      if (r.rest && !r.cardio) continue;
+      // Cardio days — count if done, skip if not (never breaks streak)
+      if (r.cardio) {
+        try { if (localStorage.getItem('ds_cardio_done_' + dateStr) === 'true') streak++; } catch {}
+        continue;
+      }
       // Check if there's actual workout data with at least one completed set
       const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
       if (!saved) { if (d === 0) continue; break; } // today not done yet is ok
@@ -1538,16 +1543,21 @@ function WeekStrip() {
     const date = localDate(d);
     const isToday = date === todayDate;
     const isFuture = d > today && !isToday;
-    const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
+    const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest && !ROUTINES[dk].cardio);
+    const isCardio = !!(ROUTINES[dk] && ROUTINES[dk].cardio);
     let done = false;
     if (!isFuture && !isRest) {
-      try {
-        const saved = localStorage.getItem('ds_workout_' + dk + '_' + date);
-        if (saved) {
-          const states = JSON.parse(saved);
-          done = states.length > 0 && states.every(e => e.sets.every(s => s.done));
-        }
-      } catch {}
+      if (isCardio) {
+        try { done = localStorage.getItem('ds_cardio_done_' + date) === 'true'; } catch {}
+      } else {
+        try {
+          const saved = localStorage.getItem('ds_workout_' + dk + '_' + date);
+          if (saved) {
+            const states = JSON.parse(saved);
+            done = states.length > 0 && states.every(e => e.sets.every(s => s.done));
+          }
+        } catch {}
+      }
     }
     return { label: dayLabelsShort[i], isToday, isFuture, isRest, done };
   });
@@ -3120,7 +3130,17 @@ function WeekCalendar({ days, selectedIdx, onSelect }) {
         else if (isSelected) { bg = T.accentDim; border = '2px solid ' + T.accent; }
         let emoji = '';
         if (d.isPast) {
-          emoji = d.routine.rest ? '\uD83D\uDE34' : '\u2705';
+          if (d.routine.rest && !d.routine.cardio) {
+            emoji = '\uD83D\uDE34';
+          } else if (d.routine.cardio) {
+            try { emoji = localStorage.getItem('ds_cardio_done_' + localDate(d.date)) === 'true' ? '\u2705' : '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; } catch { emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; }
+          } else {
+            try {
+              const ws = localStorage.getItem('ds_workout_' + d.dayKey + '_' + localDate(d.date));
+              if (ws) { const st = JSON.parse(ws); emoji = st.some(e => e.sets && e.sets.some(s => s.done)) ? '\u2705' : '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F'; }
+              else emoji = '\u2705';
+            } catch { emoji = '\u2705'; }
+          }
         } else if (d.isFuture) {
           if (d.routine.cardio) emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F';
           else if (d.routine.rest) emoji = '\uD83D\uDEB6\uD83C\uDFFB\u200D\u2642\uFE0F';
@@ -3337,8 +3357,11 @@ function WeekSummary() {
   const planWeek = getPlanWeek();
   const weekDays = getWeekDays();
   const trainedThisWeek = weekDays.filter(d => {
-    if (d.routine.rest || d.routine.cardio) return false;
+    if (d.routine.rest && !d.routine.cardio) return false;
     const dateStr = localDate(d.date);
+    if (d.routine.cardio) {
+      try { return localStorage.getItem('ds_cardio_done_' + dateStr) === 'true'; } catch { return false; }
+    }
     try {
       const saved = localStorage.getItem('ds_workout_' + d.dayKey + '_' + dateStr);
       if (!saved) return false;
