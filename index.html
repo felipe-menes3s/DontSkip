@@ -2734,7 +2734,7 @@ function DualRingCard({ outer, inner }) {
   const outerAnimVal = useCountUp(outer.value, 700);
   const innerAnimVal = useCountUp(inner.value, 700);
 
-  const rOuter = 41, rInner = 29, sw = 7;
+  const rOuter = 41, rInner = 29, sw = 10;
   const circOuter = 2 * Math.PI * rOuter; // ~257.61
   const circInner = 2 * Math.PI * rInner; // ~182.21
   const pctOuter = outer.max > 0 ? Math.min(outer.value / outer.max, 1) : 0;
@@ -2751,7 +2751,10 @@ function DualRingCard({ outer, inner }) {
     <div className="flex items-center gap-2">
       <div style=${{ flexShrink: 0 }}>${m.icon}</div>
       <div style=${{ flex: 1, minWidth: 0 }}>
-        <div style=${{ fontSize: 10, fontWeight: 700, fontFamily: inter, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>${m.label}</div>
+        <div className="flex items-center gap-1">
+          <div style=${{ width: 8, height: 8, borderRadius: 4, background: m.gradientColors[1], flexShrink: 0 }} />
+          <span style=${{ fontSize: 10, fontWeight: 700, fontFamily: inter, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>${m.label}</span>
+        </div>
         <div className="flex items-center gap-1" style=${{ marginTop: 2 }}>
           <span style=${{ fontSize: 22, fontWeight: 800, fontFamily: inter, color: T.text, lineHeight: 1 }}>${animVal}</span>
           <span style=${{ fontSize: 10, fontWeight: 500, fontFamily: inter, color: T.muted }}>/ ${m.max}${m.unit}</span>
