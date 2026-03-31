@@ -295,8 +295,8 @@ applyThemeCSS(getInitialTheme());
     document.body.appendChild(test);
     var h = test.offsetHeight;
     document.body.removeChild(test);
-    // If env() returned 0, use 47px fallback (standard iPhone safe area)
-    var val = h > 0 ? h + 'px' : '47px';
+    // If env() returned 0, use minimal fallback
+    var val = h > 0 ? h + 'px' : '20px';
     document.documentElement.style.setProperty('--safe-top', val);
   } else {
     // Non-standalone: ensure --safe-top is 0
@@ -549,6 +549,7 @@ const EN = {
   'Recientes': 'Recent', 'Biblioteca': 'Library', 'Guardar cambios': 'Save changes', 'Agregar': 'Add',
   'con leche y creatina 5g': 'with milk and creatine 5g', '¿Qué tipo de comida?': 'What type of meal?',
   'Leche entera': 'Whole milk',
+  'Calentamiento y estiramientos': 'Warmup & Stretching', 'Completado': 'Completed',
   'c/dirección': 'each direction', 'c/l': 'each side',
   'Marcar como hecho': 'Mark as done', 'Completado': 'Completed',
   'Rotaciones de hombro': 'Arm Circles', 'Estiramiento de pecho con banda': 'Band Pull-Aparts',
@@ -1894,9 +1895,6 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
           <${CheckCircle} size=${16} weight="fill" color=${T.green} />
         </div>
       ` : ''}
-      ${context ? html`
-        <div style=${{ fontSize: 11, fontWeight: 600, color: context.color || T.sub, marginTop: 8, textAlign: 'center' }}>${context.text}</div>
-      ` : ''}
     </div>
   `;
 }
@@ -1976,14 +1974,14 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
 
   let gymCtx = null;
   if (gymTotal === 0) gymCtx = { text: t('Día de descanso'), color: T.sub };
-  else if (gymDone === gymTotal) gymCtx = { text: '\u2713 ' + t('Entrenamiento completado'), color: T.green };
+  else if (gymDone === gymTotal) gymCtx = { text: '\u2713 ' + t('Completado'), color: T.green };
 
   return html`
     <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
       <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} gradientId="gProt" gradientColors=${['#93c5fd','#274472']} />
       <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} gradientId="gCal" gradientColors=${['#fdba74','#b84a0a']} />
       <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} gradientId="gWat" gradientColors=${['#67e8f9','#0891b2']} />
-      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.accent} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.accent} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#86efac','#0d6b3a']} />
+      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.green} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.green} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#86efac','#0d6b3a']} />
     </div>
   `;
 }
@@ -3128,17 +3126,19 @@ function WeekCalendar({ days, selectedIdx, onSelect }) {
         let border = '2px solid transparent';
         if (isToday) { bg = T.accent; textColor = '#fff'; border = '2px solid ' + T.accent; }
         else if (isSelected) { bg = T.accentDim; border = '2px solid ' + T.accent; }
+        const moodEmojis = ['\uD83D\uDE2B', '\uD83D\uDE10', '\uD83D\uDE0A', '\uD83D\uDCAA\uD83C\uDFFC', '\uD83D\uDD25'];
         let emoji = '';
-        if (d.isPast) {
+        if (d.isPast || d.isToday) {
+          const savedMood = (() => { try { const m = localStorage.getItem('ds_mood_' + localDate(d.date)); return m ? moodEmojis[Number(m)] : null; } catch { return null; } })();
           if (d.routine.rest && !d.routine.cardio) {
             emoji = '\uD83D\uDE34';
           } else if (d.routine.cardio) {
-            try { emoji = localStorage.getItem('ds_cardio_done_' + localDate(d.date)) === 'true' ? '\u2705' : '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; } catch { emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; }
+            try { const cd = localStorage.getItem('ds_cardio_done_' + localDate(d.date)) === 'true'; emoji = cd ? (savedMood || '\u2705') : '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; } catch { emoji = '\uD83C\uDFC3\uD83C\uDFFB\u200D\u2642\uFE0F'; }
           } else {
             try {
               const ws = localStorage.getItem('ds_workout_' + d.dayKey + '_' + localDate(d.date));
-              if (ws) { const st = JSON.parse(ws); emoji = st.some(e => e.sets && e.sets.some(s => s.done)) ? '\u2705' : '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F'; }
-              else emoji = '\u2705';
+              if (ws) { const st = JSON.parse(ws); const trained = st.some(e => e.sets && e.sets.some(s => s.done)); emoji = trained ? (savedMood || '\u2705') : '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F'; }
+              else emoji = d.isToday ? '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F' : '\u2705';
             } catch { emoji = '\u2705'; }
           }
         } else if (d.isFuture) {
@@ -3692,6 +3692,83 @@ function ExerciseCatalog({ unitPref }) {
   `;
 }
 
+function WarmupStretchCatalog() {
+  const [openSection, setOpenSection] = useState(null);
+  const [openEx, setOpenEx] = useState(null);
+  const dayOrder = ['Upper A', 'Lower A', 'Upper B', 'Lower B'];
+  const dayNames = { 'Upper A': t('Lunes — Upper A'), 'Lower A': t('Martes — Lower A'), 'Upper B': t('Jueves — Upper B'), 'Lower B': t('Viernes — Lower B') };
+  const dayEmojis = { 'Upper A': '💪🏼', 'Lower A': '🦵🏻', 'Upper B': '💪🏼', 'Lower B': '🦵🏻' };
+
+  const sections = [
+    { id: 'warmup', title: t('Calentamiento dinámico'), icon: '🔥', data: WARMUP_ROUTINES },
+    { id: 'stretch', title: t('Estiramientos post-entreno'), icon: '🧘🏼', data: STRETCHING_ROUTINES },
+  ];
+
+  return html`
+    <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
+      <${SectionHeader} title=${t("Calentamiento y estiramientos")} />
+      <div className="space-y-2">
+        ${sections.map(sec => html`
+          <div key=${sec.id}>
+            <div className="text-xs font-bold mb-1.5 mt-2" style=${{ color: T.sub }}>${sec.icon} ${sec.title}</div>
+            ${dayOrder.map(dk => {
+              const exercises = sec.data[dk] || [];
+              const sKey = sec.id + '-' + dk;
+              const isOpen = openSection === sKey;
+              return html`
+                <div key=${sKey}>
+                  <button onClick=${() => { setOpenSection(isOpen ? null : sKey); setOpenEx(null); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl press-scale"
+                    style=${{ background: isOpen ? T.accentDim : T.elevated, transition: 'all 0.2s', marginBottom: 2 }}>
+                    <span style=${{ fontSize: 14 }}>${dayEmojis[dk]}</span>
+                    <div className="flex-1 text-left">
+                      <div style=${{ fontSize: 12, fontWeight: 700, color: isOpen ? T.accent : T.text }}>${dayNames[dk]}</div>
+                      <div style=${{ fontSize: 10, color: T.muted }}>${exercises.length} ${t('ejercicios')}</div>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  ${isOpen && html`
+                    <div className="slide-down mt-1 mb-2">
+                      ${exercises.map((ex, i) => {
+                        const eKey = sKey + '-' + i;
+                        const eOpen = openEx === eKey;
+                        return html`
+                          <div key=${i} style=${{ borderBottom: i < exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
+                            <div className="flex items-center gap-3 py-2 px-3 cursor-pointer" onClick=${() => setOpenEx(eOpen ? null : eKey)}>
+                              <span style=${{ fontSize: 16 }}>${ex.emoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <div style=${{ fontSize: 12, fontWeight: 600, color: T.text }}>${LANG === 'en' ? ex.nameEn : ex.name}</div>
+                                <div style=${{ fontSize: 10, color: T.muted }}>${ex.sets}${ex.detail ? ' ' + t(ex.detail) : ''}</div>
+                              </div>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: eOpen ? 'rotate(180deg)' : 'none', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            ${eOpen && html`
+                              <div className="slide-down px-3 pb-3">
+                                ${ex.gif ? html`
+                                  <div className="flex justify-center mb-2">
+                                    <img src=${ex.gif} alt=${ex.nameEn || ex.name} loading="lazy"
+                                      style=${{ height: 120, width: 120, objectFit: 'contain', borderRadius: 10, background: T.input }}
+                                      onError=${(e) => { e.target.style.display = 'none'; }} />
+                                  </div>
+                                ` : ''}
+                                <p className="text-xs leading-relaxed" style=${{ color: T.sub }}>${LANG === 'en' ? ex.howToEn : ex.howTo}</p>
+                              </div>
+                            `}
+                          </div>
+                        `;
+                      })}
+                    </div>
+                  `}
+                </div>
+              `;
+            })}
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+}
+
 function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
   const days = useMemo(() => getWeekDays(), []);
   const todayIdx = days.findIndex(d => d.isToday);
@@ -3727,6 +3804,7 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
         <${MuscleMap} />
         <${StreakCalendar} />
         <${ExerciseCatalog} unitPref=${'lbs'} />
+        <${WarmupStretchCatalog} />
         <${NextWeekPreview} />
 
         <div className="bottom-spacer" />
@@ -4728,6 +4806,7 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
           <${MuscleMap} />
           <${StreakCalendar} />
           <${ExerciseCatalog} unitPref=${unitPref} />
+          <${WarmupStretchCatalog} />
           <${NextWeekPreview} />
         </div>
       `}
