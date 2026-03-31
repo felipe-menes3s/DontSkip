@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <title>DontSkip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -34,6 +34,7 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 
 /* Ring animation */
 .ring-circle { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.dual-ring-arc { transition: stroke-dashoffset 800ms ease-out; }
 
 /* Fade in */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -322,6 +323,11 @@ const EN = {
   'Sin actividad reciente': 'No recent activity', 'Ultimo entreno': 'Last workout',
   'Volumen semanal': 'Weekly volume', 'Frecuencia': 'Frequency', 'esta semana': 'this week',
   'Optimo': 'Optimal', 'Medidas corporales': 'Body measurements', 'Medido el': 'Measured on',
+  'Mapa': 'Map', 'Analytics': 'Analytics',
+  'Empieza a entrenar para ver tu analytics': 'Start training to see your analytics',
+  'Brazos': 'Arms', 'Piernas': 'Legs', 'Hombros': 'Shoulders',
+  'sets ponderados': 'weighted sets', 'dias esta semana': 'days this week',
+  'Semana': 'Week',
   // ── Days ──
   'Domingo': 'Sunday', 'Lunes': 'Monday', 'Martes': 'Tuesday', 'Miércoles': 'Wednesday',
   'Jueves': 'Thursday', 'Viernes': 'Friday', 'Sábado': 'Saturday',
@@ -1296,6 +1302,34 @@ const MUSCLE_WEEKLY_TARGETS = {
   biceps: [8,15], triceps: [8,15], deltoids: [8,15], calves: [8,15], abs: [8,15],
   obliques: [8,15], trapezius: [8,15], 'lower-back': [8,15], forearm: [8,15],
 };
+const SUNBURST_GROUPS = [
+  { id: 'brazos', label: 'Brazos', labelEn: 'Arms', color: '#3b6fd4', muscles: [
+    { slug: 'biceps', label: 'Bíceps', labelEn: 'Biceps', color: '#3b6fd4' },
+    { slug: 'triceps', label: 'Tríceps', labelEn: 'Triceps', color: '#5a87dc' },
+    { slug: 'forearm', label: 'Antebrazo', labelEn: 'Forearm', color: '#7a9fe4' },
+  ]},
+  { id: 'piernas', label: 'Piernas', labelEn: 'Legs', color: '#1a9e5c', muscles: [
+    { slug: 'quadriceps', label: 'Cuádriceps', labelEn: 'Quads', color: '#1a9e5c' },
+    { slug: 'hamstring', label: 'Isquiotibiales', labelEn: 'Hamstrings', color: '#28b76c' },
+    { slug: 'gluteal', label: 'Glúteos', labelEn: 'Glutes', color: '#36d07c' },
+    { slug: 'calves', label: 'Pantorrillas', labelEn: 'Calves', color: '#4de88c' },
+  ]},
+  { id: 'pecho', label: 'Pecho', labelEn: 'Chest', color: '#e07b2a', muscles: [
+    { slug: 'chest', label: 'Pecho', labelEn: 'Chest', color: '#e07b2a' },
+  ]},
+  { id: 'espalda', label: 'Espalda', labelEn: 'Back', color: '#274472', muscles: [
+    { slug: 'upper-back', label: 'Espalda sup.', labelEn: 'Upper back', color: '#274472' },
+    { slug: 'lower-back', label: 'Lumbar', labelEn: 'Lower back', color: '#3a5f8c' },
+    { slug: 'trapezius', label: 'Trapecio', labelEn: 'Traps', color: '#4d7aa6' },
+  ]},
+  { id: 'core', label: 'Core', labelEn: 'Core', color: '#2196c4', muscles: [
+    { slug: 'abs', label: 'Abdominales', labelEn: 'Abs', color: '#2196c4' },
+    { slug: 'obliques', label: 'Oblicuos', labelEn: 'Obliques', color: '#3daed4' },
+  ]},
+  { id: 'hombros', label: 'Hombros', labelEn: 'Shoulders', color: '#5c9fd4', muscles: [
+    { slug: 'deltoids', label: 'Deltoides', labelEn: 'Deltoids', color: '#5c9fd4' },
+  ]},
+];
 
 function getMuscleIntensityForDay(dayKey) {
   const intensity = {};
@@ -1414,6 +1448,47 @@ function getWeeklyMuscleStats() {
     } catch(e) {}
   }
   return { volume, frequency };
+}
+
+function getWeeklySunburstData() {
+  const today = new Date();
+  const jsDay = today.getDay();
+  const mondayOffset = jsDay === 0 ? 6 : jsDay - 1;
+  const monday = new Date(today.getTime() - mondayOffset * 86400000);
+  const scores = {};
+  const daysHit = {};
+  for (let d = 0; d <= mondayOffset; d++) {
+    const date = new Date(monday.getTime() + d * 86400000);
+    const dateStr = localDate(date);
+    const dk = DAYS[date.getDay()];
+    const r = ROUTINES[dk];
+    if (!r || r.rest || r.cardio || !r.exercises) continue;
+    try {
+      const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
+      if (!saved) continue;
+      const states = JSON.parse(saved);
+      r.exercises.forEach((ex, i) => {
+        if (!states[i]) return;
+        const map = EXERCISE_MUSCLE_MAP[ex.id];
+        if (!map) return;
+        const doneSets = (states[i].sets || []).filter(s => s.done).length;
+        if (doneSets === 0) return;
+        const add = (slug, weight) => {
+          scores[slug] = (scores[slug] || 0) + doneSets * weight;
+          if (!daysHit[slug]) daysHit[slug] = new Set();
+          daysHit[slug].add(dateStr);
+        };
+        (map.primary || []).forEach(s => add(s, 3));
+        (map.secondary || []).forEach(s => add(s, 2));
+        (map.tertiary || []).forEach(s => add(s, 1));
+      });
+    } catch(e) {}
+  }
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const fmt = d => localDate(d).slice(5);
+  const weekRange = fmt(monday) + ' \u2014 ' + fmt(sunday);
+  return { scores, daysHit, total, weekRange };
 }
 
 // ── Warmup & Stretching ──────────────────────────────────────────────
@@ -2649,26 +2724,109 @@ function SupplementsCheck() {
 }
 
 
+// ── Dual Ring Card ───────────────────────────────────────────────────
+
+function DualRingCard({ outer, inner }) {
+  // outer/inner: { icon, label, value, max, unit, gradientId, gradientColors }
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true))); }, []);
+
+  const outerAnimVal = useCountUp(outer.value, 700);
+  const innerAnimVal = useCountUp(inner.value, 700);
+
+  const rOuter = 41, rInner = 29, sw = 7;
+  const circOuter = 2 * Math.PI * rOuter; // ~257.61
+  const circInner = 2 * Math.PI * rInner; // ~182.21
+  const pctOuter = outer.max > 0 ? Math.min(outer.value / outer.max, 1) : 0;
+  const pctInner = inner.max > 0 ? Math.min(inner.value / inner.max, 1) : 0;
+  const offOuter = mounted ? circOuter * (1 - pctOuter) : circOuter;
+  const offInner = mounted ? circInner * (1 - pctInner) : circInner;
+  const outerDone = outer.value >= outer.max && outer.max > 0;
+  const innerDone = inner.value >= inner.max && inner.max > 0;
+  const svgSz = 100;
+
+  const inter = "'Inter', system-ui, sans-serif";
+
+  const metricRow = (m, animVal, done) => html`
+    <div className="flex items-center gap-2">
+      <div style=${{ flexShrink: 0 }}>${m.icon}</div>
+      <div style=${{ flex: 1, minWidth: 0 }}>
+        <div style=${{ fontSize: 10, fontWeight: 700, fontFamily: inter, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>${m.label}</div>
+        <div className="flex items-center gap-1" style=${{ marginTop: 2 }}>
+          <span style=${{ fontSize: 22, fontWeight: 800, fontFamily: inter, color: T.text, lineHeight: 1 }}>${animVal}</span>
+          <span style=${{ fontSize: 10, fontWeight: 500, fontFamily: inter, color: T.muted }}>/ ${m.max}${m.unit}</span>
+          ${done ? html`<${CheckCircle} size=${16} weight="fill" color=${T.green} style=${{ marginLeft: 2 }} />` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  return html`
+    <div style=${{ padding: '16px 18px', borderRadius: 20, background: T.card, boxShadow: 'var(--ds-card-shadow)' }}>
+      <div className="flex items-center gap-4">
+        <div style=${{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          ${metricRow(outer, outerAnimVal, outerDone)}
+          <div style=${{ height: 1, background: T.border }} />
+          ${metricRow(inner, innerAnimVal, innerDone)}
+        </div>
+        <div style=${{ flexShrink: 0, width: svgSz, height: svgSz }}>
+          <svg width=${svgSz} height=${svgSz} style=${{ transform: 'rotate(-90deg)' }}>
+            <defs>
+              <linearGradient id=${outer.gradientId} x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color=${outer.gradientColors[0]} />
+                <stop offset="100%" stop-color=${outer.gradientColors[1]} />
+              </linearGradient>
+              <linearGradient id=${inner.gradientId} x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color=${inner.gradientColors[0]} />
+                <stop offset="100%" stop-color=${inner.gradientColors[1]} />
+              </linearGradient>
+            </defs>
+            <!-- Outer track -->
+            <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rOuter} fill="none"
+              stroke=${outer.gradientColors[1]} strokeWidth=${sw} opacity="0.1" />
+            <!-- Outer arc -->
+            <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rOuter} fill="none"
+              stroke=${'url(#' + outer.gradientId + ')'} strokeWidth=${sw}
+              strokeDasharray=${circOuter} strokeDashoffset=${offOuter}
+              strokeLinecap="round" className="dual-ring-arc" />
+            <!-- Inner track -->
+            <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rInner} fill="none"
+              stroke=${inner.gradientColors[1]} strokeWidth=${sw} opacity="0.1" />
+            <!-- Inner arc -->
+            <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rInner} fill="none"
+              stroke=${'url(#' + inner.gradientId + ')'} strokeWidth=${sw}
+              strokeDasharray=${circInner} strokeDashoffset=${offInner}
+              strokeLinecap="round" className="dual-ring-arc" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ── Dashboard Stats ──────────────────────────────────────────────────
 
 function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
   const waterGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
+  const gymUnit = LANG === 'en' ? ' exer.' : ' ejer.';
+  const waterUnit = ' ' + t('vasos');
 
-  const proteinCtx = null;
-  const caloriesCtx = null;
-  const waterCtx = waterGlasses >= waterGoalGlasses ? { text: '\u2713 ' + t('Meta cumplida'), color: T.green } : null;
-
-  let gymCtx = null;
-  if (gymTotal === 0) gymCtx = { text: t('Día de descanso'), color: T.sub };
-  else if (gymDone === gymTotal) gymCtx = { text: '\u2713 ' + t('Completado'), color: T.green };
+  const calIcon = html`<${FireSimple} size=${20} weight="duotone" color="#e07b2a" />`;
+  const protIcon = html`<${Barbell} size=${20} weight="duotone" color="#274472" />`;
+  const gymIcon = html`<${Lightning} size=${20} weight="duotone" color="#1a9e5c" />`;
+  const waterIcon = html`<${Drop} size=${20} weight="duotone" color="#2196c4" />`;
 
   return html`
-    <div className="fade-up" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-      <${StatCard} icon=${html`<${Barbell} size=${22} weight="duotone" color=${T.copper} />`} label=${t('Proteína')} value=${protein} max=${PROTEIN_GOAL} unit="g" color=${T.copper} context=${proteinCtx} delay=${0} gradientId="gProt" gradientColors=${['#93c5fd','#274472']} />
-      <${StatCard} icon=${html`<${FireSimple} size=${22} weight="duotone" color=${T.amber} />`} label=${t('Calorías')} value=${calories} max=${CALORIES_GOAL} unit="" color=${T.amber} context=${caloriesCtx} delay=${150} gradientId="gCal" gradientColors=${['#fdba74','#b84a0a']} />
-      <${StatCard} icon=${html`<${Drop} size=${22} weight="duotone" color=${T.water} />`} label=${t('Agua')} value=${waterGlasses} max=${waterGoalGlasses} unit=${' ' + t('vasos')} color=${T.water} context=${waterCtx} delay=${300} gradientId="gWat" gradientColors=${['#67e8f9','#0891b2']} />
-      <${StatCard} icon=${html`<${Lightning} size=${22} weight="duotone" color=${T.green} />`} label=${t('Gym')} value=${gymDone} max=${gymTotal || 1} unit=${LANG === 'en' ? ' exer.' : ' ejer.'} color=${T.green} context=${gymCtx} delay=${450} gradientId="gGym" gradientColors=${['#86efac','#0d6b3a']} />
+    <div className="fade-up" style=${{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+      <${DualRingCard}
+        outer=${{ icon: calIcon, label: t('Calorías'), value: calories, max: CALORIES_GOAL, unit: '', gradientId: 'gCal', gradientColors: ['#e8793a','#b84a0a'] }}
+        inner=${{ icon: protIcon, label: t('Proteína'), value: protein, max: PROTEIN_GOAL, unit: 'g', gradientId: 'gProt', gradientColors: ['#5c9fd4','#274472'] }}
+      />
+      <${DualRingCard}
+        outer=${{ icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal || 1, unit: gymUnit, gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] }}
+        inner=${{ icon: waterIcon, label: t('Agua'), value: waterGlasses, max: waterGoalGlasses, unit: waterUnit, gradientId: 'gWat', gradientColors: ['#5bbfe8','#0d6e9a'] }}
+      />
     </div>
   `;
 }
@@ -5456,8 +5614,238 @@ function GoalsCard() {
   `;
 }
 
+// ── Sunburst Analytics View ──────────────────────────────────────────
+
+function SunburstView({ dark }) {
+  const [mounted, setMounted] = useState(false);
+  const [selGroup, setSelGroup] = useState(null);
+  const [selMuscle, setSelMuscle] = useState(null);
+
+  useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true))); }, []);
+
+  const data = useMemo(() => getWeeklySunburstData(), []);
+  const { scores, daysHit, total, weekRange } = data;
+
+  // Compute all derived data (must not be behind early return — hooks below)
+  const computed = useMemo(() => {
+    if (total === 0) return null;
+    const groupData = SUNBURST_GROUPS.map(g => {
+      const groupScore = g.muscles.reduce((sum, m) => sum + (scores[m.slug] || 0), 0);
+      const groupDays = new Set();
+      g.muscles.forEach(m => { if (daysHit[m.slug]) daysHit[m.slug].forEach(d => groupDays.add(d)); });
+      const muscleData = g.muscles.map(m => {
+        const sc = scores[m.slug] || 0;
+        return { ...m, score: sc, pct: total > 0 ? Math.round(sc / total * 100) : 0, days: daysHit[m.slug] ? daysHit[m.slug].size : 0 };
+      }).filter(m => m.score > 0);
+      return { ...g, score: groupScore, pct: total > 0 ? Math.round(groupScore / total * 100) : 0, days: groupDays.size, muscleData };
+    }).filter(g => g.score > 0);
+
+    const svgSz = 260, cx = 130, cy = 130;
+    const rInner = 55, swInner = 28, circInner = 2 * Math.PI * rInner;
+    const rOuter = 88, swOuter = 18, circOuter = 2 * Math.PI * rOuter;
+    const gapInner = 3, gapOuter = 2;
+
+    const totalInnerGap = gapInner * groupData.length;
+    const usableInner = circInner - totalInnerGap;
+    let offsetInner = 0;
+    const innerSegs = groupData.map(g => {
+      const arcLen = (g.score / total) * usableInner;
+      const seg = { ...g, arcLen, offset: offsetInner, type: 'group' };
+      offsetInner += arcLen + gapInner;
+      return seg;
+    });
+
+    const totalOuterGap = gapOuter * groupData.reduce((n, g) => n + g.muscleData.length, 0);
+    const usableOuter = circOuter - totalOuterGap;
+    let offsetOuter = 0;
+    const outerSegs = [];
+    groupData.forEach(g => {
+      g.muscleData.forEach(m => {
+        const arcLen = (m.score / total) * usableOuter;
+        outerSegs.push({ ...m, groupId: g.id, groupColor: g.color, arcLen, offset: offsetOuter, type: 'muscle' });
+        offsetOuter += arcLen + gapOuter;
+      });
+    });
+
+    // Labels with collision detection
+    const labelCandidates = outerSegs.filter(s => s.pct >= 8).map(s => {
+      const midAngle = ((s.offset + s.arcLen / 2) / circOuter) * 360 - 90;
+      const rad = midAngle * Math.PI / 180;
+      const labelR = rOuter + swOuter / 2 + 22;
+      const lx = cx + labelR * Math.cos(rad);
+      const ly = cy + labelR * Math.sin(rad);
+      return { ...s, x: lx, y: ly, angle: midAngle, rad };
+    }).sort((a, b) => b.pct - a.pct);
+    const labels = [];
+    labelCandidates.forEach(lbl => {
+      if (!labels.some(placed => Math.abs(placed.y - lbl.y) < 14)) labels.push(lbl);
+    });
+
+    return { groupData, innerSegs, outerSegs, labels, svgSz, cx, cy, rInner, swInner, circInner, rOuter, swOuter, circOuter };
+  }, [total, scores, daysHit]);
+
+  // Selected info — safe to call unconditionally
+  const selInfo = useMemo(() => {
+    if (!computed) return null;
+    const { outerSegs, groupData } = computed;
+    if (selMuscle) {
+      const seg = outerSegs.find(s => s.slug === selMuscle);
+      if (seg) return { name: LANG === 'en' ? seg.labelEn : seg.label, pct: seg.pct, score: seg.score, days: seg.days, color: seg.color, groupId: seg.groupId };
+    }
+    if (selGroup) {
+      const g = groupData.find(g => g.id === selGroup);
+      if (g) return { name: LANG === 'en' ? g.labelEn : g.label, pct: g.pct, score: g.score, days: g.days, color: g.color, muscleData: g.muscleData };
+    }
+    return null;
+  }, [selGroup, selMuscle, computed]);
+
+  function handleInnerClick(gId) { setSelGroup(selGroup === gId ? null : gId); setSelMuscle(null); }
+  function handleOuterClick(slug, gId) { setSelMuscle(selMuscle === slug ? null : slug); setSelGroup(gId); }
+  function handleCenterClick() { setSelGroup(null); setSelMuscle(null); }
+
+  if (!computed) {
+    return html`
+      <div style=${{ textAlign: 'center', padding: '40px 20px', animation: 'fadeUp 0.35s ease' }}>
+        <div style=${{ fontSize: 40, marginBottom: 12 }}>${'\uD83D\uDCCA'}</div>
+        <div style=${{ fontSize: 13, color: T.muted }}>${t('Empieza a entrenar para ver tu analytics')}</div>
+      </div>
+    `;
+  }
+
+  const { groupData, innerSegs, outerSegs, labels, svgSz, cx, cy, rInner, swInner, circInner, rOuter, swOuter, circOuter } = computed;
+  const centerText = selInfo ? selInfo.name : t('Semana');
+  const centerPct = selInfo ? selInfo.pct + '%' : '100%';
+
+  return html`
+    <div style=${{ animation: 'fadeUp 0.35s ease' }}>
+      <div style=${{ textAlign: 'center', marginBottom: 16 }}>
+        <div style=${{ fontSize: 15, fontWeight: 800, color: T.text }}>${t('Volumen semanal')}</div>
+        <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${weekRange}</div>
+      </div>
+
+      <div className="flex justify-center" style=${{ marginBottom: 16 }}>
+        <svg width=${svgSz} height=${svgSz} style=${{ transform: 'rotate(-90deg)' }}>
+          <!-- Inner ring tracks -->
+          ${innerSegs.map(s => html`
+            <circle key=${'it-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
+              stroke=${s.color} strokeWidth=${swInner} opacity="0.1"
+              strokeDasharray=${s.arcLen + ' ' + (circInner - s.arcLen)}
+              strokeDashoffset=${-s.offset} />
+          `)}
+          <!-- Inner ring arcs -->
+          ${innerSegs.map(s => {
+            const isActive = selGroup === s.id || (!selGroup && !selMuscle);
+            return html`
+              <circle key=${'ia-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
+                stroke=${s.color} strokeWidth=${isActive ? swInner : swInner - 4}
+                opacity=${isActive ? 1 : 0.35}
+                strokeDasharray=${mounted ? (s.arcLen + ' ' + (circInner - s.arcLen)) : ('0 ' + circInner)}
+                strokeDashoffset=${-s.offset}
+                strokeLinecap="round" className="dual-ring-arc"
+                style=${{ cursor: 'pointer' }}
+                onClick=${() => handleInnerClick(s.id)} />
+            `;
+          })}
+          <!-- Outer ring tracks -->
+          ${outerSegs.map(s => html`
+            <circle key=${'ot-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
+              stroke=${s.color} strokeWidth=${swOuter} opacity="0.08"
+              strokeDasharray=${s.arcLen + ' ' + (circOuter - s.arcLen)}
+              strokeDashoffset=${-s.offset} />
+          `)}
+          <!-- Outer ring arcs -->
+          ${outerSegs.map(s => {
+            const isActive = selMuscle === s.slug || selGroup === s.groupId || (!selGroup && !selMuscle);
+            return html`
+              <circle key=${'oa-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
+                stroke=${s.color} strokeWidth=${isActive ? swOuter : swOuter - 4}
+                opacity=${isActive ? 1 : 0.25}
+                strokeDasharray=${mounted ? (s.arcLen + ' ' + (circOuter - s.arcLen)) : ('0 ' + circOuter)}
+                strokeDashoffset=${-s.offset}
+                strokeLinecap="round" className="dual-ring-arc"
+                style=${{ cursor: 'pointer' }}
+                onClick=${() => handleOuterClick(s.slug, s.groupId)} />
+            `;
+          })}
+          <!-- Center tap area -->
+          <circle cx=${cx} cy=${cy} r=${rInner - swInner / 2 - 2} fill="transparent"
+            style=${{ cursor: 'pointer' }} onClick=${handleCenterClick} />
+          <!-- Center text (un-rotated) -->
+          <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
+            <text x=${cx} y=${cy - 6} textAnchor="middle" fill=${T.text}
+              style=${{ fontSize: 11, fontWeight: 700, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerText}</text>
+            <text x=${cx} y=${cy + 12} textAnchor="middle" fill=${T.muted}
+              style=${{ fontSize: 18, fontWeight: 800, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerPct}</text>
+          </g>
+          <!-- Labels with leader lines (un-rotated) -->
+          <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
+            ${labels.map(lbl => {
+              const edgeR = rOuter + swOuter / 2;
+              const ex = cx + edgeR * Math.cos(lbl.rad);
+              const ey = cy + edgeR * Math.sin(lbl.rad);
+              const anchor = lbl.x > cx ? 'start' : 'end';
+              return html`
+                <g key=${'lbl-' + lbl.slug}>
+                  <line x1=${ex} y1=${ey} x2=${lbl.x} y2=${lbl.y} stroke=${T.muted} strokeWidth="0.5" opacity="0.6" />
+                  <text x=${lbl.x + (anchor === 'start' ? 4 : -4)} y=${lbl.y + 3} textAnchor=${anchor} fill=${T.sub}
+                    style=${{ fontSize: 9, fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    ${LANG === 'en' ? lbl.labelEn : lbl.label} ${lbl.pct}%
+                  </text>
+                </g>
+              `;
+            })}
+          </g>
+        </svg>
+      </div>
+
+      <!-- Legend -->
+      <div className="flex gap-3 justify-center flex-wrap" style=${{ marginBottom: 12, paddingLeft: 8, paddingRight: 8 }}>
+        ${groupData.map(g => html`
+          <div key=${g.id} className="flex items-center gap-1" style=${{ cursor: 'pointer', flexShrink: 0 }}
+            onClick=${() => handleInnerClick(g.id)}>
+            <div style=${{ width: 8, height: 8, borderRadius: 4, background: g.color, flexShrink: 0 }} />
+            <span style=${{ fontSize: 11, fontWeight: selGroup === g.id ? 800 : 600, color: selGroup === g.id ? T.text : T.sub, transition: 'all 0.2s' }}>
+              ${LANG === 'en' ? g.labelEn : g.label} ${g.pct}%
+            </span>
+          </div>
+        `)}
+      </div>
+
+      <!-- Info panel -->
+      ${selInfo && html`
+        <div style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '12px 14px', animation: 'fadeUp 0.2s ease' }}>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <div style=${{ width: 10, height: 10, borderRadius: 5, background: selInfo.color }} />
+              <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${selInfo.name}</span>
+            </div>
+            <span style=${{ fontSize: 13, fontWeight: 800, color: selInfo.color }}>${selInfo.pct}%</span>
+          </div>
+          <div style=${{ fontSize: 11, color: T.muted, marginBottom: selInfo.muscleData ? 8 : 0 }}>
+            ${selInfo.score} ${t('sets ponderados')} · ${selInfo.days} ${t('dias esta semana')}
+          </div>
+          ${selInfo.muscleData && selInfo.muscleData.length > 1 ? html`
+            <div style=${{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4, paddingTop: 8, borderTop: '1px solid ' + T.border }}>
+              ${selInfo.muscleData.map(m => html`
+                <div key=${m.slug} className="flex items-center gap-2">
+                  <span style=${{ fontSize: 11, fontWeight: 600, color: T.sub, width: 90, flexShrink: 0 }}>${LANG === 'en' ? m.labelEn : m.label}</span>
+                  <div style=${{ flex: 1, height: 4, borderRadius: 2, background: T.input }}>
+                    <div style=${{ height: '100%', borderRadius: 2, background: m.color, width: (selInfo.score > 0 ? m.score / selInfo.score * 100 : 0) + '%', transition: 'width 0.3s' }} />
+                  </div>
+                  <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, width: 30, textAlign: 'right' }}>${m.pct}%</span>
+                </div>
+              `)}
+            </div>
+          ` : ''}
+        </div>
+      `}
+    </div>
+  `;
+}
+
 // ── Cuerpo Tab — Muscle Map ─────────────────────────────────────────
 function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
+  const [cuerpoView, setCuerpoView] = useState('mapa'); // 'mapa' | 'analytics'
   const [view, setView] = useState('front');
   const svgRef = useRef(null);
   const [selectedMuscle, setSelectedMuscle] = useState(null); // { slug, level }
@@ -5637,6 +6025,27 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
         </div>
       </div>
 
+      <!-- Segmented control: Mapa / Analytics -->
+      <div className="flex justify-center mb-3">
+        <div style=${{ display: 'inline-flex', borderRadius: 10, overflow: 'hidden', border: '1px solid ' + T.border }}>
+          <button onClick=${() => setCuerpoView('mapa')} style=${{
+            padding: '7px 20px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            background: cuerpoView === 'mapa' ? T.accent : T.card,
+            color: cuerpoView === 'mapa' ? '#fff' : T.muted,
+            transition: 'all 0.2s',
+          }}>${t('Mapa')}</button>
+          <button onClick=${() => setCuerpoView('analytics')} style=${{
+            padding: '7px 20px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            background: cuerpoView === 'analytics' ? T.accent : T.card,
+            color: cuerpoView === 'analytics' ? '#fff' : T.muted,
+            transition: 'all 0.2s',
+          }}>${t('Analytics')}</button>
+        </div>
+      </div>
+
+      ${cuerpoView === 'mapa' && html`
       <div className="ds-card" style=${{ padding: 20, background: T.card, borderRadius: 16 }}>
         <!-- Day selector -->
         <div className="flex gap-1 justify-center mb-3" style=${{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
@@ -5721,6 +6130,13 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
           ${t('Los musculos se recuperan gradualmente en ~3 dias')}
         </div>
       </div>
+      `}
+
+      ${cuerpoView === 'analytics' && html`
+      <div className="ds-card" style=${{ padding: 20, background: T.card, borderRadius: 16 }}>
+        <${SunburstView} dark=${dark} />
+      </div>
+      `}
 
       ${latestMeasurements && html`
         <div className="ds-card" style=${{ padding: '16px 20px', background: T.card, borderRadius: 16, marginTop: 12 }}>
