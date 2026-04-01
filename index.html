@@ -6011,7 +6011,7 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
   const statBox = { padding: '12px 14px', borderRadius: 14, background: T.card, boxShadow: 'var(--ds-card-shadow)', textAlign: 'center' };
 
   return html`
-    <div className="tab-content" style=${{ animation: 'fadeUp 0.35s ease' }}>
+    <div className="tab-content" style=${{ animation: 'fadeUp 0.35s ease', paddingBottom: 'calc(80px + var(--safe-bottom, 0px))' }}>
       <div className="flex items-center justify-between mb-3 px-1">
         <h2 style=${{ fontSize: 20, fontWeight: 800, color: T.text }}>${t('Cuerpo')}</h2>
         <div className="flex items-center gap-2">
