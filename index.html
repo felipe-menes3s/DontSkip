@@ -325,7 +325,7 @@ const EN = {
   'Optimo': 'Optimal', 'Medidas corporales': 'Body measurements', 'Medido el': 'Measured on',
   'Mapa': 'Map', 'Analytics': 'Analytics',
   'Empieza a entrenar para ver tu analytics': 'Start training to see your analytics',
-  'Brazos': 'Arms', 'Piernas': 'Legs', 'Hombros': 'Shoulders',
+  'Todos': 'All', 'Brazos': 'Arms', 'Piernas': 'Legs', 'Hombros': 'Shoulders',
   'sets ponderados': 'weighted sets', 'dias esta semana': 'days this week',
   'Semana': 'Week',
   // ── Days ──
@@ -5626,14 +5626,12 @@ function GoalsCard() {
 function SunburstView({ dark }) {
   const [mounted, setMounted] = useState(false);
   const [selGroup, setSelGroup] = useState(null);
-  const [selMuscle, setSelMuscle] = useState(null);
 
   useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true))); }, []);
 
   const data = useMemo(() => getWeeklySunburstData(), []);
   const { scores, daysHit, total, weekRange } = data;
 
-  // Compute all derived data (must not be behind early return — hooks below)
   const computed = useMemo(() => {
     if (total === 0) return null;
     const groupData = SUNBURST_GROUPS.map(g => {
@@ -5643,72 +5641,18 @@ function SunburstView({ dark }) {
       const muscleData = g.muscles.map(m => {
         const sc = scores[m.slug] || 0;
         return { ...m, score: sc, pct: total > 0 ? Math.round(sc / total * 100) : 0, days: daysHit[m.slug] ? daysHit[m.slug].size : 0 };
-      }).filter(m => m.score > 0);
-      return { ...g, score: groupScore, pct: total > 0 ? Math.round(groupScore / total * 100) : 0, days: groupDays.size, muscleData };
-    }).filter(g => g.score > 0);
-
-    const svgSz = 260, cx = 130, cy = 130;
-    const rInner = 55, swInner = 28, circInner = 2 * Math.PI * rInner;
-    const rOuter = 88, swOuter = 18, circOuter = 2 * Math.PI * rOuter;
-    const gapInner = 3, gapOuter = 2;
-
-    const totalInnerGap = gapInner * groupData.length;
-    const usableInner = circInner - totalInnerGap;
-    let offsetInner = 0;
-    const innerSegs = groupData.map(g => {
-      const arcLen = (g.score / total) * usableInner;
-      const seg = { ...g, arcLen, offset: offsetInner, type: 'group' };
-      offsetInner += arcLen + gapInner;
-      return seg;
-    });
-
-    const totalOuterGap = gapOuter * groupData.reduce((n, g) => n + g.muscleData.length, 0);
-    const usableOuter = circOuter - totalOuterGap;
-    let offsetOuter = 0;
-    const outerSegs = [];
-    groupData.forEach(g => {
-      g.muscleData.forEach(m => {
-        const arcLen = (m.score / total) * usableOuter;
-        outerSegs.push({ ...m, groupId: g.id, groupColor: g.color, arcLen, offset: offsetOuter, type: 'muscle' });
-        offsetOuter += arcLen + gapOuter;
       });
+      return { ...g, score: groupScore, pct: total > 0 ? Math.round(groupScore / total * 100) : 0, days: groupDays.size, muscleData };
     });
-
-    // Labels with collision detection
-    const labelCandidates = outerSegs.filter(s => s.pct >= 8).map(s => {
-      const midAngle = ((s.offset + s.arcLen / 2) / circOuter) * 360 - 90;
-      const rad = midAngle * Math.PI / 180;
-      const labelR = rOuter + swOuter / 2 + 22;
-      const lx = cx + labelR * Math.cos(rad);
-      const ly = cy + labelR * Math.sin(rad);
-      return { ...s, x: lx, y: ly, angle: midAngle, rad };
-    }).sort((a, b) => b.pct - a.pct);
-    const labels = [];
-    labelCandidates.forEach(lbl => {
-      if (!labels.some(placed => Math.abs(placed.y - lbl.y) < 14)) labels.push(lbl);
-    });
-
-    return { groupData, innerSegs, outerSegs, labels, svgSz, cx, cy, rInner, swInner, circInner, rOuter, swOuter, circOuter };
+    return { groupData };
   }, [total, scores, daysHit]);
 
-  // Selected info — safe to call unconditionally
-  const selInfo = useMemo(() => {
+  // Filtered group info
+  const activeGroup = useMemo(() => {
     if (!computed) return null;
-    const { outerSegs, groupData } = computed;
-    if (selMuscle) {
-      const seg = outerSegs.find(s => s.slug === selMuscle);
-      if (seg) return { name: LANG === 'en' ? seg.labelEn : seg.label, pct: seg.pct, score: seg.score, days: seg.days, color: seg.color, groupId: seg.groupId };
-    }
-    if (selGroup) {
-      const g = groupData.find(g => g.id === selGroup);
-      if (g) return { name: LANG === 'en' ? g.labelEn : g.label, pct: g.pct, score: g.score, days: g.days, color: g.color, muscleData: g.muscleData };
-    }
+    if (selGroup) return computed.groupData.find(g => g.id === selGroup) || null;
     return null;
-  }, [selGroup, selMuscle, computed]);
-
-  function handleInnerClick(gId) { setSelGroup(selGroup === gId ? null : gId); setSelMuscle(null); }
-  function handleOuterClick(slug, gId) { setSelMuscle(selMuscle === slug ? null : slug); setSelGroup(gId); }
-  function handleCenterClick() { setSelGroup(null); setSelMuscle(null); }
+  }, [computed, selGroup]);
 
   if (!computed) {
     return html`
@@ -5719,84 +5663,165 @@ function SunburstView({ dark }) {
     `;
   }
 
-  const { groupData, innerSegs, outerSegs, labels, svgSz, cx, cy, rInner, swInner, circInner, rOuter, swOuter, circOuter } = computed;
-  const centerText = selInfo ? selInfo.name : t('Semana');
-  const centerPct = selInfo ? selInfo.pct + '%' : '100%';
+  const { groupData } = computed;
+  const groupsWithScore = groupData.filter(g => g.score > 0);
+
+  // Build chart arcs
+  const svgSz = 300, cx = 150, cy = 150;
+  const rInner = 58, swInner = 32;
+  const rOuter = 96, swOuter = 22;
+  const circInner = 2 * Math.PI * rInner;
+  const circOuter = 2 * Math.PI * rOuter;
+
+  // Determine what to show in the chart
+  const showAll = !selGroup;
+  const filteredGroupData = showAll ? groupsWithScore : groupsWithScore.map(g => ({
+    ...g,
+    _dimmed: g.id !== selGroup,
+  }));
+
+  // Inner ring segments (groups)
+  const gapInner = showAll ? 4 : 3;
+  const totalInnerGap = gapInner * groupsWithScore.length;
+  const usableInner = circInner - totalInnerGap;
+  let offI = 0;
+  const innerSegs = groupsWithScore.map(g => {
+    const arcLen = (g.score / total) * usableInner;
+    const seg = { ...g, arcLen, offset: offI, dimmed: !showAll && g.id !== selGroup };
+    offI += arcLen + gapInner;
+    return seg;
+  });
+
+  // Outer ring segments (muscles) — always show all but dim non-selected group
+  const allMuscles = [];
+  groupsWithScore.forEach(g => {
+    g.muscleData.forEach(m => {
+      if (m.score > 0) allMuscles.push({ ...m, groupId: g.id, groupColor: g.color });
+    });
+  });
+  const gapOuter = 2;
+  const totalOuterGap = gapOuter * allMuscles.length;
+  const usableOuter = circOuter - totalOuterGap;
+  let offO = 0;
+  const outerSegs = allMuscles.map(m => {
+    const arcLen = (m.score / total) * usableOuter;
+    const seg = { ...m, arcLen, offset: offO, dimmed: !showAll && m.groupId !== selGroup };
+    offO += arcLen + gapOuter;
+    return seg;
+  });
+
+  // Floating labels — all outer segments with pct >= 3
+  const labelCandidates = outerSegs.filter(s => !s.dimmed && s.pct >= 3).map(s => {
+    const midAngle = ((s.offset + s.arcLen / 2) / circOuter) * 360 - 90;
+    const rad = midAngle * Math.PI / 180;
+    const labelR = rOuter + swOuter / 2 + 28;
+    const lx = cx + labelR * Math.cos(rad);
+    const ly = cy + labelR * Math.sin(rad);
+    return { ...s, lx, ly, angle: midAngle, rad };
+  }).sort((a, b) => b.pct - a.pct);
+  const labels = [];
+  labelCandidates.forEach(lbl => {
+    if (!labels.some(placed => Math.abs(placed.ly - lbl.ly) < 16)) labels.push(lbl);
+  });
+
+  // Center display
+  const centerPct = activeGroup ? activeGroup.pct + '%' : total > 0 ? '100%' : '0%';
+  const groupLabel = activeGroup ? (LANG === 'en' ? activeGroup.labelEn : activeGroup.label) : null;
+
+  // Dimmed color
+  const dimColor = dark ? '#1e2a3a' : '#d8dfe8';
+
+  function handleGroupSelect(gId) {
+    setSelGroup(selGroup === gId ? null : gId);
+  }
 
   return html`
     <div style=${{ animation: 'fadeUp 0.35s ease' }}>
-      <div style=${{ textAlign: 'center', marginBottom: 16 }}>
+      <!-- Header -->
+      <div style=${{ textAlign: 'center', marginBottom: 12 }}>
         <div style=${{ fontSize: 15, fontWeight: 800, color: T.text }}>${t('Volumen semanal')}</div>
         <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${weekRange}</div>
       </div>
 
-      <div className="flex justify-center" style=${{ marginBottom: 16 }}>
-        <svg width=${svgSz} height=${svgSz} style=${{ transform: 'rotate(-90deg)' }}>
-          <!-- Inner ring tracks -->
+      <!-- Group filter pills -->
+      <div className="flex gap-2 justify-center flex-wrap" style=${{ marginBottom: 14, padding: '0 8px' }}>
+        <button onClick=${() => setSelGroup(null)} style=${{
+          padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, border: '1.5px solid ' + (showAll ? T.accent : T.border),
+          background: showAll ? T.accent : 'transparent', color: showAll ? '#fff' : T.sub,
+          cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif",
+        }}>${t('Todos')}</button>
+        ${groupsWithScore.map(g => html`
+          <button key=${g.id} onClick=${() => handleGroupSelect(g.id)} style=${{
+            padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, fontFamily: "'Inter', system-ui, sans-serif",
+            border: '1.5px solid ' + (selGroup === g.id ? g.color : T.border),
+            background: selGroup === g.id ? g.color : 'transparent',
+            color: selGroup === g.id ? '#fff' : T.sub,
+            cursor: 'pointer', transition: 'all 0.2s',
+          }}>${LANG === 'en' ? g.labelEn : g.label}</button>
+        `)}
+      </div>
+
+      <!-- Selected group heading -->
+      ${groupLabel && html`
+        <div style=${{ fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 8, paddingLeft: 4 }}>${groupLabel}</div>
+      `}
+
+      <!-- Donut chart -->
+      <div className="flex justify-center" style=${{ marginBottom: 12, position: 'relative' }}>
+        <svg width=${svgSz} height=${svgSz} viewBox=${'0 0 ' + svgSz + ' ' + svgSz} style=${{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+          <!-- Inner ring (groups) -->
           ${innerSegs.map(s => html`
-            <circle key=${'it-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
-              stroke=${s.color} strokeWidth=${swInner} opacity="0.1"
-              strokeDasharray=${s.arcLen + ' ' + (circInner - s.arcLen)}
-              strokeDashoffset=${-s.offset} />
+            <circle key=${'i-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
+              stroke=${s.dimmed ? dimColor : s.color}
+              strokeWidth=${s.dimmed ? swInner - 6 : swInner}
+              opacity=${s.dimmed ? 0.5 : 1}
+              strokeDasharray=${mounted ? (s.arcLen + ' ' + (circInner - s.arcLen)) : ('0 ' + circInner)}
+              strokeDashoffset=${-s.offset}
+              strokeLinecap="round" className="dual-ring-arc"
+              style=${{ cursor: 'pointer' }}
+              onClick=${() => handleGroupSelect(s.id)} />
           `)}
-          <!-- Inner ring arcs -->
-          ${innerSegs.map(s => {
-            const isActive = selGroup === s.id || (!selGroup && !selMuscle);
-            return html`
-              <circle key=${'ia-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
-                stroke=${s.color} strokeWidth=${isActive ? swInner : swInner - 4}
-                opacity=${isActive ? 1 : 0.35}
-                strokeDasharray=${mounted ? (s.arcLen + ' ' + (circInner - s.arcLen)) : ('0 ' + circInner)}
-                strokeDashoffset=${-s.offset}
-                strokeLinecap="round" className="dual-ring-arc"
-                style=${{ cursor: 'pointer' }}
-                onClick=${() => handleInnerClick(s.id)} />
-            `;
-          })}
-          <!-- Outer ring tracks -->
+          <!-- Outer ring (muscles) -->
           ${outerSegs.map(s => html`
-            <circle key=${'ot-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
-              stroke=${s.color} strokeWidth=${swOuter} opacity="0.08"
-              strokeDasharray=${s.arcLen + ' ' + (circOuter - s.arcLen)}
-              strokeDashoffset=${-s.offset} />
+            <circle key=${'o-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
+              stroke=${s.dimmed ? dimColor : s.color}
+              strokeWidth=${s.dimmed ? swOuter - 6 : swOuter}
+              opacity=${s.dimmed ? 0.35 : 1}
+              strokeDasharray=${mounted ? (s.arcLen + ' ' + (circOuter - s.arcLen)) : ('0 ' + circOuter)}
+              strokeDashoffset=${-s.offset}
+              strokeLinecap="round" className="dual-ring-arc"
+              style=${{ cursor: 'pointer' }}
+              onClick=${() => handleGroupSelect(s.groupId)} />
           `)}
-          <!-- Outer ring arcs -->
-          ${outerSegs.map(s => {
-            const isActive = selMuscle === s.slug || selGroup === s.groupId || (!selGroup && !selMuscle);
-            return html`
-              <circle key=${'oa-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
-                stroke=${s.color} strokeWidth=${isActive ? swOuter : swOuter - 4}
-                opacity=${isActive ? 1 : 0.25}
-                strokeDasharray=${mounted ? (s.arcLen + ' ' + (circOuter - s.arcLen)) : ('0 ' + circOuter)}
-                strokeDashoffset=${-s.offset}
-                strokeLinecap="round" className="dual-ring-arc"
-                style=${{ cursor: 'pointer' }}
-                onClick=${() => handleOuterClick(s.slug, s.groupId)} />
-            `;
-          })}
           <!-- Center tap area -->
-          <circle cx=${cx} cy=${cy} r=${rInner - swInner / 2 - 2} fill="transparent"
-            style=${{ cursor: 'pointer' }} onClick=${handleCenterClick} />
-          <!-- Center text (un-rotated) -->
+          <circle cx=${cx} cy=${cy} r=${rInner - swInner / 2 - 4} fill="transparent"
+            style=${{ cursor: 'pointer' }} onClick=${() => setSelGroup(null)} />
+          <!-- Center text -->
           <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
-            <text x=${cx} y=${cy - 6} textAnchor="middle" fill=${T.text}
-              style=${{ fontSize: 11, fontWeight: 700, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerText}</text>
-            <text x=${cx} y=${cy + 12} textAnchor="middle" fill=${T.muted}
-              style=${{ fontSize: 18, fontWeight: 800, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerPct}</text>
+            <text x=${cx} y=${cy + 8} textAnchor="middle" fill=${activeGroup ? activeGroup.color : T.text}
+              style=${{ fontSize: 28, fontWeight: 900, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerPct}</text>
           </g>
-          <!-- Labels with leader lines (un-rotated) -->
+          <!-- Floating labels with leader lines -->
           <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
             ${labels.map(lbl => {
               const edgeR = rOuter + swOuter / 2;
               const ex = cx + edgeR * Math.cos(lbl.rad);
               const ey = cy + edgeR * Math.sin(lbl.rad);
-              const anchor = lbl.x > cx ? 'start' : 'end';
+              const isRight = lbl.lx > cx;
+              const anchor = isRight ? 'start' : 'end';
+              const elbowX = isRight ? lbl.lx - 6 : lbl.lx + 6;
               return html`
-                <g key=${'lbl-' + lbl.slug}>
-                  <line x1=${ex} y1=${ey} x2=${lbl.x} y2=${lbl.y} stroke=${T.muted} strokeWidth="0.5" opacity="0.6" />
-                  <text x=${lbl.x + (anchor === 'start' ? 4 : -4)} y=${lbl.y + 3} textAnchor=${anchor} fill=${T.sub}
-                    style=${{ fontSize: 9, fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                    ${LANG === 'en' ? lbl.labelEn : lbl.label} ${lbl.pct}%
+                <g key=${'lbl-' + lbl.slug} style=${{ opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease 0.3s' }}>
+                  <line x1=${ex} y1=${ey} x2=${elbowX} y2=${lbl.ly} stroke=${lbl.color} strokeWidth="1" opacity="0.5" />
+                  <line x1=${elbowX} y1=${lbl.ly} x2=${lbl.lx} y2=${lbl.ly} stroke=${lbl.color} strokeWidth="1" opacity="0.5" />
+                  <circle cx=${ex} cy=${ey} r="2" fill=${lbl.color} />
+                  <text x=${lbl.lx + (isRight ? 4 : -4)} y=${lbl.ly - 4} textAnchor=${anchor} fill=${lbl.color}
+                    style=${{ fontSize: 11, fontWeight: 800, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    ${lbl.pct}%
+                  </text>
+                  <text x=${lbl.lx + (isRight ? 4 : -4)} y=${lbl.ly + 9} textAnchor=${anchor} fill=${T.sub}
+                    style=${{ fontSize: 10, fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    ${LANG === 'en' ? lbl.labelEn : lbl.label}
                   </text>
                 </g>
               `;
@@ -5805,45 +5830,61 @@ function SunburstView({ dark }) {
         </svg>
       </div>
 
-      <!-- Legend -->
-      <div className="flex gap-3 justify-center flex-wrap" style=${{ marginBottom: 12, paddingLeft: 8, paddingRight: 8 }}>
-        ${groupData.map(g => html`
-          <div key=${g.id} className="flex items-center gap-1" style=${{ cursor: 'pointer', flexShrink: 0 }}
-            onClick=${() => handleInnerClick(g.id)}>
-            <div style=${{ width: 8, height: 8, borderRadius: 4, background: g.color, flexShrink: 0 }} />
-            <span style=${{ fontSize: 11, fontWeight: selGroup === g.id ? 800 : 600, color: selGroup === g.id ? T.text : T.sub, transition: 'all 0.2s' }}>
-              ${LANG === 'en' ? g.labelEn : g.label} ${g.pct}%
+      <!-- Breakdown list -->
+      ${activeGroup && activeGroup.muscleData.filter(m => m.score > 0).length > 0 ? html`
+        <div style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 14, padding: '14px 16px', animation: 'fadeUp 0.2s ease' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <div style=${{ width: 10, height: 10, borderRadius: 5, background: activeGroup.color }} />
+            <span style=${{ fontSize: 14, fontWeight: 800, color: T.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+              ${LANG === 'en' ? activeGroup.labelEn : activeGroup.label}
+            </span>
+            <span style=${{ fontSize: 12, fontWeight: 700, color: activeGroup.color, marginLeft: 'auto', fontFamily: "'Inter', system-ui, sans-serif" }}>
+              ${activeGroup.pct}% · ${activeGroup.score} ${t('sets ponderados')}
             </span>
           </div>
-        `)}
-      </div>
-
-      <!-- Info panel -->
-      ${selInfo && html`
-        <div style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '12px 14px', animation: 'fadeUp 0.2s ease' }}>
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <div style=${{ width: 10, height: 10, borderRadius: 5, background: selInfo.color }} />
-              <span style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${selInfo.name}</span>
-            </div>
-            <span style=${{ fontSize: 13, fontWeight: 800, color: selInfo.color }}>${selInfo.pct}%</span>
+          <div style=${{ fontSize: 11, color: T.muted, marginBottom: 10 }}>
+            ${activeGroup.days} ${t('dias esta semana')}
           </div>
-          <div style=${{ fontSize: 11, color: T.muted, marginBottom: selInfo.muscleData ? 8 : 0 }}>
-            ${selInfo.score} ${t('sets ponderados')} · ${selInfo.days} ${t('dias esta semana')}
-          </div>
-          ${selInfo.muscleData && selInfo.muscleData.length > 1 ? html`
-            <div style=${{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4, paddingTop: 8, borderTop: '1px solid ' + T.border }}>
-              ${selInfo.muscleData.map(m => html`
-                <div key=${m.slug} className="flex items-center gap-2">
-                  <span style=${{ fontSize: 11, fontWeight: 600, color: T.sub, width: 90, flexShrink: 0 }}>${LANG === 'en' ? m.labelEn : m.label}</span>
-                  <div style=${{ flex: 1, height: 4, borderRadius: 2, background: T.input }}>
-                    <div style=${{ height: '100%', borderRadius: 2, background: m.color, width: (selInfo.score > 0 ? m.score / selInfo.score * 100 : 0) + '%', transition: 'width 0.3s' }} />
-                  </div>
-                  <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, width: 30, textAlign: 'right' }}>${m.pct}%</span>
+          <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            ${activeGroup.muscleData.filter(m => m.score > 0).map(m => html`
+              <div key=${m.slug}>
+                <div className="flex items-center justify-between" style=${{ marginBottom: 3 }}>
+                  <span style=${{ fontSize: 12, fontWeight: 600, color: T.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    ${LANG === 'en' ? m.labelEn : m.label}
+                  </span>
+                  <span style=${{ fontSize: 11, fontWeight: 700, color: m.color, fontFamily: "'Inter', system-ui, sans-serif" }}>${m.pct}%</span>
                 </div>
-              `)}
+                <div style=${{ height: 6, borderRadius: 3, background: T.input }}>
+                  <div style=${{ height: '100%', borderRadius: 3, background: m.color, width: (activeGroup.score > 0 ? m.score / activeGroup.score * 100 : 0) + '%', transition: 'width 0.4s ease' }} />
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- All groups overview (when no group selected) -->
+      ${showAll && html`
+        <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          ${groupsWithScore.map(g => html`
+            <div key=${g.id} onClick=${() => handleGroupSelect(g.id)}
+              style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s' }}>
+              <div className="flex items-center gap-3">
+                <div style=${{ width: 12, height: 12, borderRadius: 6, background: g.color, flexShrink: 0 }} />
+                <div style=${{ flex: 1 }}>
+                  <div className="flex items-center justify-between">
+                    <span style=${{ fontSize: 13, fontWeight: 700, color: T.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                      ${LANG === 'en' ? g.labelEn : g.label}
+                    </span>
+                    <span style=${{ fontSize: 12, fontWeight: 800, color: g.color, fontFamily: "'Inter', system-ui, sans-serif" }}>${g.pct}%</span>
+                  </div>
+                  <div style=${{ height: 4, borderRadius: 2, background: T.input, marginTop: 6 }}>
+                    <div style=${{ height: '100%', borderRadius: 2, background: g.color, width: g.pct + '%', transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+              </div>
             </div>
-          ` : ''}
+          `)}
         </div>
       `}
     </div>
