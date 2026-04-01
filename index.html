@@ -2812,13 +2812,17 @@ function DualRingCard({ outer, inner }) {
 function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
   const waterGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
-  const gymUnit = LANG === 'en' ? ' exer.' : ' ejer.';
   const waterUnit = ' ' + t('vasos');
+  const isRestDay = gymTotal === 0;
 
   const calIcon = html`<${FireSimple} size=${20} weight="duotone" color="#e07b2a" />`;
   const protIcon = html`<${Barbell} size=${20} weight="duotone" color="#274472" />`;
   const gymIcon = html`<${Lightning} size=${20} weight="duotone" color="#1a9e5c" />`;
   const waterIcon = html`<${Drop} size=${20} weight="duotone" color="#2196c4" />`;
+
+  const gymOuter = isRestDay
+    ? { icon: gymIcon, label: t('Gym') + ' \u00B7 ' + t('Descanso'), value: 1, max: 1, unit: '', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] }
+    : { icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal, unit: LANG === 'en' ? ' exer.' : ' ejer.', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] };
 
   return html`
     <div className="fade-up" style=${{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
@@ -2827,7 +2831,7 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
         inner=${{ icon: protIcon, label: t('Proteína'), value: protein, max: PROTEIN_GOAL, unit: 'g', gradientId: 'gProt', gradientColors: ['#5c9fd4','#274472'] }}
       />
       <${DualRingCard}
-        outer=${{ icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal || 1, unit: gymUnit, gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] }}
+        outer=${gymOuter}
         inner=${{ icon: waterIcon, label: t('Agua'), value: waterGlasses, max: waterGoalGlasses, unit: waterUnit, gradientId: 'gWat', gradientColors: ['#5bbfe8','#0d6e9a'] }}
       />
     </div>
