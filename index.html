@@ -12,13 +12,13 @@
 <link rel="manifest" href="manifest.json">
 <title>DontSkip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
   theme: {
     extend: {
-      fontFamily: { sans: ['"Outfit"', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['"Inter"', 'system-ui', 'sans-serif'] },
     }
   }
 };
@@ -26,7 +26,7 @@ tailwind.config = {
 <style>
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { background: var(--ds-bg, #f4f6f9); }
-body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
+body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
 /* Count-up animation for stats */
 @keyframes countPulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
 .count-up { animation: countPulse 0.1s ease-out; }
@@ -65,6 +65,9 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 .stagger > *:nth-child(5) { animation-delay: 0.24s; }
 .stagger > *:nth-child(6) { animation-delay: 0.30s; }
 .stagger > *:nth-child(7) { animation-delay: 0.36s; }
+.stagger > *:nth-child(8) { animation-delay: 0.42s; }
+.stagger > *:nth-child(9) { animation-delay: 0.48s; }
+.stagger > *:nth-child(10) { animation-delay: 0.54s; }
 
 /* Celebration */
 @keyframes celebrate { 0% { transform: scale(1); } 30% { transform: scale(1.2); } 60% { transform: scale(0.95); } 100% { transform: scale(1); } }
@@ -103,6 +106,32 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 /* Number bounce — value change emphasis */
 @keyframes bounceNum { 0% { transform: scale(1); } 30% { transform: scale(1.12); } 60% { transform: scale(0.97); } 100% { transform: scale(1); } }
 .bounce-num { animation: bounceNum 0.35s ease-out; }
+
+/* Shimmer loading effect */
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.shimmer { background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%); background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite; }
+
+/* Card press elevation */
+.card-press { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.card-press:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+
+/* Supplement pill toggle animation */
+@keyframes pillCheck { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 70% { transform: scale(0.96); } 100% { transform: scale(1); } }
+.pill-check { animation: pillCheck 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Value glow pulse when number updates */
+@keyframes valueGlow { 0% { text-shadow: 0 0 0 transparent; } 50% { text-shadow: 0 0 8px var(--glow-color, rgba(39,68,114,0.3)); } 100% { text-shadow: 0 0 0 transparent; } }
+.value-glow { animation: valueGlow 0.6s ease-out; }
+
+/* Gradient text shimmer for headers */
+@keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+/* Smooth number transition */
+.num-transition { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Subtle float animation */
+@keyframes subtleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.subtle-float { animation: subtleFloat 3s ease-in-out infinite; }
 
 /* Green flash — confirm feedback */
 @keyframes greenFlash { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); } 50% { box-shadow: 0 0 0 6px rgba(22,163,74,0.15); } 100% { box-shadow: 0 0 0 0 transparent; } }
@@ -2427,7 +2456,7 @@ function jarvisRespond(intent, text, ctx) {
 // ── Section Header ────────────────────────────────────────────────────
 
 function SectionHeader({ title, noMargin }) {
-  return html`<div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase', marginBottom: noMargin ? 0 : 10, paddingLeft: 4 }}>${title}</div>`;
+  return html`<div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase', marginBottom: noMargin ? 0 : 10, paddingLeft: 4 }}>${title}</div>`;
 }
 
 function CollapsibleSection({ title, icon, summary, badge, extra, children, defaultOpen }) {
@@ -2439,7 +2468,7 @@ function CollapsibleSection({ title, icon, summary, badge, extra, children, defa
           className="flex items-center justify-between w-full press-scale"
           style=${{ paddingLeft: 4, paddingRight: 4, marginBottom: 10 }}>
           <div className="flex items-center gap-2">
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase' }}>${title}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase' }}>${title}</span>
             ${badge && html`<span className="px-1.5 py-0.5 rounded-md" style=${{ fontSize: 10, fontWeight: 700, background: badge.bg, color: badge.color }}>${badge.text}</span>`}
           </div>
           <${CaretUp} size=${14} weight="bold" color=${T.muted} />
@@ -2454,7 +2483,7 @@ function CollapsibleSection({ title, icon, summary, badge, extra, children, defa
           </div>
           <div className="flex-1 min-w-0 text-left">
             <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>${title}</div>
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.text, lineHeight: 1 }}>${summary}</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.text, lineHeight: 1 }}>${summary}</div>
             ${extra || ''}
           </div>
           ${badge && html`<span className="px-1.5 py-0.5 rounded-md flex-shrink-0" style=${{ fontSize: 10, fontWeight: 700, background: badge.bg, color: badge.color }}>${badge.text}</span>`}
@@ -2655,11 +2684,11 @@ function RestTimer({ duration = 90, onDone }) {
               style=${{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }} />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: urgentColor, fontVariantNumeric: 'tabular-nums', transition: 'color 0.5s' }}>${timeStr}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: urgentColor, fontVariantNumeric: 'tabular-nums', transition: 'color 0.5s' }}>${timeStr}</span>
           </div>
         </div>
         <div className="flex-1">
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Descanso')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Descanso')}</div>
           <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${restLabel} \u00B7 ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}</div>
         </div>
         <button onClick=${() => onDone && onDone()}
@@ -2729,7 +2758,7 @@ function HIITTimer({ onClose }) {
           <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/>
           <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
         </svg>
-        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, marginBottom: 6 }}>HIIT ${t('completado')}</div>
+        <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, marginBottom: 6 }}>HIIT ${t('completado')}</div>
         <div style=${{ fontSize: 13, color: T.sub, marginBottom: 4 }}>${rounds} ${t('rondas')} \u00B7 ${workSec}s/${restSec}s</div>
         <div style=${{ fontSize: 13, color: T.sub, marginBottom: 20 }}>~${Math.round(rounds * (workSec + restSec) / 60)} min \u00B7 ~${calcCaloriesBurned(rounds * (workSec + restSec), getUserWeightKg())} kcal</div>
         <div className="flex justify-center gap-3">
@@ -2744,7 +2773,7 @@ function HIITTimer({ onClose }) {
     return html`
       <div className="fade-up">
         <div className="text-center" style=${{ marginBottom: 24 }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginBottom: 4 }}>HIIT Timer</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginBottom: 4 }}>HIIT Timer</div>
           <div style=${{ fontSize: 12, color: T.muted }}>${t('Configura tu intervalo')}</div>
         </div>
         <div className="space-y-4" style=${{ maxWidth: 280, margin: '0 auto' }}>
@@ -2754,11 +2783,11 @@ function HIITTimer({ onClose }) {
             { label: t('Rondas'), value: rounds, setter: setRounds, unit: '', min: 2, max: 20, step: 1 },
           ].map((cfg, ci) => html`
             <div key=${ci} className="flex items-center justify-between py-2">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.text }}>${cfg.label}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.text }}>${cfg.label}</span>
               <div className="flex items-center gap-3">
                 <button onClick=${() => adjustValue(cfg.setter, cfg.value, -cfg.step, cfg.min, cfg.max)} className="press-scale"
                   style=${{ width: 36, height: 36, borderRadius: '50%', background: T.input, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: T.muted }}>-</button>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, width: 48, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>${cfg.value}${cfg.unit}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, width: 48, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>${cfg.value}${cfg.unit}</span>
                 <button onClick=${() => adjustValue(cfg.setter, cfg.value, cfg.step, cfg.min, cfg.max)} className="press-scale"
                   style=${{ width: 36, height: 36, borderRadius: '50%', background: T.input, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: T.muted }}>+</button>
               </div>
@@ -2770,7 +2799,7 @@ function HIITTimer({ onClose }) {
         </div>
         <div className="flex justify-center gap-3 mt-6">
           <button onClick=${startHIIT} className="px-8 py-3 rounded-2xl press-scale"
-            style=${{ background: T.green, color: '#fff', fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, boxShadow: '0 4px 20px rgba(22,163,74,0.3)' }}>
+            style=${{ background: T.green, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, boxShadow: '0 4px 20px rgba(22,163,74,0.3)' }}>
             ${t('Iniciar')}
           </button>
           <button onClick=${onClose} className="px-5 py-3 rounded-2xl press-scale"
@@ -2787,7 +2816,7 @@ function HIITTimer({ onClose }) {
     <div className="text-center fade-up">
       <div className="flex items-center justify-center gap-2 mb-2">
         <div style=${{ width: 8, height: 8, borderRadius: '50%', background: phaseColor, animation: 'livePulse 1.5s ease-in-out infinite' }} />
-        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 800, color: phaseColor, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 800, color: phaseColor, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
           ${phase === 'work' ? (LANG === 'en' ? 'Work' : 'Trabajo') : t('Descanso')}
         </span>
       </div>
@@ -2799,7 +2828,7 @@ function HIITTimer({ onClose }) {
             style=${{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }} />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 48, fontWeight: 900, color: T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-2px', lineHeight: 1 }}>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 48, fontWeight: 900, color: T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-2px', lineHeight: 1 }}>
             ${mm > 0 ? mm + ':' + String(ss).padStart(2, '0') : ss}
           </div>
           <div style=${{ fontSize: 12, fontWeight: 600, color: T.muted, marginTop: 4 }}>
@@ -2850,7 +2879,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="flex items-baseline">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: valColor, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: valColor, lineHeight: 1, letterSpacing: '-1px' }}>${animVal}</span>
               <span style=${{ fontSize: 11, fontWeight: 500, color: T.muted, marginLeft: 1 }}>/</span>
             </div>
             <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, marginTop: 2 }}>${max}${unit}</div>
@@ -2899,17 +2928,27 @@ function SupplementsCheck() {
 
   const allDone = creatine && whey && omega3;
 
-  const suppBtn = (checked, onToggle, emoji, label, sub) => html`
+  const pillCard = (checked, onToggle, emoji, label, sub, colorBg, colorBorder, colorAccent) => html`
     <button onClick=${onToggle}
-      className="flex-1 flex items-center gap-2 py-2 px-2.5 rounded-xl transition-all active:scale-[0.97]"
-      style=${{ background: checked ? T.greenDim : T.input, border: '1px solid ' + (checked ? T.green + '30' : 'transparent'), minWidth: 0 }}>
-      <div style=${{ width: 18, height: 18, borderRadius: 5, border: checked ? 'none' : '2px solid ' + T.muted + '50', background: checked ? T.green : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-        ${checked && html`<svg className="check-draw" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`}
+      className="press-scale"
+      style=${{
+        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        padding: '10px 6px 8px', borderRadius: 12, cursor: 'pointer',
+        background: checked ? colorBg : T.elevated,
+        border: checked ? ('1px solid ' + colorBorder) : ('1px dashed ' + T.border),
+        transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+        minWidth: 0
+      }}>
+      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }}>
+        <span style=${{ fontSize: 24, lineHeight: 1, opacity: checked ? 1 : 0.7, transition: 'opacity 0.2s' }}>${emoji}</span>
+        ${checked && html`
+          <div style=${{ position: 'absolute', top: -2, right: -4, display: 'flex' }}>
+            <${CheckCircle} size=${14} weight="fill" color=${colorAccent} />
+          </div>
+        `}
       </div>
-      <div style=${{ minWidth: 0 }}>
-        <div style=${{ fontSize: 12, fontWeight: 700, color: checked ? T.green : T.text, lineHeight: 1, transition: 'color 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>${emoji} ${label}</div>
-        <div style=${{ fontSize: 9, fontWeight: 500, color: T.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>${sub}</div>
-      </div>
+      <div style=${{ fontSize: 11, fontWeight: 700, color: checked ? colorAccent : T.text, lineHeight: 1.1, transition: 'color 0.2s', textAlign: 'center' }}>${label}</div>
+      <div style=${{ fontSize: 9, fontWeight: 500, color: T.muted, lineHeight: 1, textAlign: 'center' }}>${sub}</div>
     </button>
   `;
 
@@ -2917,16 +2956,19 @@ function SupplementsCheck() {
     <div className="fade-up" style=${{ marginBottom: 12, padding: '10px 14px', borderRadius: 14, background: T.card, border: '1px solid ' + T.border }}>
       <div className="flex items-center gap-2 mb-2" style=${{ paddingLeft: 2 }}>
         <${Checks} size=${14} weight="bold" color=${allDone ? T.green : T.muted} />
-        <span style=${{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: T.muted, textTransform: 'uppercase' }}>${t('Suplementos')}</span>
+        <span style=${{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: allDone ? T.green : T.muted, textTransform: 'uppercase', transition: 'color 0.2s' }}>
+          ${allDone ? (t('Completo') + ' \u2713') : t('Suplementos')}
+        </span>
       </div>
       <div className="flex gap-2">
-        ${suppBtn(creatine, toggleCreatine, '\uD83C\uDF73', t('Creatina'), t('5g diarios'))}
-        ${suppBtn(whey, toggleWhey, '\uD83E\uDD64', 'Whey', 'Post-gym')}
-        ${suppBtn(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels \xB7 almuerzo'))}
+        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), T.accent + '12', T.accent + '25', T.accent)}
+        ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)')}
+        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(33,150,196,0.08)', 'rgba(33,150,196,0.2)', 'rgb(33,150,196)')}
       </div>
     </div>
   `;
 }
+
 
 
 // ── Sparkline helpers ────────────────────────────────────────────────
@@ -2968,19 +3010,30 @@ function getSparklineData(type, days = 7) {
   return points;
 }
 
-function Sparkline({ data, color, width = 50, height = 16 }) {
+function Sparkline({ data, color, gradientId = 'sparkGrad' }) {
   if (!data || data.length < 2 || data.every(v => v === 0)) return null;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data);
-  const range = max - min || 1;
+  const vbW = 100, vbH = 24;
+  const maxVal = Math.max(...data, 1);
+  const minVal = Math.min(...data);
+  const range = maxVal - minVal || 1;
   const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - 2 - ((v - min) / range) * (height - 4);
+    const x = (i / (data.length - 1)) * vbW;
+    const y = vbH - 2 - ((v - minVal) / range) * (vbH - 4);
     return x + ',' + y;
-  }).join(' ');
+  });
+  const linePts = pts.join(' ');
+  const areaPts = pts[0].split(',')[0] + ',' + vbH + ' ' + linePts + ' ' + pts[pts.length - 1].split(',')[0] + ',' + vbH;
+  const fillId = gradientId + '_fill';
   return html`
-    <svg width=${width} height=${height} style=${{ display: 'block', opacity: 0.6 }}>
-      <polyline points=${pts} fill="none" stroke=${color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="100%" height=${vbH} viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="none" style=${{ display: 'block', opacity: 0.7 }}>
+      <defs>
+        <linearGradient id=${fillId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color=${color} stop-opacity="0.3" />
+          <stop offset="100%" stop-color=${color} stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points=${areaPts} fill=${'url(#' + fillId + ')'} />
+      <polyline points=${linePts} fill="none" stroke=${color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   `;
 }
@@ -2995,7 +3048,7 @@ function DualRingCard({ outer, inner }) {
   const outerAnimVal = useCountUp(outer.value, 700);
   const innerAnimVal = useCountUp(inner.value, 700);
 
-  const rOuter = 41, rInner = 29, sw = 10;
+  const rOuter = 52, rInner = 38, sw = 8;
   const circOuter = 2 * Math.PI * rOuter; // ~257.61
   const circInner = 2 * Math.PI * rInner; // ~182.21
   const pctOuter = outer.max > 0 ? Math.min(outer.value / outer.max, 1) : 0;
@@ -3004,7 +3057,7 @@ function DualRingCard({ outer, inner }) {
   const offInner = mounted ? circInner * (1 - pctInner) : circInner;
   const outerDone = outer.value >= outer.max && outer.max > 0;
   const innerDone = inner.value >= inner.max && inner.max > 0;
-  const svgSz = 100;
+  const svgSz = 126;
 
   const inter = "'Inter', system-ui, sans-serif";
 
@@ -3015,19 +3068,19 @@ function DualRingCard({ outer, inner }) {
         <div className="flex items-center gap-1">
           <div style=${{ width: 8, height: 8, borderRadius: 4, background: m.gradientColors[1], flexShrink: 0 }} />
           <span style=${{ fontSize: 10, fontWeight: 700, fontFamily: inter, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>${m.label}</span>
-          ${m.sparkData ? html`<div style=${{ marginLeft: 'auto' }}><${Sparkline} data=${m.sparkData} color=${m.gradientColors[1]} /></div>` : ''}
         </div>
         <div className="flex items-center gap-1" style=${{ marginTop: 2 }}>
           <span style=${{ fontSize: 22, fontWeight: 800, fontFamily: inter, color: T.text, lineHeight: 1 }}>${animVal}</span>
           <span style=${{ fontSize: 10, fontWeight: 500, fontFamily: inter, color: T.muted }}>/ ${m.max}${m.unit}</span>
           ${done ? html`<${CheckCircle} size=${16} weight="fill" color=${T.green} style=${{ marginLeft: 2 }} />` : ''}
         </div>
+        ${m.sparkData ? html`<div style=${{ marginTop: 4 }}><${Sparkline} data=${m.sparkData} color=${m.gradientColors[1]} gradientId=${m.gradientId + '_spark'} /></div>` : ''}
       </div>
     </div>
   `;
 
   return html`
-    <div style=${{ padding: '16px 18px', borderRadius: 20, background: T.card, boxShadow: 'var(--ds-card-shadow)' }}>
+    <div className="card-press" style=${{ padding: '16px 18px', borderRadius: 20, background: T.card, boxShadow: 'var(--ds-card-shadow)' }}>
       <div className="flex items-center gap-4">
         <div style=${{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           ${metricRow(outer, outerAnimVal, outerDone)}
@@ -3094,7 +3147,7 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
     : { icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal, unit: LANG === 'en' ? ' exer.' : ' ejer.', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'], sparkData: sparkGym };
 
   return html`
-    <div className="fade-up" style=${{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+    <div className="stagger" style=${{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
       <${DualRingCard}
         outer=${{ icon: calIcon, label: t('Calorías'), value: calories, max: CALORIES_GOAL, unit: '', gradientId: 'gCal', gradientColors: ['#e8793a','#b84a0a'], sparkData: sparkCal }}
         inner=${{ icon: protIcon, label: t('Proteína'), value: protein, max: PROTEIN_GOAL, unit: 'g', gradientId: 'gProt', gradientColors: ['#5c9fd4','#274472'], sparkData: sparkProt }}
@@ -3134,8 +3187,8 @@ function DaySummary({ protein, calories, waterMl, gymDone, gymTotal }) {
     <div className="px-5">
       <div className="ds-card fade-up" style=${{ padding: '16px 20px', marginBottom: 12 }}>
         <div className="flex items-center justify-between mb-3">
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: allDone ? T.green : T.text }}>${msgs[completed]}</span>
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 800, color: allDone ? T.green : T.accent }}>${completed}/4</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: allDone ? T.green : T.text }}>${msgs[completed]}</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: allDone ? T.green : T.accent }}>${completed}/4</span>
         </div>
         <div className="flex gap-2">
           ${goals.map((g, i) => html`
@@ -3483,7 +3536,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
             return html`
               <div className="flex items-center justify-between mt-2 px-3 py-2 rounded-lg" style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '15' }}>
                 <span style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>1RM Est.</span>
-                <span style=${{ fontSize: 13, fontWeight: 800, color: T.accent, fontFamily: 'Outfit, sans-serif' }}>${orm} ${unitPref}</span>
+                <span style=${{ fontSize: 13, fontWeight: 800, color: T.accent, fontFamily: 'Inter, sans-serif' }}>${orm} ${unitPref}</span>
               </div>
             `;
           })()}
@@ -3550,7 +3603,7 @@ function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpd
                     transition: 'all 0.2s',
                   }}>
                   <div style=${{ fontSize: 22, marginBottom: 4 }}>${opt.emoji}</div>
-                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: wcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+                  <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: wcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
                     ${LANG === 'en' ? opt.nameEn : opt.name}
                   </div>
                 </button>
@@ -3572,13 +3625,13 @@ function WorkoutCard({ routine, unitPref, onUnitToggle, exercises, onExerciseUpd
                 <div className="flex items-center justify-center gap-2 py-3 rounded-2xl"
                   style=${{ background: T.greenDim, border: '1px solid ' + T.green + '30' }}>
                   <${CheckCircle} size=${18} weight="fill" color=${T.green} />
-                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.green }}>${t('Cardio completado')}</span>
+                  <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.green }}>${t('Cardio completado')}</span>
                 </div>
               ` : html`
                 <button onClick=${onCardioDone}
                   className="w-full py-3 rounded-2xl press-scale"
                   style=${{ background: T.accent, border: 'none' }}>
-                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>${t('Completar cardio')}</span>
+                  <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: '#fff' }}>${t('Completar cardio')}</span>
                 </button>
               `}
             </div>
@@ -3760,7 +3813,7 @@ function MealsTimeline({ meals, onConfirm, onEdit, onAddMeal }) {
     <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
       <div className="flex items-center gap-2 mb-4">
         <${ForkKnife} size=${20} weight="duotone" color=${T.accent} />
-        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700, color: T.text }}>${t('Comidas del día')}</span>
+        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: T.text }}>${t('Comidas del día')}</span>
       </div>
       <div>
         ${meals.map((meal, i) => html`
@@ -3836,7 +3889,7 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
     <div className="ds-card fade-up" style=${{ padding: 20, marginBottom: 12 }}>
       <!-- Header -->
       <div className="flex items-center justify-between mb-4">
-        <span style=${{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 15, color: T.text }}>${t('Agua')}</span>
+        <span style=${{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15, color: T.text }}>${t('Agua')}</span>
         <span style=${{ fontSize: 13, fontWeight: 600, color: T.muted }}>${glassCount} ${t('de')} ${goalGlasses} ${t('vasos')}</span>
       </div>
 
@@ -3868,11 +3921,11 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
             <path d="M8 6 L72 6" stroke=${T.border} strokeWidth="2" strokeLinecap="round" />
             <!-- ML text inside -->
             <text x="40" y="60" textAnchor="middle" fill=${done ? T.green : T.text}
-              style=${{ fontFamily: 'Outfit, sans-serif', fontSize: waterMl >= 1000 ? 18 : 22, fontWeight: 900 }}>
+              style=${{ fontFamily: 'Inter, sans-serif', fontSize: waterMl >= 1000 ? 18 : 22, fontWeight: 900 }}>
               ${waterMl}
             </text>
             <text x="40" y="76" textAnchor="middle" fill=${T.muted}
-              style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600 }}>
+              style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600 }}>
               ml
             </text>
           </svg>
@@ -3923,7 +3976,7 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
           <button key=${q.ml} onClick=${() => onAddWater(q.ml)} disabled=${done}
             className="flex-1 py-2.5 rounded-xl text-center transition-all active:scale-[0.96]"
             style=${{ background: T.accentDim, border: '1px solid ' + T.accentDim }}>
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${q.label}</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${q.label}</div>
             <div style=${{ fontSize: 10, color: T.muted, marginTop: 1 }}>${q.sub}</div>
           </button>
         `)}
@@ -4071,7 +4124,7 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2.5">
             <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 800, color: T.text, letterSpacing: '-0.8px' }}>Jarvis</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 800, color: T.text, letterSpacing: '-0.8px' }}>Jarvis</div>
           </div>
           <div className="flex items-center gap-2">
             ${messages.length > 0 && html`
@@ -4094,7 +4147,7 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
         <div className="flex gap-2">
           ${summaryCards.map((c, i) => html`
             <div key=${i} className="flex-1 rounded-xl py-2.5 px-2" style=${{ background: T.elevated, border: '1px solid ' + T.border, textAlign: 'center' }}>
-              <div style=${{ fontSize: 16, fontWeight: 800, color: c.color, fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>${c.value}</div>
+              <div style=${{ fontSize: 16, fontWeight: 800, color: c.color, fontFamily: 'Inter, sans-serif', lineHeight: 1 }}>${c.value}</div>
               <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>${c.label}</div>
               <div style=${{ marginTop: 4, height: 3, borderRadius: 2, background: T.input, overflow: 'hidden' }}>
                 <div style=${{ width: c.pct + '%', height: '100%', borderRadius: 2, background: c.color, transition: 'width 0.5s ease' }} />
@@ -4115,7 +4168,7 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
             background: 'linear-gradient(135deg, ' + T.accent + ', ' + T.accentGlow + ')',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <span style=${{ color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
+            <span style=${{ color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
           </div>
           <div className="rounded-2xl px-4 py-2.5" style=${{
             background: T.elevated, maxWidth: '82%', fontSize: 14, lineHeight: '1.55',
@@ -4149,7 +4202,7 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
                 background: 'linear-gradient(135deg, ' + T.accent + ', ' + T.accentGlow + ')',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-                <span style=${{ color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
+                <span style=${{ color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
               </div>
             `}
             <div className="rounded-2xl px-4 py-2.5" style=${{
@@ -4174,7 +4227,7 @@ function JarvisTab({ meals, waterMl, exerciseStates, routine, dark, onThemeToggl
               background: 'linear-gradient(135deg, ' + T.accent + ', ' + T.accentGlow + ')',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <span style=${{ color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
+              <span style=${{ color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 900, fontSize: 14 }}>J</span>
             </div>
             <div className="rounded-2xl px-4 py-3" style=${{ background: T.elevated, borderTopLeftRadius: 6, border: '1px solid ' + T.border }}>
               <div className="flex gap-1.5">
@@ -4305,7 +4358,7 @@ function WeekCalendar({ days, selectedIdx, onSelect }) {
             className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-2xl transition-all active:scale-[0.95]"
             style=${{ background: bg, border, minHeight: 72 }}>
             <span style=${{ fontSize: 11, fontWeight: 600, color: isToday ? 'rgba(255,255,255,0.7)' : T.muted }}>${t(d.initial)}</span>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: textColor }}>${d.dayNum}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: textColor }}>${d.dayNum}</span>
             <span style=${{ fontSize: 14, lineHeight: 1 }}>${emoji}</span>
           </button>
         `;
@@ -4323,7 +4376,7 @@ function RoutineCard({ routine, dayLabel }) {
       <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 24 }}>
         <div className="text-center">
           <div style=${{ fontSize: 40, marginBottom: 8 }}>${'\uD83D\uDE34'}</div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Descanso')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Descanso')}</div>
           <div style=${{ fontSize: 14, color: T.sub }}>${t(routine.focus)}</div>
           <div className="mt-3 px-4 py-2 rounded-xl inline-block" style=${{ background: T.elevated, fontSize: 13, color: T.muted }}>
             ${t('Estiramiento, movilidad, caminata suave')}
@@ -4337,7 +4390,7 @@ function RoutineCard({ routine, dayLabel }) {
       <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 24 }}>
         <div className="text-center">
           <div style=${{ fontSize: 40, marginBottom: 8 }}>${'\uD83C\uDFC3'}</div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Cardio')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 4 }}>${t('Día de Cardio')}</div>
           <div style=${{ fontSize: 14, color: T.sub, marginBottom: 4 }}>${t('Elige tu cardio de hoy')}</div>
         </div>
         <div className="mt-2" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -4351,7 +4404,7 @@ function RoutineCard({ routine, dayLabel }) {
                 transition: 'all 0.2s',
               }}>
               <div style=${{ fontSize: 24, marginBottom: 4 }}>${opt.emoji}</div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: rcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: rcCardio === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
                 ${LANG === 'en' ? opt.nameEn : opt.name}
               </div>
               <div style=${{ fontSize: 9, color: T.muted, marginTop: 2 }}>30 min</div>
@@ -4365,7 +4418,7 @@ function RoutineCard({ routine, dayLabel }) {
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <div className="mb-3">
-        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 800, color: T.text }}>${t(routine.name)}</div>
+        <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: T.text }}>${t(routine.name)}</div>
         <div style=${{ fontSize: 13, fontWeight: 500, color: T.sub }}>${t(routine.focus)}</div>
       </div>
       <div>
@@ -4374,7 +4427,7 @@ function RoutineCard({ routine, dayLabel }) {
             style=${{ borderBottom: i < routine.exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
             <div className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
               style=${{ background: T.accentDim }}>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 800, color: T.accent }}>${i + 1}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800, color: T.accent }}>${i + 1}</span>
             </div>
             <div className="flex-1 min-w-0">
               <div style=${{ fontSize: 14, fontWeight: 600, color: T.text }}>${exName(ex)}</div>
@@ -4468,7 +4521,7 @@ function WeeklyVolumeReport() {
       <${SectionHeader} title=${t("Volumen semanal")} />
       <div className="flex items-end gap-4 mb-3">
         <div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: T.text, letterSpacing: '-1px' }}>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: T.text, letterSpacing: '-1px' }}>
             ${report.thisWeekVol >= 1000 ? (report.thisWeekVol / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : report.thisWeekVol}
           </div>
           <div style=${{ fontSize: 11, color: T.muted }}>${t('lbs esta semana')}</div>
@@ -4543,7 +4596,7 @@ function WeekSummary() {
             <span style=${{ fontSize: 18 }}>${s.emoji}</span>
             <div>
               <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase' }}>${s.label}</div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text }}>${s.value}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text }}>${s.value}</div>
             </div>
           </div>
         `)}
@@ -4654,7 +4707,7 @@ function MuscleMap() {
                 <div key=${i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style=${{ background: active ? T.accentDim : T.elevated, transition: 'background 0.3s' }}>
                   <div style=${{ width: 8, height: 8, borderRadius: 4, background: active ? T.accent : T.muted, opacity: active ? getOpacity(mg.svgId) : 0.3, transition: 'all 0.5s' }} />
                   <span style=${{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? T.accent : T.muted, flex: 1 }}>${t(mg.name)}</span>
-                  ${active && html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 900, color: T.accent }}>${count}x</span>`}
+                  ${active && html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 900, color: T.accent }}>${count}x</span>`}
                 </div>
               `;
             })}
@@ -4943,7 +4996,7 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Semana')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Semana')}</div>
         </div>
         <div className="flex items-center gap-2">
           <${LangToggle} onToggle=${onLangToggle} />
@@ -5098,7 +5151,7 @@ function MetricsCard({ unitPref, onSaved }) {
               <button key=${bp.key}
                 onClick=${() => { setSelectedPart(bp.key === selectedPart ? null : bp.key); setInputVal(''); setChartPart(null); }}
                 className="press-scale" style=${pillStyle}>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted }}>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted }}>
                   ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : ' cm') : (LANG === 'en' ? bp.labelEn : bp.label)}
                 </span>
               </button>
@@ -5147,7 +5200,7 @@ function MetricsCard({ unitPref, onSaved }) {
           padding: '10px 0', borderRadius: 12, background: T.accentDim,
           border: '1px solid ' + T.accent + '25' }}>
         <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCA'}</span>
-        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent }}>
+        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent }}>
           ${LANG === 'en' ? 'Update composition' : 'Actualizar composición'}
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showBodyComp ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
@@ -5289,7 +5342,7 @@ function WeightChart() {
           const dateLabel = new Date(entry.date + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' });
           return html`
             <div key=${i} className="flex-1 flex flex-col items-center" style=${{ height: '100%', justifyContent: 'flex-end' }}>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, color: isLast ? T.accent : T.sub, marginBottom: 4 }}>${entry.kg}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: isLast ? T.accent : T.sub, marginBottom: 4 }}>${entry.kg}</span>
               <div style=${{
                 width: '100%', height: h, borderRadius: '8px 8px 0 0',
                 background: isLast ? T.accent : T.elevated,
@@ -5352,7 +5405,7 @@ function RecordsCard({ unitPref }) {
                   </div>
                   ${rec ? html`
                     <div className="flex items-center gap-2">
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${displayUnit}</span>
+                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${displayUnit}</span>
                       <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps}</span>
                       <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${displayUnit}</span>
                     </div>
@@ -5509,12 +5562,12 @@ function WeeklyShareCard() {
 
     // Brand
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px Outfit, system-ui, sans-serif';
+    ctx.font = 'bold 28px Inter, system-ui, sans-serif';
     ctx.fillText('DontSkip', 40, 50);
 
     // Week range
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '14px Outfit, system-ui, sans-serif';
+    ctx.font = '14px Inter, system-ui, sans-serif';
     ctx.fillText(data.weekRange, 40, 75);
 
     // Stats — 2x2 grid
@@ -5526,20 +5579,20 @@ function WeeklyShareCard() {
     ];
     stats.forEach(function(s) {
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px Outfit, system-ui, sans-serif';
+      ctx.font = 'bold 36px Inter, system-ui, sans-serif';
       ctx.fillText(s.val, s.x, s.y);
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = '13px Outfit, system-ui, sans-serif';
+      ctx.font = '13px Inter, system-ui, sans-serif';
       ctx.fillText(s.label, s.x, s.y + 22);
     });
 
     // PRs section (if any)
     if (data.weekPRs && data.weekPRs.length > 0) {
       ctx.fillStyle = '#facc15';
-      ctx.font = 'bold 13px Outfit, system-ui, sans-serif';
+      ctx.font = 'bold 13px Inter, system-ui, sans-serif';
       ctx.fillText('\uD83C\uDFC6 PRs', 40, 310);
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = '12px Outfit, system-ui, sans-serif';
+      ctx.font = '12px Inter, system-ui, sans-serif';
       data.weekPRs.slice(0, 3).forEach(function(pr, i) {
         ctx.fillText(pr, 80, 310 + (i + 1) * 18);
       });
@@ -5547,7 +5600,7 @@ function WeeklyShareCard() {
 
     // Footer
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '11px Outfit, system-ui, sans-serif';
+    ctx.font = '11px Inter, system-ui, sans-serif';
     ctx.fillText('DontSkip Fitness', 40, 380);
 
     return new Promise(function(resolve) { canvas.toBlob(resolve, 'image/png'); });
@@ -5602,19 +5655,19 @@ function WeeklyShareCard() {
       </div>
       <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div className="text-center py-3 rounded-xl" style=${{ background: T.accentDim }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.accent }}>${data.totalWorkouts}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.accent }}>${data.totalWorkouts}</div>
           <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${t('Entrenamientos')}</div>
         </div>
         <div className="text-center py-3 rounded-xl" style=${{ background: T.copperDim }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.copper }}>${data.avgProtein}g</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.copper }}>${data.avgProtein}g</div>
           <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${t('Proteína prom.')}</div>
         </div>
         <div className="text-center py-3 rounded-xl" style=${{ background: T.amberDim }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.amber }}>${data.avgCalories}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.amber }}>${data.avgCalories}</div>
           <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${t('Calorías prom.')}</div>
         </div>
         <div className="text-center py-3 rounded-xl" style=${{ background: T.waterDim }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.water }}>${data.totalWater}L</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.water }}>${data.totalWater}L</div>
           <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${t('Agua total')}</div>
         </div>
       </div>
@@ -5648,7 +5701,7 @@ function GeneralStats() {
             <span style=${{ fontSize: 18 }}>${s.emoji}</span>
             <div>
               <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase' }}>${s.label}</div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text }}>${s.value}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text }}>${s.value}</div>
             </div>
           </div>
         `)}
@@ -5819,12 +5872,12 @@ function BodyCompCards() {
             <div style=${{ width: 32, height: 32, borderRadius: 10, background: cfg.accent + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style=${{ fontSize: 16 }}>${cfg.icon}</span>
             </div>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${cfg.label}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${cfg.label}</span>
           </div>
           <div style=${{ fontSize: 10, fontWeight: 700, color: badge.color, padding: '2px 8px', borderRadius: 8, background: badge.color + '15' }}>${badge.label}</div>
         </div>
         <div className="flex items-baseline gap-1">
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 32, fontWeight: 900, color: T.text, lineHeight: 1 }}>${cfg.value}</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 32, fontWeight: 900, color: T.text, lineHeight: 1 }}>${cfg.value}</span>
           <span style=${{ fontSize: 13, fontWeight: 600, color: T.muted }}>${cfg.unit}</span>
           ${cfg.delta != null ? deltaTag(cfg.delta, cfg.inverted) : ''}
         </div>
@@ -5859,7 +5912,7 @@ function BodyCompCards() {
     <div className="fade-up mx-5 mb-4">
       <div className="flex items-center gap-2 mb-3" style=${{ paddingLeft: 2 }}>
         <span style=${{ fontSize: 16 }}>${'\uD83E\uDDBE'}</span>
-        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text }}>${t('Composición corporal')}</span>
+        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: T.text }}>${t('Composición corporal')}</span>
       </div>
 
       ${renderCard({
@@ -5897,7 +5950,7 @@ function BodyCompCards() {
           background: T.card, border: '1px solid ' + T.border, marginTop: 4 }}>
         <div className="flex items-center gap-2">
           <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCA'}</span>
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Comparativa')}</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Comparativa')}</span>
         </div>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showTable ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
       </button>
@@ -5962,7 +6015,7 @@ function GoalsCard() {
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20, border: '2px solid ' + T.accent + '30' }}>
       <div className="flex items-center gap-2 mb-4">
         <span style=${{ fontSize: 18 }}>${'\uD83C\uDFAF'}</span>
-        <span style=${{ fontSize: 16, fontWeight: 800, color: T.text, fontFamily: 'Outfit, sans-serif' }}>
+        <span style=${{ fontSize: 16, fontWeight: 800, color: T.text, fontFamily: 'Inter, sans-serif' }}>
           ${LANG === 'en' ? 'My Goals — 6 months' : 'Mis metas — 6 meses'}
         </span>
       </div>
@@ -6872,7 +6925,7 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
         <div className="ds-card" style=${{ padding: '16px 20px', background: T.card, borderRadius: 16, marginTop: 12 }}>
           <button onClick=${() => setShowMeasurements(!showMeasurements)}
             className="flex items-center justify-between w-full"
-            style=${{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+            style=${{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
             <div className="flex items-center gap-2">
               <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCF'}</span>
               <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${t('Medidas corporales')}</span>
@@ -6946,7 +6999,7 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Progreso')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Progreso')}</div>
         </div>
         <div className="flex items-center gap-2">
           <${LangToggle} onToggle=${onLangToggle} />
@@ -7155,7 +7208,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
   });
 
   const sectionTitle = (text) => html`
-    <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 12 }}>${text}</div>
+    <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 12 }}>${text}</div>
   `;
 
   const rowStyle = (last) => ({
@@ -7172,7 +7225,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Perfil')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Perfil')}</div>
         </div>
         <div className="flex items-center gap-2">
           <${LangToggle} onToggle=${onLangToggle} />
@@ -7403,7 +7456,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
                   style=${{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
                   <div className="flex items-center gap-2">
                     <span style=${{ fontSize: 18 }}>${item.emoji}</span>
-                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.text }}>${LANG === 'en' ? item.nameEn : item.name}</span>
+                    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.text }}>${LANG === 'en' ? item.nameEn : item.name}</span>
                   </div>
                   <span style=${{ fontSize: 12, color: T.muted, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>\u25BC</span>
                 </button>
@@ -7478,7 +7531,7 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
             style=${{
               width: '100%', fontSize: 14, fontWeight: 500, color: T.text, lineHeight: 1.6,
               background: T.input, border: '1px solid ' + T.border, borderRadius: 12,
-              padding: '12px 14px', resize: 'vertical', fontFamily: 'Outfit, sans-serif',
+              padding: '12px 14px', resize: 'vertical', fontFamily: 'Inter, sans-serif',
               outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus=${e => e.target.style.borderColor = T.accent}
@@ -7516,7 +7569,7 @@ function PlaceholderTab({ name, icon, dark, onThemeToggle }) {
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${name}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${name}</div>
         </div>
         <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
       </div>
@@ -7923,7 +7976,7 @@ function MealEditorModal({ visible, category, initialItems, foodLibrary, onSave,
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span style=${{ fontSize: 22 }}>${category?.icon || '\u{1F37D}\uFE0F'}</span>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: T.text }}>${LANG === 'en' ? (category?.nameEn || category?.name) : category?.name}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: T.text }}>${LANG === 'en' ? (category?.nameEn || category?.name) : category?.name}</span>
           </div>
           <button onClick=${onClose} className="press-scale"
             style=${{ width: 36, height: 36, borderRadius: 12, background: T.input, border: '1px solid ' + T.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -8012,7 +8065,7 @@ function MealEditorModal({ visible, category, initialItems, foodLibrary, onSave,
             <input type="text" placeholder=${t('Buscar alimento...')} value=${query}
               onInput=${e => setQuery(e.target.value)}
               className="w-full py-3 px-4 rounded-xl"
-              style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text, fontSize: 15, fontFamily: 'Outfit, sans-serif' }} />
+              style=${{ background: T.input, border: '1px solid ' + T.border, color: T.text, fontSize: 15, fontFamily: 'Inter, sans-serif' }} />
           </div>
 
           <div className="flex gap-2 px-5 py-3">
@@ -8121,7 +8174,7 @@ function MealEditorModal({ visible, category, initialItems, foodLibrary, onSave,
         <button onClick=${() => { if (selected.length > 0) onSave(selected); }}
           disabled=${selected.length === 0}
           className="w-full py-3.5 rounded-2xl text-sm font-bold press-scale"
-          style=${{ background: selected.length > 0 ? T.accent : T.elevated, color: selected.length > 0 ? '#fff' : T.muted, fontFamily: 'Outfit, sans-serif', fontWeight: 800 }}>
+          style=${{ background: selected.length > 0 ? T.accent : T.elevated, color: selected.length > 0 ? '#fff' : T.muted, fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
           ${initialItems ? t('Guardar cambios') : t('Guardar comida')} ${selected.length > 0 ? '(' + selected.length + ')' : ''}
         </button>
       </div>
@@ -8222,7 +8275,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Comidas')}</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 30, fontWeight: 800, letterSpacing: '-0.8px', color: T.text }}>${t('Comidas')}</div>
           </div>
           <div className="flex items-center gap-2">
             <${LangToggle} onToggle=${onLangToggle} />
@@ -8277,7 +8330,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                       ` : ''}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, lineHeight: 1 }}>${consumedCal}</span>
+                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, lineHeight: 1 }}>${consumedCal}</span>
                       <span style=${{ fontSize: 9, color: T.muted }}>kcal</span>
                     </div>
                   </div>
@@ -8539,7 +8592,7 @@ function WorkoutTimer({ startTime }) {
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
   return html`
-    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent, fontVariantNumeric: 'tabular-nums' }}>
+    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent, fontVariantNumeric: 'tabular-nums' }}>
       ${m}:${String(s).padStart(2, '0')}
     </span>
   `;
@@ -8728,7 +8781,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         <div className="px-5 pt-2 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
           </div>
           <div className="flex items-center gap-2">
             <${LangToggle} onToggle=${onLangToggle} />
@@ -8739,13 +8792,13 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           ${showHIIT ? html`
             <${HIITTimer} onClose=${() => setShowHIIT(false)} />
           ` : html`
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 48, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>${LANG === 'en' ? 'REST DAY' : 'DÍA DE DESCANSO'}</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 48, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>${LANG === 'en' ? 'REST DAY' : 'DÍA DE DESCANSO'}</div>
             <div style=${{ fontSize: 14, color: T.sub, lineHeight: 1.5 }}>${t('No hay entrenamiento programado hoy.')}${html`<br/>`}${t('Recuperación activa o descanso total.')}</div>
             <button onClick=${() => setShowHIIT(true)}
               className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl press-scale"
               style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
             </button>
           `}
         </div>
@@ -8762,7 +8815,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         <div className="px-5 pt-2 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
           </div>
           <div className="flex items-center gap-2">
             <${LangToggle} onToggle=${onLangToggle} />
@@ -8776,7 +8829,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           </div>
         ` : html`
           <div className="text-center px-5" style=${{ paddingTop: 12, paddingBottom: 4 }}>
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 36, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 8 }}>CARDIO</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 36, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 8 }}>CARDIO</div>
             <div style=${{ fontSize: 13, color: T.sub }}>${t('Elige tu cardio de hoy')}</div>
           </div>
 
@@ -8792,7 +8845,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                     transition: 'all 0.2s',
                   }}>
                   <div style=${{ fontSize: 28, marginBottom: 6 }}>${opt.emoji}</div>
-                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, color: cardioChoice === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
+                  <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: cardioChoice === opt.key ? T.accent : T.text, lineHeight: 1.3 }}>
                     ${LANG === 'en' ? opt.nameEn : opt.name}
                   </div>
                   <div style=${{ fontSize: 9, color: T.muted, marginTop: 2 }}>30 min</div>
@@ -8806,7 +8859,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <div className="px-5 mb-4 fade-up">
                 <div className="flex items-center gap-2 mb-2">
                   <span style=${{ fontSize: 14 }}>${'\uD83D\uDD25'}</span>
-                  <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
+                  <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
                 </div>
                 <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
                   <div style=${{ padding: '8px 12px 12px' }}>
@@ -8826,8 +8879,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                         </button>
                         <div className="flex-1 min-w-0" onClick=${() => setExpandedWarmup(expandedWarmup === wi ? null : wi)} style=${{ cursor: 'pointer' }}>
                           <div className="flex items-center justify-between">
-                            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
-                            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
                           </div>
                           ${expandedWarmup === wi && w.howTo ? html`
                             ${w.gif ? html`<img src=${w.gif} alt=${w.nameEn || w.name} loading="lazy" style=${{ width: 120, height: 120, objectFit: 'contain', display: 'block', margin: '8px auto 4px', borderRadius: 10, background: T.input }} onError=${(e) => { e.target.style.display = 'none'; }} />` : ''}
@@ -8847,7 +8900,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                   loading="lazy"
                   style=${{ width: 180, height: 180, objectFit: 'contain', display: 'block', margin: '0 auto 12px', borderRadius: 12 }}
                   onError=${(e) => { e.target.src = 'gifs/cardio.gif'; e.target.onerror = () => { e.target.style.display = 'none'; }; }} />
-                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginBottom: 4 }}>${LANG === 'en' ? selectedOption.nameEn : selectedOption.name}</div>
+                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginBottom: 4 }}>${LANG === 'en' ? selectedOption.nameEn : selectedOption.name}</div>
                 <div style=${{ fontSize: 13, color: T.sub }}>${LANG === 'en' ? selectedOption.descEn : selectedOption.desc}</div>
               </div>
             </div>
@@ -8859,7 +8912,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                   style=${{ borderBottom: '1px solid ' + T.border }}>
                   <div className="flex items-center gap-2">
                     <span style=${{ fontSize: 16 }}>${'\uD83E\uDDD8\uD83C\uDFFC'}</span>
-                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
+                    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
                     <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${stretchDone.length}/${stretchExercises.length}</span>
                   </div>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showStretching ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
@@ -8883,8 +8936,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                         </button>
                         <div className="flex-1 min-w-0" onClick=${() => setExpandedStretch(expandedStretch === si ? null : si)} style=${{ cursor: 'pointer' }}>
                           <div className="flex items-center justify-between">
-                            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
-                            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
+                            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
+                            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
                           </div>
                           ${expandedStretch === si && st.howTo ? html`
                             ${st.gif ? html`<img src=${st.gif} alt=${st.nameEn || st.name} loading="lazy" style=${{ width: 120, height: 120, objectFit: 'contain', display: 'block', margin: '8px auto 4px', borderRadius: 10, background: T.input }} onError=${(e) => { e.target.style.display = 'none'; }} />` : ''}
@@ -8904,7 +8957,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl press-scale"
               style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
             </button>
           </div>
         `}
@@ -8921,7 +8974,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         <div className="px-5 pt-2 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="logo-icon.png" alt="" style=${{ height: 28, width: 'auto' }} />
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, letterSpacing: '-1px', color: T.text }}>Live</div>
           </div>
           <div className="flex items-center gap-2">
             <${LangToggle} onToggle=${onLangToggle} />
@@ -8929,9 +8982,9 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           </div>
         </div>
         <div className="text-center px-5" style=${{ paddingTop: 24 }}>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 60, fontWeight: 900, color: T.text + '12', letterSpacing: '-3px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>00:00</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 60, fontWeight: 900, color: T.text + '12', letterSpacing: '-3px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>00:00</div>
           <div style=${{ marginTop: 16, marginBottom: 4 }}>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${routine.name}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${routine.name}</span>
           </div>
           <div style=${{ fontSize: 13, color: T.muted, marginBottom: 20 }}>${t(routine.focus)} \u2014 ${exercises.length} ${t('ejercicios')}</div>
 
@@ -8953,7 +9006,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl press-scale"
             style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>${t('Comenzar')}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>${t('Comenzar')}</span>
           </button>
 
           ${hasRecommendations && html`
@@ -8961,7 +9014,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl press-scale"
               style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '20' }}>
               <span style=${{ fontSize: 16 }}>📋</span>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${t('Semana')} ${trainingWeek}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${t('Semana')} ${trainingWeek}</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           `}
@@ -8969,9 +9022,9 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             ${exercises.map((ex, i) => html`
               <div key=${i} className="flex items-center gap-3 py-3 px-1"
                 style=${{ borderBottom: i < exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 900, color: T.muted, width: 20, textAlign: 'center' }}>${i + 1}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 900, color: T.muted, width: 20, textAlign: 'center' }}>${i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(ex)}</div>
+                  <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(ex)}</div>
                   <div style=${{ fontSize: 11, color: T.muted, marginTop: 1 }}>${t(ex.muscle)} \u00B7 ${ex.sets}\u00D7${ex.reps}</div>
                 </div>
               </div>
@@ -8990,15 +9043,15 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       <div className="text-center glass" style=${{ paddingTop: 18, paddingBottom: 16, background: T.card + 'e6', borderBottom: '1px solid ' + T.border }}>
         <div className="flex items-center justify-center gap-2 mb-1">
           ${isPaused
-            ? html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.12em' }}>${t('Pausado')}</span>`
-            : html`<div className="live-dot" /><span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.12em' }}>${t('En vivo')}</span>`
+            ? html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.12em' }}>${t('Pausado')}</span>`
+            : html`<div className="live-dot" /><span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.12em' }}>${t('En vivo')}</span>`
           }
           ${startTimeStr && html`<span style=${{ fontSize: 10, color: T.muted, letterSpacing: '0.02em' }}>\u00B7 ${startTimeStr}</span>`}
         </div>
 
         <!-- Timer -->
         <div className=${isPaused ? '' : 'timer-glow'} style=${{
-          fontFamily: 'Outfit, sans-serif', fontSize: 68, fontWeight: 900, letterSpacing: '-4px', lineHeight: 1,
+          fontFamily: 'Inter, sans-serif', fontSize: 68, fontWeight: 900, letterSpacing: '-4px', lineHeight: 1,
           fontVariantNumeric: 'tabular-nums', color: isPaused ? T.muted : T.text, opacity: isPaused ? 0.5 : 1,
           transition: 'color 0.3s, opacity 0.3s'
         }}>
@@ -9024,7 +9077,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               padding: confirmStop ? '0 16px' : 0,
               background: confirmStop ? T.red : T.elevated, border: confirmStop ? 'none' : '1.5px solid ' + T.border }}>
             ${confirmStop
-              ? html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 800, color: '#fff' }}>${t('Finalizar')}</span>`
+              ? html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 800, color: '#fff' }}>${t('Finalizar')}</span>`
               : html`<svg width="14" height="14" viewBox="0 0 24 24" fill=${T.muted} stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`
             }
           </button>
@@ -9046,8 +9099,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             { value: elapsed > 0 ? '~' + calcCaloriesBurned(elapsed, getUserWeightKg()) : '--', label: 'KCAL' },
           ].map((met, i) => html`
             <div key=${i} className="text-center">
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', lineHeight: 1.2 }}>${met.value}</div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 8, fontWeight: 800, color: T.muted, letterSpacing: '0.12em', marginTop: 2 }}>${met.label}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', lineHeight: 1.2 }}>${met.value}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 8, fontWeight: 800, color: T.muted, letterSpacing: '0.12em', marginTop: 2 }}>${met.label}</div>
             </div>
           `)}
         </div>
@@ -9057,11 +9110,11 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         <div className="px-5 pt-4 fade-up">
           <div className="flex items-center gap-2 mb-2">
             <span style=${{ fontSize: 14 }}>🔥</span>
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Calentamiento dinámico')} \u00B7 ${warmupDone.length}/${warmupExercises.length}</span>
           </div>
           <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.amber + '30' }}>
             <div style=${{ padding: '12px 16px', borderBottom: '1px solid ' + T.border, background: T.amberDim + '40' }}>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${t('Prepara tu cuerpo para el entrenamiento')}</div>
               <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>${t(routine.focus)}</div>
             </div>
             <div style=${{ padding: '8px 12px 12px' }}>
@@ -9081,8 +9134,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                   </button>
                   <div className="flex-1 min-w-0" onClick=${() => setExpandedWarmup(expandedWarmup === wi ? null : wi)} style=${{ cursor: 'pointer' }}>
                     <div className="flex items-center justify-between">
-                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
-                      <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
+                      <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: warmupDone.includes(wi) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: warmupDone.includes(wi) ? 'line-through' : 'none' }}>${LANG === 'en' ? w.nameEn : w.name}</div>
+                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: T.amber, flexShrink: 0 }}>${w.sets}${w.detail ? ' ' + t(w.detail) : ''}</span>
                     </div>
                     ${expandedWarmup === wi && w.howTo ? html`
                       ${w.gif ? html`<img src=${w.gif} alt=${w.nameEn || w.name} loading="lazy" style=${{ width: 120, height: 120, objectFit: 'contain', display: 'block', margin: '8px auto 4px', borderRadius: 10, background: T.input }} onError=${(e) => { e.target.style.display = 'none'; }} />` : ''}
@@ -9101,18 +9154,18 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         <div className="text-center px-5 fade-up" style=${{ paddingTop: 36 }}>
           <div className="ds-card" style=${{ padding: 28, border: '1px solid ' + T.green + '30' }}>
             <span style=${{ fontSize: 48 }}>\uD83D\uDCAA\uD83C\uDFFC</span>
-            <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginTop: 12, marginBottom: 4 }}>${t('¿Entrenamiento terminado?')}</div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginTop: 12, marginBottom: 4 }}>${t('¿Entrenamiento terminado?')}</div>
             <div style=${{ fontSize: 13, color: T.sub, marginBottom: 20 }}>${gymTotal} ${t('ejercicios completados')} \u00B7 ${completedSets} sets</div>
             <div className="flex gap-3 justify-center">
               <button onClick=${() => setConfirmedDone(true)}
                 className="px-6 py-3 rounded-2xl press-scale"
                 style=${{ background: T.green, border: 'none' }}>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Sí, terminé')}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Sí, terminé')}</span>
               </button>
               <button onClick=${() => { const lastDoneIdx = exerciseStates.map((e,i) => e.sets.every(s => s.done) ? i : -1).filter(i => i >= 0).pop(); if (lastDoneIdx >= 0) { const es = exerciseStates[lastDoneIdx]; const lastSetIdx = es.sets.length - 1; onExerciseUpdate(lastDoneIdx, { ...es, sets: es.sets.map((s,i) => i === lastSetIdx ? { ...s, done: false } : s) }); } }}
                 className="px-6 py-3 rounded-2xl press-scale"
                 style=${{ background: T.input, border: '1px solid ' + T.border }}>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 700, color: T.sub }}>${t('Revisar sets')}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: T.sub }}>${t('Revisar sets')}</span>
               </button>
             </div>
           </div>
@@ -9125,12 +9178,12 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/>
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
           </svg>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginBottom: 6 }}>${t('Entrenamiento completado')}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: '-0.5px', marginBottom: 6 }}>${t('Entrenamiento completado')}</div>
           <div style=${{ fontSize: 13, color: T.sub }}>${t(routine.focus)} \u00B7 ${Math.floor(elapsed / 60)} min \u00B7 ${formatVolume(totalVolume)} ${unitPref}</div>
           ${elapsed > 0 && html`
             <div style=${{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 12, background: T.amberDim }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=${T.amber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c-4.97 0-7-3.58-7-7 0-4 3.5-8 5-9.5.42 2 2 3 2 3 1-2.5 3-4.5 4-5.5.67 2 1 4 1 4s2-1 2-3c2.5 3.5 3 5.5 3 7 0 5-3 8-7 8z"/></svg>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.amber }}>~${calcCaloriesBurned(elapsed, getUserWeightKg())} kcal ${t('quemadas')}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.amber }}>~${calcCaloriesBurned(elapsed, getUserWeightKg())} kcal ${t('quemadas')}</span>
             </div>
           `}
         </div>
@@ -9141,7 +9194,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               className="w-full py-3.5 rounded-2xl press-scale flex items-center justify-center gap-2"
               style=${{ background: T.accent, border: 'none' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Terminar entreno')}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>${t('Terminar entreno')}</span>
             </button>
           </div>
         ` : html`
@@ -9175,7 +9228,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               style=${{ borderBottom: '1px solid ' + T.border }}>
               <div className="flex items-center gap-2">
                 <span style=${{ fontSize: 16 }}>\uD83E\uDDD8\uD83C\uDFFC</span>
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent, letterSpacing: '-0.3px' }}>${t('Estiramientos post-entreno')}</span>
                 <span style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${stretchDone.length}/${stretchExercises.length}</span>
               </div>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showStretching ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
@@ -9199,8 +9252,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                     </button>
                     <div className="flex-1 min-w-0" onClick=${() => setExpandedStretch(expandedStretch === si ? null : si)} style=${{ cursor: 'pointer' }}>
                       <div className="flex items-center justify-between">
-                        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
-                        <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
+                        <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: stretchDone.includes(si) ? T.muted : T.text, letterSpacing: '-0.2px', textDecoration: stretchDone.includes(si) ? 'line-through' : 'none' }}>${LANG === 'en' ? st.nameEn : st.name}</div>
+                        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: T.accent, flexShrink: 0 }}>${st.sets}${st.detail ? ' ' + t(st.detail) : ''}</span>
                       </div>
                       ${expandedStretch === si && st.howTo ? html`
                         ${st.gif ? html`<img src=${st.gif} alt=${st.nameEn || st.name} loading="lazy" style=${{ width: 120, height: 120, objectFit: 'contain', display: 'block', margin: '8px auto 4px', borderRadius: 10, background: T.input }} onError=${(e) => { e.target.style.display = 'none'; }} />` : ''}
@@ -9219,11 +9272,11 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           <div className="px-5 pt-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="live-dot" />
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Ejercicio actual')} \u00B7 ${currentIdx + 1}/${gymTotal}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Ejercicio actual')} \u00B7 ${currentIdx + 1}/${gymTotal}</span>
             </div>
             <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', border: '1px solid ' + T.green + '25' }}>
               <div style=${{ padding: '14px 18px', borderBottom: '1px solid ' + T.border }}>
-                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${exName(currentEx)}</div>
+                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${exName(currentEx)}</div>
                 <div style=${{ fontSize: 12, color: T.muted, marginTop: 2 }}>${t(currentEx.muscle)} \u00B7 ${currentEx.sets}\u00D7${currentEx.reps}</div>
               </div>
               ${currentEx.gif ? html`
@@ -9286,7 +9339,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                         }}>
                           ${set.done
                             ? html`<svg className="check-draw" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                            : html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted }}>${si + 1}</span>`
+                            : html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted }}>${si + 1}</span>`
                           }
                         </div>
                       </button>
@@ -9322,7 +9375,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                 ${!currentState.sets.every(s => s.done) && html`
                   <button onClick=${() => completeExercise(currentIdx)}
                     className="w-full flex items-center justify-center gap-2 mt-3 py-3 rounded-xl press-scale"
-                    style=${{ background: T.green, color: '#fff', fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 800, letterSpacing: '-0.2px' }}>
+                    style=${{ background: T.green, color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, letterSpacing: '-0.2px' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     ${t('Completar ejercicio')}
                   </button>
@@ -9337,7 +9390,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           <div className="px-5 pt-4">
             <div className="flex items-center gap-2 mb-2">
               <${SkipForward} size=${12} weight="fill" color=${T.accent} />
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.accent, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${LANG === 'en' ? 'Up next' : 'Siguiente'}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.accent, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${LANG === 'en' ? 'Up next' : 'Siguiente'}</span>
             </div>
             <div className="ds-card press-scale" style=${{ padding: 0, overflow: 'hidden', cursor: 'pointer' }}
               onClick=${() => setExpandedNext(!expandedNext)}>
@@ -9348,7 +9401,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                     onError=${(e) => { e.target.style.display = 'none'; }} />
                 ` : ''}
                 <div className="flex-1 min-w-0">
-                  <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${exName(nextEx)}</div>
+                  <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>${exName(nextEx)}</div>
                   <div style=${{ fontSize: 11, fontWeight: 600, color: T.accent, marginTop: 2 }}>${t(nextEx.muscle)} \u00B7 ${nextEx.sets}\u00D7${nextEx.reps}</div>
                   ${!expandedNext && html`<div style=${{ fontSize: 11, color: T.sub, marginTop: 4, lineHeight: 1.4 }}>${nextEx.desc}</div>`}
                 </div>
@@ -9387,15 +9440,15 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           return html`
             <div className="px-5 pt-4">
               <div className="flex items-center gap-2 mb-2">
-                <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Cola')} \u00B7 ${remaining.length} ${t('restantes')}</span>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Cola')} \u00B7 ${remaining.length} ${t('restantes')}</span>
               </div>
               <div className="ds-card" style=${{ padding: 0, overflow: 'hidden' }}>
                 ${remaining.map((qEx, qi) => html`
                   <div key=${qi} className="flex items-center gap-3 px-4 py-2.5"
                     style=${{ borderTop: qi > 0 ? '1px solid ' + T.border : 'none' }}>
-                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted, width: 16, textAlign: 'center' }}>${queueStart + qi + 1}</span>
+                    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted, width: 16, textAlign: 'center' }}>${queueStart + qi + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(qEx)}</div>
+                      <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(qEx)}</div>
                       <div style=${{ fontSize: 10, color: T.muted }}>${qEx.sets}\u00D7${qEx.reps}</div>
                     </div>
                   </div>
@@ -9409,7 +9462,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
         ${gymDone > 0 && html`
           <div className="px-5 pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 9, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Completados')} \u00B7 ${gymDone}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 800, color: T.green, textTransform: 'uppercase', letterSpacing: '0.14em' }}>${t('Completados')} \u00B7 ${gymDone}</span>
             </div>
             <div className="ds-card" style=${{ padding: 0, overflow: 'hidden' }}>
               ${exercises.map((ex, ei) => {
@@ -9419,8 +9472,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                   <div key=${ei} className="flex items-center gap-3 px-4 py-2.5"
                     style=${{ borderTop: '1px solid ' + T.border }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 600, color: T.muted, flex: 1, letterSpacing: '-0.2px' }}>${exName(ex)}</span>
-                    ${vol > 0 ? html`<span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>${formatVolume(vol)}</span>` : ''}
+                    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: T.muted, flex: 1, letterSpacing: '-0.2px' }}>${exName(ex)}</span>
+                    ${vol > 0 ? html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>${formatVolume(vol)}</span>` : ''}
                   </div>
                 `;
               })}
@@ -9439,7 +9492,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             style=${{ background: T.card, borderRadius: '24px 24px 0 0', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', maxHeight: '80vh', overflowY: 'auto', border: '1px solid ' + T.border, borderBottom: 'none' }}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>
+                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>
                   📋 ${t('Semana')} ${trainingWeek}
                 </div>
                 <div style=${{ fontSize: 11, color: T.sub, marginTop: 2 }}>
@@ -9462,15 +9515,15 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                   <div key=${ri} className="flex items-center gap-3 py-3 px-3 rounded-xl"
                     style=${{ background: T.elevated, border: '1px solid ' + T.border }}>
                     <div className="flex-1 min-w-0">
-                      <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(rec.exercise)}</div>
+                      <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(rec.exercise)}</div>
                       <div style=${{ fontSize: 10, color: T.muted, marginTop: 1 }}>${statusTip}</div>
                     </div>
                     ${rec.current !== null ? html`
                       <div className="text-right" style=${{ flexShrink: 0 }}>
                         <div className="flex items-center gap-1.5">
-                          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 600, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>${rec.current}</span>
+                          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>${rec.current}</span>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${statusColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 900, color: statusColor, fontVariantNumeric: 'tabular-nums' }}>${rec.recommended} ${unitPref}</span>
+                          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 900, color: statusColor, fontVariantNumeric: 'tabular-nums' }}>${rec.recommended} ${unitPref}</span>
                         </div>
                         <div style=${{ marginTop: 3 }}>
                           <span style=${{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: statusBg, color: statusColor }}>${statusLabel}</span>
@@ -9594,14 +9647,14 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full pop-in" style=${{ background: T.amberDim, animationDelay: '0.3s' }}>
             <${FireSimple} size=${14} weight="fill" color=${T.amber} />
-            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
           </div>
         </div>
         <div style=${{ marginTop: 12 }}>
           <div style=${{ fontSize: 14, fontWeight: 500, color: T.sub, marginBottom: 2 }}>
             ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: T.text, letterSpacing: '-1px', lineHeight: 1.1 }}>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: T.text, letterSpacing: '-1px', lineHeight: 1.1 }}>
             ${t(getGreeting())}, ${profileName}
           </div>
         </div>
@@ -9651,7 +9704,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
           <div style=${{ width: 28, height: 28, borderRadius: 8, background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <${Drop} size=${16} weight="fill" color=${T.water} />
           </div>
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase' }}>${LANG === 'en' ? 'Hydration' : 'Hidratación'}</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase' }}>${LANG === 'en' ? 'Hydration' : 'Hidratación'}</span>
         </div>
         <${WaterCounter} waterMl=${waterMl} onAddWater=${onAddWater} onUndoWater=${onUndoWater} waterLog=${waterLog} />
       </div>
@@ -9693,7 +9746,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             </svg>
           </div>
 
-          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 800,
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 800,
             color: T.text, marginBottom: 8, letterSpacing: '-0.5px' }}>
             ${LANG === 'en' ? 'Workout completed!' : '¡Entrenamiento completado!'}
           </div>
@@ -9712,22 +9765,22 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
           <div className="flex justify-center gap-5" style=${{ marginBottom: 24 }}>
             <div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${gymTotal}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${gymTotal}</div>
               <div style=${{ fontSize: 11, color: T.muted }}>${t('ejercicios')}</div>
             </div>
             <div>
-              <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${completedSets}</div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${completedSets}</div>
               <div style=${{ fontSize: 11, color: T.muted }}>${t('SETS')}</div>
             </div>
             ${totalVolume > 0 ? html`
               <div>
-                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${formatVolume(totalVolume)}</div>
+                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${formatVolume(totalVolume)}</div>
                 <div style=${{ fontSize: 11, color: T.muted }}>${unitPref} vol.</div>
               </div>
             ` : ''}
             ${elapsedMin > 0 ? html`
               <div>
-                <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${elapsedMin}</div>
+                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 900, color: T.accent }}>${elapsedMin}</div>
                 <div style=${{ fontSize: 11, color: T.muted }}>min</div>
               </div>
             ` : ''}
@@ -9736,7 +9789,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
           <div className="flex gap-3">
             <button onClick=${() => setShowCelebration(false)}
               className="flex-1 py-3 rounded-xl font-bold transition-all active:scale-[0.97]"
-              style=${{ background: T.accent, color: '#fff', fontSize: 15, fontFamily: 'Outfit, sans-serif', fontWeight: 700 }}>
+              style=${{ background: T.accent, color: '#fff', fontSize: 15, fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
               ${LANG === 'en' ? 'Time to rest!' : '¡A descansar!'}
             </button>
             <button onClick=${() => {
@@ -9797,7 +9850,7 @@ function ThemeToggle({ dark, onToggle }) {
 function LangToggle({ onToggle }) {
   return html`
     <button onClick=${onToggle} className="flex items-center justify-center press-scale"
-      style=${{ width: 36, height: 36, borderRadius: 10, background: T.input, fontFamily: 'Outfit, sans-serif', fontSize: 12, fontWeight: 800, color: T.muted, letterSpacing: '0.5px' }}>
+      style=${{ width: 36, height: 36, borderRadius: 10, background: T.input, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800, color: T.muted, letterSpacing: '0.5px' }}>
       ${LANG === 'en' ? 'EN' : 'ES'}
     </button>
   `;
@@ -9835,7 +9888,7 @@ function FloatingTimer({ workoutStartTime, isPaused, pausedElapsed, routine, exe
             ? html`<div style=${{ width: 8, height: 8, borderRadius: '50%', background: '#fbbf24' }} />`
             : html`<div className="live-dot" style=${{ width: 8, height: 8, background: '#fff' }} />`
           }
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>${timerStr}</span>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>${timerStr}</span>
           <span style=${{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>${routine.name}${!routine.cardio ? ' \u00B7 ' + gymDone + '/' + gymTotal : ''}</span>
         </div>
         <div className="flex items-center gap-1.5" onClick=${e => e.stopPropagation()}>
@@ -10172,7 +10225,7 @@ function App() {
       <div className="splash-screen fixed inset-0 z-[100] flex flex-col items-center justify-center"
         style=${{ background: '#f4f6f9' }}>
         <img src="logo-icon.png" alt="" className="splash-logo" style=${{ height: 80, width: 'auto', marginBottom: 16 }} />
-        <div className="splash-text" style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 28, fontWeight: 900, color: '#274472', letterSpacing: '-1px' }}>DontSkip</div>
+        <div className="splash-text" style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: '#274472', letterSpacing: '-1px' }}>DontSkip</div>
       </div>
     `}
     <div id="safe-bar" style=${{ position: 'fixed', top: 0, left: 0, right: 0, height: 'var(--safe-top)', zIndex: 9999, pointerEvents: 'none', background: T.bg, transition: 'background 0.3s' }} />

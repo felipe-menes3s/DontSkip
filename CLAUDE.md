@@ -22,7 +22,7 @@ Mobile-first fitness tracking web app for personal use. Tracks workouts, meals, 
 - **Frontend**: React 18 (CDN, no build tools) + htm (ES modules)
 - **State**: Local state in App component + localStorage persistence for daily data
 - **Styling**: Tailwind CSS (CDN) + inline styles via theme tokens (`T.*`)
-- **Font**: **Outfit** (single font, all weights 400-900, Google Fonts CDN)
+- **Font**: **Inter** (single font, all weights 400-900, Google Fonts CDN)
 - **Icons**: Phosphor Icons React via `esm.sh` with `?deps=react@18.3.1`
 - **No build step**: Single `index.html` (~6000 lines), dev server port **8085**
 - **Exercise GIFs**: Local files in `gifs/` folder (24 exercises + cardio), no CDN dependency
