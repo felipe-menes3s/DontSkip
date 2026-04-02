@@ -315,7 +315,7 @@ let LANG = (() => { try { return localStorage.getItem('ds_lang') || 'es'; } catc
 const EN = {
   // ── Tabs ──
   'Hoy': 'Today', 'Comidas': 'Meals', 'Progreso': 'Progress', 'Cuerpo': 'Body', 'Semana': 'Week', 'Perfil': 'Profile',
-  'Frontal': 'Front', 'Posterior': 'Back',
+  'Frontal': 'Front', 'Posterior': 'Back', 'Anterior': 'Previous',
   'Primario': 'Primary', 'Secundario': 'Secondary', 'Terciario': 'Tertiary', 'Recuperado': 'Recovered',
   'Los musculos se recuperan gradualmente en ~3 dias': 'Muscles gradually recover in ~3 days',
   'Ayer': 'Yesterday', 'dias': 'days',
@@ -2811,6 +2811,62 @@ function SupplementsCheck() {
 }
 
 
+// ── Sparkline helpers ────────────────────────────────────────────────
+
+function getSparklineData(type, days = 7) {
+  const points = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dateStr = localDate(d);
+    const dayKey = DAYS[d.getDay()];
+    let val = 0;
+    if (type === 'calories' || type === 'protein') {
+      try {
+        const mealsKey = 'ds_meals_' + dateStr;
+        const saved = localStorage.getItem(mealsKey);
+        if (saved) {
+          const meals = JSON.parse(saved);
+          meals.forEach(m => { if (m.confirmed && m.items) m.items.forEach(it => { val += (type === 'calories' ? (it.cal || 0) : (it.protein || 0)); }); });
+        }
+      } catch {}
+    } else if (type === 'water') {
+      try { val = Math.floor(parseInt(localStorage.getItem('ds_water_' + dateStr) || '0') / WATER_GLASS_ML); } catch {}
+    } else if (type === 'gym') {
+      try {
+        const routine = ROUTINES[dayKey];
+        if (routine && !routine.rest) {
+          const saved = localStorage.getItem('ds_workout_' + dayKey + '_' + dateStr);
+          if (saved) {
+            const states = JSON.parse(saved);
+            val = states.filter(s => s && s.sets && s.sets.every(ss => ss.done)).length;
+          }
+        } else if (routine && routine.cardio) {
+          val = localStorage.getItem('ds_cardio_done_' + dateStr) === 'true' ? 1 : 0;
+        }
+      } catch {}
+    }
+    points.push(val);
+  }
+  return points;
+}
+
+function Sparkline({ data, color, width = 50, height = 16 }) {
+  if (!data || data.length < 2 || data.every(v => v === 0)) return null;
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - 2 - ((v - min) / range) * (height - 4);
+    return x + ',' + y;
+  }).join(' ');
+  return html`
+    <svg width=${width} height=${height} style=${{ display: 'block', opacity: 0.6 }}>
+      <polyline points=${pts} fill="none" stroke=${color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  `;
+}
+
 // ── Dual Ring Card ───────────────────────────────────────────────────
 
 function DualRingCard({ outer, inner }) {
@@ -2841,6 +2897,7 @@ function DualRingCard({ outer, inner }) {
         <div className="flex items-center gap-1">
           <div style=${{ width: 8, height: 8, borderRadius: 4, background: m.gradientColors[1], flexShrink: 0 }} />
           <span style=${{ fontSize: 10, fontWeight: 700, fontFamily: inter, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>${m.label}</span>
+          ${m.sparkData ? html`<div style=${{ marginLeft: 'auto' }}><${Sparkline} data=${m.sparkData} color=${m.gradientColors[1]} /></div>` : ''}
         </div>
         <div className="flex items-center gap-1" style=${{ marginTop: 2 }}>
           <span style=${{ fontSize: 22, fontWeight: 800, fontFamily: inter, color: T.text, lineHeight: 1 }}>${animVal}</span>
@@ -2897,6 +2954,11 @@ function DualRingCard({ outer, inner }) {
 // ── Dashboard Stats ──────────────────────────────────────────────────
 
 function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
+  const sparkCal = useMemo(() => getSparklineData('calories'), []);
+  const sparkProt = useMemo(() => getSparklineData('protein'), []);
+  const sparkGym = useMemo(() => getSparklineData('gym'), []);
+  const sparkWater = useMemo(() => getSparklineData('water'), []);
+
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
   const waterGoalGlasses = Math.floor(WATER_GOAL_ML / WATER_GLASS_ML);
   const waterUnit = ' ' + t('vasos');
@@ -2908,18 +2970,18 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterIcon = html`<${Drop} size=${20} weight="duotone" color="#2196c4" />`;
 
   const gymOuter = isRestDay
-    ? { icon: gymIcon, label: t('Gym') + ' \u00B7 ' + t('Descanso'), value: 1, max: 1, unit: '', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] }
-    : { icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal, unit: LANG === 'en' ? ' exer.' : ' ejer.', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'] };
+    ? { icon: gymIcon, label: t('Gym') + ' \u00B7 ' + t('Descanso'), value: 1, max: 1, unit: '', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'], sparkData: sparkGym }
+    : { icon: gymIcon, label: t('Gym'), value: gymDone, max: gymTotal, unit: LANG === 'en' ? ' exer.' : ' ejer.', gradientId: 'gGym', gradientColors: ['#4ec88a','#0d6b3a'], sparkData: sparkGym };
 
   return html`
     <div className="fade-up" style=${{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
       <${DualRingCard}
-        outer=${{ icon: calIcon, label: t('Calorías'), value: calories, max: CALORIES_GOAL, unit: '', gradientId: 'gCal', gradientColors: ['#e8793a','#b84a0a'] }}
-        inner=${{ icon: protIcon, label: t('Proteína'), value: protein, max: PROTEIN_GOAL, unit: 'g', gradientId: 'gProt', gradientColors: ['#5c9fd4','#274472'] }}
+        outer=${{ icon: calIcon, label: t('Calorías'), value: calories, max: CALORIES_GOAL, unit: '', gradientId: 'gCal', gradientColors: ['#e8793a','#b84a0a'], sparkData: sparkCal }}
+        inner=${{ icon: protIcon, label: t('Proteína'), value: protein, max: PROTEIN_GOAL, unit: 'g', gradientId: 'gProt', gradientColors: ['#5c9fd4','#274472'], sparkData: sparkProt }}
       />
       <${DualRingCard}
         outer=${gymOuter}
-        inner=${{ icon: waterIcon, label: t('Agua'), value: waterGlasses, max: waterGoalGlasses, unit: waterUnit, gradientId: 'gWat', gradientColors: ['#5bbfe8','#0d6e9a'] }}
+        inner=${{ icon: waterIcon, label: t('Agua'), value: waterGlasses, max: waterGoalGlasses, unit: waterUnit, gradientId: 'gWat', gradientColors: ['#5bbfe8','#0d6e9a'], sparkData: sparkWater }}
       />
     </div>
   `;
@@ -8190,6 +8252,19 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   const recommendations = useMemo(() => getWeeklyRecommendations(routine, getTodayKey(), unitPref), [routine, unitPref]);
   const hasRecommendations = recommendations.some(r => r.status !== 'new');
 
+  const prevWeekData = useMemo(() => {
+    const result = {};
+    const prevDate = new Date();
+    prevDate.setDate(prevDate.getDate() - 7);
+    const prevDateStr = localDate(prevDate);
+    const prevDayKey = DAYS[prevDate.getDay()];
+    try {
+      const saved = localStorage.getItem('ds_workout_' + prevDayKey + '_' + prevDateStr);
+      if (saved) result.states = JSON.parse(saved);
+    } catch {}
+    return result;
+  }, []);
+
   // Mood/energy check-in
   const moodKey = 'ds_mood_' + localDate();
   const [mood, setMood] = useState(() => {
@@ -8784,6 +8859,18 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                     ${t('Rellenar sets')} (${currentState.sets[0].weight} ${unitPref} × ${currentState.sets[0].reps || currentEx.reps})
                   </button>
                 ` : ''}
+                ${prevWeekData.states && prevWeekData.states[currentIdx] ? html`
+                  <div className="flex items-center gap-2 mb-1 px-2" style=${{ opacity: 0.5 }}>
+                    <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted, width: 74 }}>${t('Anterior')}</span>
+                    <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted, flex: 1, textAlign: 'center' }}>
+                      ${prevWeekData.states[currentIdx].sets[0] ? prevWeekData.states[currentIdx].sets[0].weight || '-' : '-'} ${unitPref}
+                    </span>
+                    <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted, textAlign: 'center', width: 60 }}>
+                      ${prevWeekData.states[currentIdx].sets[0] ? prevWeekData.states[currentIdx].sets[0].reps || '-' : '-'} reps
+                    </span>
+                    <div style=${{ width: 28 }} />
+                  </div>
+                ` : ''}
                 <div className="space-y-2">
                   ${currentState.sets.map((set, si) => html`
                     <div key=${si} className="flex items-center gap-2"
@@ -8801,7 +8888,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                       </button>
                       <span className="text-xs font-semibold w-10" style=${{ color: T.muted }}>Set ${si + 1}</span>
                       <div className="flex items-center gap-1 flex-1">
-                        <input type="number" placeholder="0" value=${set.weight || ''}
+                        <input type="number" placeholder=${prevWeekData.states && prevWeekData.states[currentIdx] && prevWeekData.states[currentIdx].sets[si] ? prevWeekData.states[currentIdx].sets[si].weight || '0' : '0'} value=${set.weight || ''}
                           onChange=${e => updateLiveSet(currentIdx, si, 'weight', Number(e.target.value))}
                           onClick=${e => e.stopPropagation()}
                           className="w-16 text-center text-sm font-semibold rounded-lg py-1.5"
@@ -8809,7 +8896,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                         <span className="text-xs" style=${{ color: T.muted }}>${unitPref}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <input type="number" placeholder=${currentEx.reps} value=${set.reps || ''}
+                        <input type="number" placeholder=${prevWeekData.states && prevWeekData.states[currentIdx] && prevWeekData.states[currentIdx].sets[si] && prevWeekData.states[currentIdx].sets[si].reps ? prevWeekData.states[currentIdx].sets[si].reps : currentEx.reps} value=${set.reps || ''}
                           onChange=${e => updateLiveSet(currentIdx, si, 'reps', Number(e.target.value))}
                           onClick=${e => e.stopPropagation()}
                           className="w-12 text-center text-sm font-semibold rounded-lg py-1.5"
