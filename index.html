@@ -35,6 +35,8 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 /* Ring animation */
 .ring-circle { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
 .dual-ring-arc { transition: stroke-dashoffset 800ms ease-out; }
+@keyframes ringFlash { 0% { opacity: 0.1; } 40% { opacity: 0.35; } 100% { opacity: 0.1; } }
+.ring-flash { animation: ringFlash 800ms ease-out; }
 
 /* Fade in */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -333,6 +335,8 @@ const EN = {
   'Sin datos de entrenamiento reciente': 'No recent workout data',
   'Musculos en recuperacion': 'Muscles recovering', 'restantes': 'remaining',
   'Todos los musculos recuperados': 'All muscles recovered',
+  'Listo para entrenar': 'Ready to train', 'Recuperacion parcial': 'Partial recovery',
+  'Necesitas descanso': 'Rest needed', 'Listos para entrenar': 'Ready to train',
   'Frontal': 'Front', 'Posterior': 'Back',
   // ── Days ──
   'Domingo': 'Sunday', 'Lunes': 'Monday', 'Martes': 'Tuesday', 'Miércoles': 'Wednesday',
@@ -2930,7 +2934,8 @@ function DualRingCard({ outer, inner }) {
             </defs>
             <!-- Outer track -->
             <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rOuter} fill="none"
-              stroke=${outer.gradientColors[1]} strokeWidth=${sw} opacity="0.1" />
+              stroke=${outer.gradientColors[1]} strokeWidth=${sw} opacity="0.1"
+              className=${outerDone && mounted ? 'ring-flash' : ''} />
             <!-- Outer arc -->
             <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rOuter} fill="none"
               stroke=${'url(#' + outer.gradientId + ')'} strokeWidth=${sw}
@@ -2938,7 +2943,8 @@ function DualRingCard({ outer, inner }) {
               strokeLinecap="round" className="dual-ring-arc" />
             <!-- Inner track -->
             <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rInner} fill="none"
-              stroke=${inner.gradientColors[1]} strokeWidth=${sw} opacity="0.1" />
+              stroke=${inner.gradientColors[1]} strokeWidth=${sw} opacity="0.1"
+              className=${innerDone && mounted ? 'ring-flash' : ''} />
             <!-- Inner arc -->
             <circle cx=${svgSz / 2} cy=${svgSz / 2} r=${rInner} fill="none"
               stroke=${'url(#' + inner.gradientId + ')'} strokeWidth=${sw}
@@ -6149,10 +6155,33 @@ function RecoveryView({ dark }) {
         <div style=${{ fontSize: 14, fontWeight: 700, color: T.text, marginTop: 8 }}>
           ${avg >= 100 ? t('Completamente recuperado') : (avg + '% ' + t('recuperado'))}
         </div>
-        <div style=${{ fontSize: 10, color: T.muted, marginTop: 2 }}>
+        <div style=${{ fontSize: 11, fontWeight: 600, color: avg >= 80 ? (dark ? '#22c55e' : '#16a34a') : avg >= 50 ? T.amber : (dark ? '#f87171' : '#dc2626'), marginTop: 4, padding: '3px 12px', borderRadius: 8, background: avg >= 80 ? (dark ? '#22c55e18' : '#16a34a12') : avg >= 50 ? T.amberDim : (dark ? '#f8717118' : '#dc262612') }}>
+          ${avg >= 80 ? t('Listo para entrenar') : avg >= 50 ? t('Recuperacion parcial') : t('Necesitas descanso')}
+        </div>
+        <div style=${{ fontSize: 10, color: T.muted, marginTop: 4 }}>
           ${t('Basado en tus ultimos entrenamientos')}
         </div>
       </div>
+
+      <!-- Ready muscles suggestion -->
+      ${(() => {
+        const readyMuscles = Object.entries(recoveryData)
+          .filter(([, d]) => d.recoveryPct >= 85)
+          .map(([slug]) => {
+            const info = MUSCLE_RECOVERY_LABELS[slug] || { label: slug, labelEn: slug };
+            return LANG === 'en' ? info.labelEn : info.label;
+          });
+        return readyMuscles.length > 0 ? html`
+          <div style=${{ marginBottom: 14, padding: '10px 14px', borderRadius: 12, background: dark ? '#22c55e10' : '#16a34a08', border: '1px solid ' + (dark ? '#22c55e20' : '#16a34a15') }}>
+            <div style=${{ fontSize: 11, fontWeight: 700, color: dark ? '#22c55e' : '#16a34a', marginBottom: 6 }}>${t('Listos para entrenar')}</div>
+            <div className="flex flex-wrap gap-1">
+              ${readyMuscles.map(name => html`
+                <span key=${name} style=${{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: dark ? '#22c55e18' : '#16a34a10', color: dark ? '#4ade80' : '#16a34a' }}>${name}</span>
+              `)}
+            </div>
+          </div>
+        ` : '';
+      })()}
 
       <!-- Front/Back toggle -->
       <div className="flex justify-center gap-2" style=${{ marginBottom: 14 }}>
