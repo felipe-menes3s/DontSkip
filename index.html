@@ -32,6 +32,10 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 .count-up { animation: countPulse 0.1s ease-out; }
 :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* Body map flip */
+.body-flip { transition: transform 0.4s ease; transform-style: preserve-3d; }
+.body-flip-exit { transform: rotateY(90deg); }
+
 /* Ring animation */
 .ring-circle { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
 .dual-ring-arc { transition: stroke-dashoffset 800ms ease-out; }
@@ -45,6 +49,12 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 /* Tab enter */
 @keyframes tabEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .tab-enter { animation: tabEnter 0.2s ease-out; }
+
+/* Directional tab transitions */
+@keyframes tabSlideRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes tabSlideLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+.tab-slide-right { animation: tabSlideRight 0.2s ease-out; }
+.tab-slide-left { animation: tabSlideLeft 0.2s ease-out; }
 
 /* Stagger children */
 .stagger > * { animation: fadeUp 0.35s ease-out both; }
@@ -333,6 +343,7 @@ const EN = {
   'recuperado': 'recovered', 'Completamente recuperado': 'Fully recovered',
   'Basado en tus ultimos entrenamientos': 'Based on your recent workouts',
   'Sin datos de entrenamiento reciente': 'No recent workout data',
+  'Ejercicios esta semana': 'Exercises this week',
   'Musculos en recuperacion': 'Muscles recovering', 'restantes': 'remaining',
   'Todos los musculos recuperados': 'All muscles recovered',
   'Listo para entrenar': 'Ready to train', 'Recuperacion parcial': 'Partial recovery',
@@ -1471,6 +1482,49 @@ function getWeeklyMuscleStats() {
   return { volume, frequency };
 }
 
+function getExerciseBreakdownForMuscle(slug) {
+  const breakdown = {}; // { exerciseId: { name, nameEn, sets, role } }
+  const today = new Date();
+  const jsDay = today.getDay();
+  const mondayOffset = jsDay === 0 ? 6 : jsDay - 1;
+  const monday = new Date(today.getTime() - mondayOffset * 86400000);
+  const weekDayKeys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  for (let d = 0; d <= mondayOffset; d++) {
+    const date = new Date(monday.getTime() + d * 86400000);
+    const dateStr = localDate(date);
+    const dayKey = weekDayKeys[d];
+    const routine = ROUTINES[dayKey];
+    if (!routine || routine.rest) continue;
+    try {
+      const saved = localStorage.getItem('ds_workout_' + dayKey + '_' + dateStr);
+      if (!saved) continue;
+      const states = JSON.parse(saved);
+      routine.exercises.forEach((ex, ei) => {
+        const map = EXERCISE_MUSCLE_MAP[ex.id];
+        if (!map) return;
+        let role = null;
+        if ((map.primary || []).includes(slug)) role = 'primary';
+        else if ((map.secondary || []).includes(slug)) role = 'secondary';
+        else if ((map.tertiary || []).includes(slug)) role = 'tertiary';
+        if (!role) return;
+        const st = states[ei];
+        if (!st || !st.sets) return;
+        const doneSets = st.sets.filter(s => s.done).length;
+        if (doneSets === 0) return;
+        if (!breakdown[ex.id]) breakdown[ex.id] = { name: ex.name, nameEn: ex.nameEn, sets: 0, role };
+        breakdown[ex.id].sets += doneSets;
+        // Keep highest role
+        if (role === 'primary') breakdown[ex.id].role = 'primary';
+        else if (role === 'secondary' && breakdown[ex.id].role !== 'primary') breakdown[ex.id].role = 'secondary';
+      });
+    } catch {}
+  }
+  return Object.values(breakdown).sort((a, b) => {
+    const roleOrder = { primary: 0, secondary: 1, tertiary: 2 };
+    return (roleOrder[a.role] || 2) - (roleOrder[b.role] || 2);
+  });
+}
+
 function getMuscleRecoveryData() {
   const now = new Date();
   const muscleLoad = {}; // { slug: { totalLoad, lastTrainedMs } }
@@ -2535,28 +2589,32 @@ function RestTimer({ duration = 90, onDone }) {
   const timeStr = mm > 0 ? mm + ':' + String(ss).padStart(2, '0') : left + 's';
   const sz = 52, sw = 4, r = (sz - sw) / 2, circ = 2 * Math.PI * r, off = circ * (1 - pct), ctr = sz / 2;
   return html`
-    <div className="flex items-center gap-3 py-3 px-4 rounded-xl fade-up mt-2"
-      style=${{ background: T.elevated, border: '1px solid ' + urgentColor + '30' }}>
-      <div className="relative" style=${{ width: sz, height: sz, flexShrink: 0 }}>
-        <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
-          <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${T.input} strokeWidth=${sw} />
-          <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${urgentColor} strokeWidth=${sw}
-            strokeDasharray=${circ} strokeDashoffset=${off} strokeLinecap="round"
-            style=${{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }} />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: urgentColor, fontVariantNumeric: 'tabular-nums', transition: 'color 0.5s' }}>${timeStr}</span>
+    <div className="fade-up mt-2 rounded-xl" style=${{ background: T.amberDim, border: '1px solid ' + urgentColor + '30', overflow: 'hidden' }}>
+      <div className="flex items-center gap-3 py-3 px-4">
+        <div className="relative" style=${{ width: sz, height: sz, flexShrink: 0 }}>
+          <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
+            <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${T.input} strokeWidth=${sw} />
+            <circle cx=${ctr} cy=${ctr} r=${r} fill="none" stroke=${urgentColor} strokeWidth=${sw}
+              strokeDasharray=${circ} strokeDashoffset=${off} strokeLinecap="round"
+              style=${{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }} />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 14, fontWeight: 800, color: urgentColor, fontVariantNumeric: 'tabular-nums', transition: 'color 0.5s' }}>${timeStr}</span>
+          </div>
         </div>
+        <div className="flex-1">
+          <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Descanso')}</div>
+          <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${restLabel} \u00B7 ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}</div>
+        </div>
+        <button onClick=${() => onDone && onDone()}
+          className="press-scale"
+          style=${{ fontSize: 11, fontWeight: 700, color: T.accent, padding: '8px 14px', borderRadius: 10, background: T.accentDim, border: 'none' }}>
+          ${t('Saltar')}
+        </button>
       </div>
-      <div className="flex-1">
-        <div style=${{ fontFamily: 'Outfit, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${t('Descanso')}</div>
-        <div style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${restLabel} \u00B7 ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}</div>
+      <div style=${{ height: 4, background: T.input, borderRadius: '0 0 2px 2px' }}>
+        <div style=${{ height: '100%', width: (pct * 100) + '%', background: '#facc15', borderRadius: '0 0 2px 2px', transition: 'width 1s linear' }} />
       </div>
-      <button onClick=${() => onDone && onDone()}
-        className="press-scale"
-        style=${{ fontSize: 11, fontWeight: 700, color: T.accent, padding: '8px 14px', borderRadius: 10, background: T.accentDim, border: 'none' }}>
-        ${t('Saltar')}
-      </button>
     </div>
   `;
 }
@@ -5812,7 +5870,10 @@ function SunburstView({ dark }) {
   if (!computed) {
     return html`
       <div style=${{ textAlign: 'center', padding: '40px 20px', animation: 'fadeUp 0.35s ease' }}>
-        <div style=${{ fontSize: 40, marginBottom: 12 }}>${'\uD83D\uDCCA'}</div>
+        <div style=${{ marginBottom: 12 }}>
+          <${ChartBar} size=${40} weight="duotone" color=${T.muted} />
+        </div>
+        <div style=${{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>${t('Analytics')}</div>
         <div style=${{ fontSize: 13, color: T.muted }}>${t('Empieza a entrenar para ver tu analytics')}</div>
       </div>
     `;
@@ -5925,7 +5986,7 @@ function SunburstView({ dark }) {
       <div className="flex justify-center" style=${{ marginBottom: 12, position: 'relative' }}>
         <svg width=${svgSz} height=${svgSz} viewBox=${'0 0 ' + svgSz + ' ' + svgSz} style=${{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
           <!-- Inner ring (groups) -->
-          ${innerSegs.map(s => html`
+          ${innerSegs.map((s, i) => html`
             <circle key=${'i-' + s.id} cx=${cx} cy=${cy} r=${rInner} fill="none"
               stroke=${s.dimmed ? dimColor : s.color}
               strokeWidth=${s.dimmed ? swInner - 6 : swInner}
@@ -5933,11 +5994,11 @@ function SunburstView({ dark }) {
               strokeDasharray=${mounted ? (s.arcLen + ' ' + (circInner - s.arcLen)) : ('0 ' + circInner)}
               strokeDashoffset=${-s.offset}
               strokeLinecap="round" className="dual-ring-arc"
-              style=${{ cursor: 'pointer' }}
+              style=${{ cursor: 'pointer', transitionDelay: (i * 60) + 'ms' }}
               onClick=${() => handleGroupSelect(s.id)} />
           `)}
           <!-- Outer ring (muscles) -->
-          ${outerSegs.map(s => html`
+          ${outerSegs.map((s, i) => html`
             <circle key=${'o-' + s.slug} cx=${cx} cy=${cy} r=${rOuter} fill="none"
               stroke=${s.dimmed ? dimColor : s.color}
               strokeWidth=${s.dimmed ? swOuter - 6 : swOuter}
@@ -5945,7 +6006,7 @@ function SunburstView({ dark }) {
               strokeDasharray=${mounted ? (s.arcLen + ' ' + (circOuter - s.arcLen)) : ('0 ' + circOuter)}
               strokeDashoffset=${-s.offset}
               strokeLinecap="round" className="dual-ring-arc"
-              style=${{ cursor: 'pointer' }}
+              style=${{ cursor: 'pointer', transitionDelay: (innerSegs.length * 60 + i * 40) + 'ms' }}
               onClick=${() => handleGroupSelect(s.groupId)} />
           `)}
           <!-- Center tap area -->
@@ -5958,7 +6019,7 @@ function SunburstView({ dark }) {
           </g>
           <!-- Floating labels with leader lines -->
           <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
-            ${labels.map(lbl => {
+            ${labels.map((lbl, li) => {
               const edgeR = rOuter + swOuter / 2;
               const ex = cx + edgeR * Math.cos(lbl.rad);
               const ey = cy + edgeR * Math.sin(lbl.rad);
@@ -5966,7 +6027,7 @@ function SunburstView({ dark }) {
               const anchor = isRight ? 'start' : 'end';
               const elbowX = isRight ? lbl.lx - 6 : lbl.lx + 6;
               return html`
-                <g key=${'lbl-' + lbl.slug} style=${{ opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease 0.3s' }}>
+                <g key=${'lbl-' + lbl.slug} style=${{ opacity: mounted ? 1 : 0, transition: 'opacity 0.5s ease ' + (0.4 + li * 0.08) + 's' }}>
                   <line x1=${ex} y1=${ey} x2=${elbowX} y2=${lbl.ly} stroke=${lbl.color} strokeWidth="1" opacity="0.5" />
                   <line x1=${elbowX} y1=${lbl.ly} x2=${lbl.lx} y2=${lbl.ly} stroke=${lbl.color} strokeWidth="1" opacity="0.5" />
                   <circle cx=${ex} cy=${ey} r="2" fill=${lbl.color} />
@@ -6117,7 +6178,10 @@ function RecoveryView({ dark }) {
   if (!overallData) {
     return html`
       <div style=${{ textAlign: 'center', padding: '40px 20px', animation: 'fadeUp 0.35s ease' }}>
-        <div style=${{ fontSize: 40, marginBottom: 12 }}>${'\uD83D\uDCAA\uD83C\uDFFC'}</div>
+        <div style=${{ marginBottom: 12 }}>
+          <${Barbell} size=${40} weight="duotone" color=${T.muted} />
+        </div>
+        <div style=${{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>${t('Recovery')}</div>
         <div style=${{ fontSize: 13, color: T.muted }}>${t('Sin datos de entrenamiento reciente')}</div>
       </div>
     `;
@@ -6252,6 +6316,7 @@ function RecoveryView({ dark }) {
 function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
   const [cuerpoView, setCuerpoView] = useState('mapa'); // 'mapa' | 'analytics' | 'recovery'
   const [view, setView] = useState('front');
+  const [flipping, setFlipping] = useState(false);
   const svgRef = useRef(null);
   const [selectedMuscle, setSelectedMuscle] = useState(null); // { slug, level }
   const [selectedDay, setSelectedDay] = useState(null); // null = today (real data), 0-6 = schedule view
@@ -6360,7 +6425,8 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
     const wv = weeklyStats.volume[slug] || 0;
     const wf = weeklyStats.frequency[slug] || 0;
     const target = MUSCLE_WEEKLY_TARGETS[slug] || [8,15];
-    return { name, level, levelLabel: labels[level] || '', lastLabel, color: colors[level], weeklyVolume: wv, weeklyFrequency: wf, target };
+    const exBreakdown = slug ? getExerciseBreakdownForMuscle(slug) : [];
+    return { name, level, levelLabel: labels[level] || '', lastLabel, color: colors[level], weeklyVolume: wv, weeklyFrequency: wf, target, exerciseBreakdown: exBreakdown };
   }, [selectedMuscle, themeKey, weeklyStats]);
 
   const pillStyle = (active) => ({
@@ -6380,6 +6446,16 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
       color: isActive ? '#fff' : (isRest ? T.muted : T.sub),
     };
   };
+
+  function handleViewFlip(newView) {
+    if (newView === view) return;
+    setFlipping(true);
+    setTimeout(() => {
+      setView(newView);
+      setSelectedMuscle(null);
+      setFlipping(false);
+    }, 200);
+  }
 
   function handleDaySelect(idx) {
     if ((selectedDay === null && idx === todayWeekIdx) || selectedDay === idx) {
@@ -6462,12 +6538,12 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
 
         <!-- Front/Back toggle -->
         <div className="flex justify-center gap-2 mb-4">
-          <button style=${pillStyle(view === 'front')} onClick=${() => { setView('front'); setSelectedMuscle(null); }}>${t('Frontal')}</button>
-          <button style=${pillStyle(view === 'back')} onClick=${() => { setView('back'); setSelectedMuscle(null); }}>${t('Posterior')}</button>
+          <button style=${pillStyle(view === 'front')} onClick=${() => handleViewFlip('front')}>${t('Frontal')}</button>
+          <button style=${pillStyle(view === 'back')} onClick=${() => handleViewFlip('back')}>${t('Posterior')}</button>
         </div>
 
         <!-- SVG Body -->
-        <div className="flex justify-center">
+        <div className="flex justify-center" style=${{ transition: 'transform 0.2s ease, opacity 0.2s ease', transform: flipping ? 'scaleX(0)' : 'scaleX(1)', opacity: flipping ? 0 : 1 }}>
           <svg ref=${svgRef} width="240" height="480" viewBox=${viewBox}
             style=${{ maxWidth: '100%', height: 'auto' }} />
         </div>
@@ -6504,6 +6580,26 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
                   </span>
                 </div>
               </div>
+              ${muscleInfo.exerciseBreakdown && muscleInfo.exerciseBreakdown.length > 0 ? html`
+                <div style=${{ marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + T.border }}>
+                  <div style=${{ fontSize: 10, fontWeight: 700, color: T.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${t('Ejercicios esta semana')}</div>
+                  ${muscleInfo.exerciseBreakdown.map(ex => {
+                    const maxSets = Math.max(...muscleInfo.exerciseBreakdown.map(e => e.sets), 1);
+                    const roleColor = ex.role === 'primary' ? T.accent : ex.role === 'secondary' ? T.amber : T.muted;
+                    const roleLbl = ex.role === 'primary' ? 'P' : ex.role === 'secondary' ? 'S' : 'T';
+                    return html`
+                      <div key=${ex.name} className="flex items-center gap-2" style=${{ marginBottom: 5 }}>
+                        <span style=${{ fontSize: 9, fontWeight: 800, color: roleColor, width: 12, flexShrink: 0 }}>${roleLbl}</span>
+                        <span style=${{ fontSize: 11, fontWeight: 600, color: T.text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${LANG === 'en' ? ex.nameEn : ex.name}</span>
+                        <div style=${{ width: 50, height: 4, borderRadius: 2, background: T.input, flexShrink: 0 }}>
+                          <div style=${{ height: '100%', borderRadius: 2, background: roleColor, width: (ex.sets / maxSets * 100) + '%' }} />
+                        </div>
+                        <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, width: 24, textAlign: 'right', flexShrink: 0 }}>${ex.sets}s</span>
+                      </div>
+                    `;
+                  })}
+                </div>
+              ` : ''}
             </div>
           ` : html`
             <div className="flex flex-col items-center gap-1" style=${{ paddingTop: 12 }}>
@@ -9490,10 +9586,19 @@ function App() {
   const [theme, setTheme] = useState(getInitialTheme);
   const [tab, setTab] = useState('hoy');
   const [tabKey, setTabKey] = useState(0);
-  const handleTabChange = useCallback((newTab) => { setTab(newTab); setTabKey(k => k + 1); }, []);
+  const [tabDir, setTabDir] = useState('right');
+  const tabOrder = ['live', 'hoy', 'comidas', 'progreso', 'cuerpo', 'jarvis'];
+  const prevTabRef = useRef(tabOrder.indexOf('hoy'));
+  const handleTabChange = useCallback((newTab) => {
+    const newIdx = tabOrder.indexOf(newTab);
+    const oldIdx = prevTabRef.current;
+    setTabDir(newIdx >= oldIdx ? 'right' : 'left');
+    prevTabRef.current = newIdx;
+    setTab(newTab);
+    setTabKey(k => k + 1);
+  }, []);
 
   // Swipe between tabs (#16)
-  const tabOrder = ['live', 'hoy', 'comidas', 'progreso', 'jarvis'];
   const swipeRef = useRef({ startX: 0, startY: 0 });
   const handleTouchStart = useCallback((e) => {
     swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY };
@@ -9504,8 +9609,8 @@ function App() {
     if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.7) return; // too short or too vertical
     setTab(prev => {
       const idx = tabOrder.indexOf(prev);
-      if (dx < 0 && idx < tabOrder.length - 1) { setTabKey(k => k + 1); return tabOrder[idx + 1]; }
-      if (dx > 0 && idx > 0) { setTabKey(k => k + 1); return tabOrder[idx - 1]; }
+      if (dx < 0 && idx < tabOrder.length - 1) { setTabDir('right'); prevTabRef.current = idx + 1; setTabKey(k => k + 1); return tabOrder[idx + 1]; }
+      if (dx > 0 && idx > 0) { setTabDir('left'); prevTabRef.current = idx - 1; setTabKey(k => k + 1); return tabOrder[idx - 1]; }
       return prev;
     });
   }, []);
@@ -9805,7 +9910,7 @@ function App() {
         />`;
       })() : ''}
 
-      <div key=${tabKey} className="tab-enter">
+      <div key=${tabKey} className=${tabDir === 'right' ? 'tab-slide-right' : 'tab-slide-left'}>
       ${tab === 'hoy' && html`<${TodayTab}
         meals=${meals} onMealConfirm=${handleMealConfirm} onMealEdit=${handleMealEdit} onAddMeal=${handleAddMeal}
         waterMl=${waterMl} onAddWater=${handleAddWater} onUndoWater=${handleUndoWater} waterLog=${waterLog}
