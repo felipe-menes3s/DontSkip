@@ -37,8 +37,8 @@ body { font-family: 'Outfit', system-ui, sans-serif; color: #0e1a2b; margin: 0; 
 .body-flip-exit { transform: rotateY(90deg); }
 
 /* Ring animation */
-.ring-circle { transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
-.dual-ring-arc { transition: stroke-dashoffset 800ms ease-out; }
+.ring-circle { transition: stroke-dasharray 1s cubic-bezier(0.4, 0, 0.2, 1), stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.dual-ring-arc { transition: stroke-dasharray 800ms ease-out, stroke-dashoffset 800ms ease-out; }
 @keyframes ringFlash { 0% { opacity: 0.1; } 40% { opacity: 0.35; } 100% { opacity: 0.1; } }
 .ring-flash { animation: ringFlash 800ms ease-out; }
 
@@ -507,6 +507,7 @@ const EN = {
   'No se encontró': 'Not found',
   // ── Comidas donut chart labels ──
   'Macro balance': 'Macro balance',
+  'Carbos': 'Carbs', 'Grasas': 'Fats',
   // ── Deload badges ──
   'Esta es tu semana de descarga — volumen al 50%': 'This is your deload week — volume at 50%',
   'Próxima semana es de descarga': 'Next week is deload',
@@ -1634,6 +1635,39 @@ function getWeeklySunburstData() {
   const fmt = d => localDate(d).slice(5);
   const weekRange = fmt(monday) + ' \u2014 ' + fmt(sunday);
   return { scores, daysHit, total, weekRange };
+}
+
+function getPrevWeekSunburstData() {
+  const today = new Date();
+  const jsDay = today.getDay();
+  const mondayOffset = jsDay === 0 ? 6 : jsDay - 1;
+  const prevMonday = new Date(today.getTime() - (mondayOffset + 7) * 86400000);
+  const scores = {};
+  let total = 0;
+  for (let d = 0; d < 7; d++) {
+    const date = new Date(prevMonday.getTime() + d * 86400000);
+    const dateStr = localDate(date);
+    const dk = DAYS[date.getDay()];
+    const r = ROUTINES[dk];
+    if (!r || r.rest || r.cardio || !r.exercises) continue;
+    try {
+      const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
+      if (!saved) continue;
+      const states = JSON.parse(saved);
+      r.exercises.forEach((ex, i) => {
+        if (!states[i]) return;
+        const map = EXERCISE_MUSCLE_MAP[ex.id];
+        if (!map) return;
+        const doneSets = (states[i].sets || []).filter(s => s.done).length;
+        if (doneSets === 0) return;
+        const add = (slugs, weight) => { (slugs || []).forEach(slug => { scores[slug] = (scores[slug] || 0) + doneSets * weight; total += doneSets * weight; }); };
+        add(map.primary, 3);
+        add(map.secondary, 2);
+        add(map.tertiary, 1);
+      });
+    } catch {}
+  }
+  return { scores, total };
 }
 
 // ── Warmup & Stretching ──────────────────────────────────────────────
@@ -3360,7 +3394,28 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
           <div className="space-y-2">
             ${sets.map((s, si) => html`
               <div key=${si} className="flex items-center gap-2"
-                style=${{ background: s.done ? T.greenDim : T.input, border: s.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px' }}>
+                style=${{ background: s.done ? T.greenDim : T.input, border: s.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px', position: 'relative', overflow: 'hidden' }}
+                onTouchStart=${e => { e.currentTarget._sx = e.touches[0].clientX; e.currentTarget._sy = e.touches[0].clientY; e.currentTarget._swiping = false; }}
+                onTouchMove=${e => {
+                  const dx = e.touches[0].clientX - (e.currentTarget._sx || 0);
+                  const dy = e.touches[0].clientY - (e.currentTarget._sy || 0);
+                  if (Math.abs(dy) > Math.abs(dx)) return;
+                  if (dx > 10) {
+                    e.currentTarget._swiping = true;
+                    e.currentTarget.style.transform = 'translateX(' + Math.min(dx * 0.4, 40) + 'px)';
+                    e.currentTarget.style.transition = 'none';
+                  }
+                }}
+                onTouchEnd=${e => {
+                  const dx = e.changedTouches[0].clientX - (e.currentTarget._sx || 0);
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.transition = 'transform 0.2s ease, all 0.2s';
+                  if (dx > 60 && !s.done) {
+                    toggleSet(si);
+                    haptic(15);
+                  }
+                  e.currentTarget._swiping = false;
+                }}>
                 <input type="checkbox" className="ds-check" checked=${s.done} onChange=${() => toggleSet(si)} />
                 <span className="text-xs font-semibold w-10" style=${{ color: T.muted }}>Set ${si + 1}</span>
                 ${isPlank ? html`
@@ -4643,16 +4698,20 @@ function StreakCalendar() {
       const isFuture = dateStr > todayStr;
       const isToday = dateStr === todayStr;
       let done = false;
+      let completion = 0;
       if (!isFuture && !isRest) {
         try {
           const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
           if (saved) {
             const states = JSON.parse(saved);
+            const totalSets = states.reduce((acc, ex) => acc + (ex.sets ? ex.sets.length : 0), 0);
+            const doneSets = states.reduce((acc, ex) => acc + (ex.sets ? ex.sets.filter(s => s.done).length : 0), 0);
+            completion = totalSets > 0 ? doneSets / totalSets : 0;
             done = states.length > 0 && states.every(e => e.sets.every(s => s.done));
           }
         } catch {}
       }
-      result.push({ day: d, done, isRest, isFuture, isToday });
+      result.push({ day: d, done, completion, isRest, isFuture, isToday });
     }
     return result;
   }, []);
@@ -4668,12 +4727,20 @@ function StreakCalendar() {
           if (!c) return html`<div key=${'e' + i} />`;
           const bg = c.done ? T.green : c.isToday ? T.accent : c.isRest ? T.input : c.isFuture ? 'transparent' : T.elevated;
           const opacity = c.isFuture ? 0.3 : 1;
+          const barHeight = !c.isRest && !c.isFuture && c.completion > 0 ? Math.max(2, Math.round(c.completion * 20)) : 0;
+          const barColor = c.completion >= 1 ? (c.done || c.isToday ? 'rgba(255,255,255,0.7)' : T.green) : c.completion > 0 ? (c.isToday ? 'rgba(255,255,255,0.6)' : T.amber) : T.input;
+          const barTrack = (c.done || c.isToday) ? 'rgba(255,255,255,0.25)' : T.input;
           return html`
             <div key=${i} style=${{
-              aspectRatio: '1', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              aspectRatio: '1', borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
               background: bg, opacity, transition: 'all 0.2s'
             }}>
               <span style=${{ fontSize: 10, fontWeight: 600, color: c.done || c.isToday ? '#fff' : T.sub }}>${c.day}</span>
+              ${!c.isRest && !c.isFuture ? html`
+                <div style=${{ width: 4, height: 20, borderRadius: 2, background: barTrack, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                  <div style=${{ width: '100%', height: barHeight + 'px', borderRadius: 2, background: barColor, transition: 'height 0.3s ease' }} />
+                </div>
+              ` : ''}
             </div>
           `;
         })}
@@ -5360,31 +5427,140 @@ function WeeklyShareCard() {
       try { water = Number(localStorage.getItem('ds_water_' + ds)) || 0; } catch {}
       days.push({ date: ds, dk, workouts, prot, cal, water });
     }
+
+    // Week range string (MM-DD — MM-DD)
+    const firstDate = days.length > 0 ? days[0].date : localDate();
+    const lastDate = days.length > 0 ? days[days.length - 1].date : localDate();
+    const weekRange = firstDate.slice(5) + ' \u2014 ' + lastDate.slice(5);
+
+    // Streak
+    const streak = getStreak();
+
+    // PRs of the week
+    const weekPRs = [];
+    try {
+      const records = getRecords();
+      const weekDates = new Set(days.map(d => d.date));
+      const allExercises = {};
+      Object.values(ROUTINES).forEach(r => {
+        if (r.exercises) r.exercises.forEach(ex => { allExercises[ex.id] = ex; });
+      });
+      Object.entries(records).forEach(([id, rec]) => {
+        if (weekDates.has(rec.date)) {
+          const ex = allExercises[id];
+          const name = ex ? exName(ex) : id;
+          weekPRs.push(name + ' — ' + rec.weight + (rec.unit || 'lbs') + ' x' + rec.reps);
+        }
+      });
+    } catch {}
+
     return {
       days,
       totalWorkouts: days.reduce((s, d) => s + (d.workouts > 0 ? 1 : 0), 0),
       avgProtein: Math.round(days.reduce((s, d) => s + d.prot, 0) / (days.length || 1)),
       avgCalories: Math.round(days.reduce((s, d) => s + d.cal, 0) / (days.length || 1)),
       totalWater: Math.round(days.reduce((s, d) => s + d.water, 0) / 1000 * 10) / 10,
+      weekRange,
+      streak,
+      weekPRs,
     };
   }, []);
+
+  async function generateShareImage() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 600, 400);
+    grad.addColorStop(0, '#274472');
+    grad.addColorStop(1, '#0a1628');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 600, 400);
+
+    // Subtle pattern overlay
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    for (let i = 0; i < 600; i += 30) {
+      ctx.fillRect(i, 0, 1, 400);
+    }
+
+    // Brand
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Outfit, system-ui, sans-serif';
+    ctx.fillText('DontSkip', 40, 50);
+
+    // Week range
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '14px Outfit, system-ui, sans-serif';
+    ctx.fillText(data.weekRange, 40, 75);
+
+    // Stats — 2x2 grid
+    const stats = [
+      { val: data.totalWorkouts + '', label: LANG === 'en' ? 'Workouts' : 'Entrenos', x: 40, y: 140 },
+      { val: data.avgProtein + 'g', label: LANG === 'en' ? 'Avg Protein' : 'Prote\u00EDna prom.', x: 320, y: 140 },
+      { val: data.avgCalories + '', label: LANG === 'en' ? 'Avg Calories' : 'Calor\u00EDas prom.', x: 40, y: 230 },
+      { val: data.streak + '', label: 'Streak', x: 320, y: 230 },
+    ];
+    stats.forEach(function(s) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px Outfit, system-ui, sans-serif';
+      ctx.fillText(s.val, s.x, s.y);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '13px Outfit, system-ui, sans-serif';
+      ctx.fillText(s.label, s.x, s.y + 22);
+    });
+
+    // PRs section (if any)
+    if (data.weekPRs && data.weekPRs.length > 0) {
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 13px Outfit, system-ui, sans-serif';
+      ctx.fillText('\uD83C\uDFC6 PRs', 40, 310);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '12px Outfit, system-ui, sans-serif';
+      data.weekPRs.slice(0, 3).forEach(function(pr, i) {
+        ctx.fillText(pr, 80, 310 + (i + 1) * 18);
+      });
+    }
+
+    // Footer
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '11px Outfit, system-ui, sans-serif';
+    ctx.fillText('DontSkip Fitness', 40, 380);
+
+    return new Promise(function(resolve) { canvas.toBlob(resolve, 'image/png'); });
+  }
+
+  async function handleShare() {
+    const shareText = [
+      '\uD83D\uDCCA ' + t('Mi semana en DontSkip'),
+      '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F ' + data.totalWorkouts + ' ' + t('entrenamientos'),
+      '\uD83E\uDD69 ' + data.avgProtein + 'g ' + t('prote\u00EDna promedio'),
+      '\uD83D\uDD25 ' + data.avgCalories + ' ' + t('kcal promedio'),
+      '\uD83D\uDCA7 ' + data.totalWater + 'L ' + t('de agua total'),
+      '', '#DontSkip #Fitness'
+    ].join('\n');
+    try {
+      const blob = await generateShareImage();
+      const file = new File([blob], 'dontskip-week.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+      } else if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert(t('Copiado'));
+      }
+    } catch(e) {
+      // User cancelled or error — silent
+    }
+  }
 
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20, position: 'relative', overflow: 'hidden' }}>
       <div className="flex items-center justify-between" style=${{ marginBottom: 14 }}>
         <${SectionHeader} title=${t("Resumen semanal")} />
-        <button onClick=${() => {
-          const lines = [
-            '\uD83D\uDCCA ' + t('Mi semana en DontSkip'),
-            '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F ' + data.totalWorkouts + ' ' + t('entrenamientos'),
-            '\uD83E\uDD69 ' + data.avgProtein + 'g ' + t('proteína promedio'),
-            '\uD83D\uDD25 ' + data.avgCalories + ' ' + t('kcal promedio'),
-            '\uD83D\uDCA7 ' + data.totalWater + 'L ' + t('de agua total'),
-            '', '#DontSkip #Fitness'
-          ].join('\n');
-          if (navigator.share) navigator.share({ text: lines }).catch(() => {});
-          else navigator.clipboard.writeText(lines).then(() => alert(t('Copiado')));
-        }} className="press-scale" style=${{ padding: '4px 10px', borderRadius: 8, background: T.accentDim }}>
+        <button onClick=${handleShare} className="press-scale" style=${{ padding: '4px 10px', borderRadius: 8, background: T.accentDim }}>
           <${ShareFat} size=${14} weight="bold" color=${T.accent} />
         </button>
       </div>
@@ -5844,6 +6020,7 @@ function SunburstView({ dark }) {
 
   const data = useMemo(() => getWeeklySunburstData(), []);
   const { scores, daysHit, total, weekRange } = data;
+  const prevData = useMemo(() => getPrevWeekSunburstData(), []);
 
   const computed = useMemo(() => {
     if (total === 0) return null;
@@ -6009,6 +6186,35 @@ function SunburstView({ dark }) {
               style=${{ cursor: 'pointer', transitionDelay: (innerSegs.length * 60 + i * 40) + 'ms' }}
               onClick=${() => handleGroupSelect(s.groupId)} />
           `)}
+          <!-- Ghost ring (previous week) -->
+          ${(() => {
+            if (prevData.total === 0) return '';
+            const rGhost = rOuter + swOuter / 2 + 6;
+            const circGhost = 2 * Math.PI * rGhost;
+            const swGhost = 3;
+            const allM = [];
+            SUNBURST_GROUPS.forEach(g => {
+              g.muscles.forEach(m => {
+                const sc = prevData.scores[m.slug] || 0;
+                if (sc > 0) allM.push({ slug: m.slug, color: m.color, score: sc });
+              });
+            });
+            if (allM.length === 0) return '';
+            const gap = 2;
+            const usable = circGhost - gap * allM.length;
+            let off = 0;
+            return allM.map((m, i) => {
+              const arcLen = (m.score / prevData.total) * usable;
+              const seg = html`<circle key=${'g-' + m.slug} cx=${cx} cy=${cy} r=${rGhost} fill="none"
+                stroke=${m.color} strokeWidth=${swGhost} opacity="0.15"
+                strokeDasharray=${mounted ? (arcLen + ' ' + (circGhost - arcLen)) : ('0 ' + circGhost)}
+                strokeDashoffset=${-off} strokeLinecap="round"
+                className="dual-ring-arc"
+                style=${{ transitionDelay: (innerSegs.length * 60 + outerSegs.length * 40 + i * 30) + 'ms' }} />`;
+              off += arcLen + gap;
+              return seg;
+            });
+          })()}
           <!-- Center tap area -->
           <circle cx=${cx} cy=${cy} r=${rInner - swInner / 2 - 4} fill="transparent"
             style=${{ cursor: 'pointer' }} onClick=${() => setSelGroup(null)} />
@@ -8041,11 +8247,11 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                       <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.input} strokeWidth=${dsw} />
                       ${total > 0 ? html`
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.copper} strokeWidth=${dsw}
-                          strokeDasharray="${seg1} ${dcirc - seg1}" strokeDashoffset=${0} strokeLinecap="butt" className="ring-circle" />
+                          strokeDasharray="${seg1} ${dcirc - seg1}" strokeDashoffset=${0} strokeLinecap="butt" className="dual-ring-arc" />
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke=${T.amber} strokeWidth=${dsw}
-                          strokeDasharray="${seg2} ${dcirc - seg2}" strokeDashoffset=${-off2} strokeLinecap="butt" className="ring-circle" />
+                          strokeDasharray="${seg2} ${dcirc - seg2}" strokeDashoffset=${-off2} strokeLinecap="butt" className="dual-ring-arc" />
                         <circle cx=${dsz / 2} cy=${dsz / 2} r=${dr} fill="none" stroke="#e879a0" strokeWidth=${dsw}
-                          strokeDasharray="${seg3} ${dcirc - seg3}" strokeDashoffset=${-off3} strokeLinecap="butt" className="ring-circle" />
+                          strokeDasharray="${seg3} ${dcirc - seg3}" strokeDashoffset=${-off3} strokeLinecap="butt" className="dual-ring-arc" />
                       ` : ''}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -8077,6 +8283,36 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                     </div>
                   </div>
                 </div>
+                ${(() => {
+                  const totalMacroG = totalProt + totalCarbs + totalFat;
+                  if (totalMacroG === 0) return '';
+                  const pPct = (totalProt / totalMacroG * 100);
+                  const cPct = (totalCarbs / totalMacroG * 100);
+                  const fPct = (totalFat / totalMacroG * 100);
+                  return html`
+                    <div style=${{ marginTop: 12 }}>
+                      <div style=${{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', background: T.input }}>
+                        <div style=${{ width: pPct + '%', background: '#5c9fd4', transition: 'width 0.5s ease' }} />
+                        <div style=${{ width: cPct + '%', background: '#94a3b8', transition: 'width 0.5s ease' }} />
+                        <div style=${{ width: fPct + '%', background: '#e8793a', transition: 'width 0.5s ease' }} />
+                      </div>
+                      <div className="flex justify-between" style=${{ marginTop: 4, fontSize: 10, fontWeight: 600, color: T.muted }}>
+                        <div className="flex items-center gap-1">
+                          <div style=${{ width: 6, height: 6, borderRadius: 3, background: '#5c9fd4' }} />
+                          <span>${t('Proteína')} ${Math.round(pPct)}%</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div style=${{ width: 6, height: 6, borderRadius: 3, background: '#94a3b8' }} />
+                          <span>${t('Carbos')} ${Math.round(cPct)}%</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div style=${{ width: 6, height: 6, borderRadius: 3, background: '#e8793a' }} />
+                          <span>${t('Grasas')} ${Math.round(fPct)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                })()}
               `;
             })()}
             <div className="space-y-3">
@@ -8999,7 +9235,28 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                 <div className="space-y-2">
                   ${currentState.sets.map((set, si) => html`
                     <div key=${si} className="flex items-center gap-2"
-                      style=${{ background: set.done ? T.greenDim : T.input, border: set.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px' }}>
+                      style=${{ background: set.done ? T.greenDim : T.input, border: set.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px', position: 'relative', overflow: 'hidden' }}
+                      onTouchStart=${e => { e.currentTarget._sx = e.touches[0].clientX; e.currentTarget._sy = e.touches[0].clientY; e.currentTarget._swiping = false; }}
+                      onTouchMove=${e => {
+                        const dx = e.touches[0].clientX - (e.currentTarget._sx || 0);
+                        const dy = e.touches[0].clientY - (e.currentTarget._sy || 0);
+                        if (Math.abs(dy) > Math.abs(dx)) return;
+                        if (dx > 10) {
+                          e.currentTarget._swiping = true;
+                          e.currentTarget.style.transform = 'translateX(' + Math.min(dx * 0.4, 40) + 'px)';
+                          e.currentTarget.style.transition = 'none';
+                        }
+                      }}
+                      onTouchEnd=${e => {
+                        const dx = e.changedTouches[0].clientX - (e.currentTarget._sx || 0);
+                        e.currentTarget.style.transform = '';
+                        e.currentTarget.style.transition = 'transform 0.2s ease, all 0.2s';
+                        if (dx > 60 && !set.done) {
+                          toggleSet(currentIdx, si);
+                          haptic(15);
+                        }
+                        e.currentTarget._swiping = false;
+                      }}>
                       <button onClick=${() => toggleSet(currentIdx, si)} className="press-scale" style=${{ flexShrink: 0 }}>
                         <div style=${{
                           width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
