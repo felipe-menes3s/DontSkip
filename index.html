@@ -327,7 +327,13 @@ const EN = {
   'Empieza a entrenar para ver tu analytics': 'Start training to see your analytics',
   'Todos': 'All', 'Brazos': 'Arms', 'Piernas': 'Legs', 'Hombros': 'Shoulders',
   'sets ponderados': 'weighted sets', 'dias esta semana': 'days this week',
-  'Semana': 'Week',
+  'Semana': 'Week', 'Recovery': 'Recovery',
+  'recuperado': 'recovered', 'Completamente recuperado': 'Fully recovered',
+  'Basado en tus ultimos entrenamientos': 'Based on your recent workouts',
+  'Sin datos de entrenamiento reciente': 'No recent workout data',
+  'Musculos en recuperacion': 'Muscles recovering', 'restantes': 'remaining',
+  'Todos los musculos recuperados': 'All muscles recovered',
+  'Frontal': 'Front', 'Posterior': 'Back',
   // ── Days ──
   'Domingo': 'Sunday', 'Lunes': 'Monday', 'Martes': 'Tuesday', 'Miércoles': 'Wednesday',
   'Jueves': 'Thursday', 'Viernes': 'Friday', 'Sábado': 'Saturday',
@@ -1287,6 +1293,17 @@ const EXERCISE_MUSCLE_MAP = {
   crunch:        { primary: ['abs'],            secondary: ['obliques'] },
 };
 
+const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp']);
+const MUSCLE_RECOVERY_LABELS = {
+  chest: { label: 'Pecho', labelEn: 'Chest' }, biceps: { label: 'Bíceps', labelEn: 'Biceps' },
+  triceps: { label: 'Tríceps', labelEn: 'Triceps' }, forearm: { label: 'Antebrazo', labelEn: 'Forearm' },
+  deltoids: { label: 'Deltoides', labelEn: 'Deltoids' }, trapezius: { label: 'Trapecio', labelEn: 'Traps' },
+  'upper-back': { label: 'Espalda sup.', labelEn: 'Upper back' }, 'lower-back': { label: 'Lumbar', labelEn: 'Lower back' },
+  quadriceps: { label: 'Cuádriceps', labelEn: 'Quads' }, hamstring: { label: 'Isquiotibiales', labelEn: 'Hamstrings' },
+  gluteal: { label: 'Glúteos', labelEn: 'Glutes' }, calves: { label: 'Pantorrillas', labelEn: 'Calves' },
+  abs: { label: 'Abdominales', labelEn: 'Abs' }, obliques: { label: 'Oblicuos', labelEn: 'Obliques' },
+};
+
 const MUSCLE_INTENSITY_COLORS = {
   dark:  { 0: '#1e2a3a', 1: '#1a3a5c', 2: '#274472', 3: '#4a8fd4' },
   light: { 0: '#c8d8e8', 1: '#8bb0d4', 2: '#4a7ab5', 3: '#274472' },
@@ -1448,6 +1465,76 @@ function getWeeklyMuscleStats() {
     } catch(e) {}
   }
   return { volume, frequency };
+}
+
+function getMuscleRecoveryData() {
+  const now = new Date();
+  const muscleLoad = {}; // { slug: { totalLoad, lastTrainedMs } }
+  const weekDayKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  for (let daysAgo = 0; daysAgo < 4; daysAgo++) {
+    const d = new Date(now.getTime() - daysAgo * 86400000);
+    const dateStr = localDate(d);
+    const dayKey = DAYS[d.getDay()];
+    const routine = ROUTINES[dayKey];
+    if (!routine || routine.rest) continue;
+    const saved = localStorage.getItem('ds_workout_' + dayKey + '_' + dateStr);
+    if (!saved) continue;
+    let states;
+    try { states = JSON.parse(saved); } catch { continue; }
+    routine.exercises.forEach((ex, ei) => {
+      const st = states[ei];
+      if (!st) return;
+      const doneSets = st.sets ? st.sets.filter(s => s.done) : [];
+      if (doneSets.length === 0) return;
+      const map = EXERCISE_MUSCLE_MAP[ex.id];
+      if (!map) return;
+      const compoundMul = COMPOUND_EXERCISES.has(ex.id) ? 1.2 : 1.0;
+      const volume = doneSets.reduce((sum, s) => {
+        const w = parseFloat(s.weight) || 0;
+        const r = parseInt(s.reps) || 0;
+        return sum + (w > 0 ? w * r : r * 20);
+      }, 0) * compoundMul;
+      const trainMs = d.getTime();
+      const applyLoad = (slugs, multiplier) => {
+        (slugs || []).forEach(slug => {
+          if (!muscleLoad[slug]) muscleLoad[slug] = { totalLoad: 0, lastTrainedMs: 0 };
+          muscleLoad[slug].totalLoad += volume * multiplier;
+          muscleLoad[slug].lastTrainedMs = Math.max(muscleLoad[slug].lastTrainedMs, trainMs);
+        });
+      };
+      applyLoad(map.primary, 1.0);
+      applyLoad(map.secondary, 0.5);
+      applyLoad(map.tertiary, 0.25);
+    });
+  }
+  // Find max load to normalize
+  const loads = Object.values(muscleLoad).map(m => m.totalLoad);
+  const maxLoad = Math.max(...loads, 1);
+  const result = {};
+  for (const [slug, data] of Object.entries(muscleLoad)) {
+    const hoursElapsed = (now.getTime() - data.lastTrainedMs) / 3600000;
+    const relativeLoad = data.totalLoad / maxLoad;
+    // Recovery hours: 48h base → up to 72h for max load
+    const recoveryHours = 48 + relativeLoad * 24;
+    const recoveryPct = Math.min(100, Math.round((hoursElapsed / recoveryHours) * 100));
+    const hoursRemaining = Math.max(0, Math.round(recoveryHours - hoursElapsed));
+    result[slug] = { recoveryPct, hoursRemaining, lastTrainedMs: data.lastTrainedMs, volume: data.totalLoad };
+  }
+  return result;
+}
+
+function getRecoveryColor(pct, isDark) {
+  if (pct >= 100) return isDark ? '#22c55e' : '#16a34a';
+  if (pct >= 80) return isDark ? '#a3e635' : '#65a30d';
+  if (pct >= 50) return isDark ? '#facc15' : '#ca8a04';
+  return isDark ? '#f87171' : '#dc2626';
+}
+
+function getRecoverySkinColor(pct, isDark) {
+  if (pct >= 100) return isDark ? '#1a4a2e' : '#bbf7d0';
+  if (pct >= 80) return isDark ? '#3a4a1a' : '#d9f99d';
+  if (pct >= 50) return isDark ? '#4a3a1a' : '#fef08a';
+  return isDark ? '#4a1a1a' : '#fecaca';
 }
 
 function getWeeklySunburstData() {
@@ -5891,9 +5978,188 @@ function SunburstView({ dark }) {
   `;
 }
 
+// ── Recovery View ────────────────────────────────────────────────────
+function RecoveryView({ dark }) {
+  const [recView, setRecView] = useState('front');
+  const recSvgRef = useRef(null);
+  const recoveryData = useMemo(() => getMuscleRecoveryData(), []);
+
+  const themeKey = dark ? 'dark' : 'light';
+  const skinColor = MUSCLE_SKIN_COLORS[themeKey];
+  const outlineColor = MUSCLE_OUTLINE_COLORS[themeKey];
+  const strokeColor = MUSCLE_STROKE_COLORS[themeKey];
+
+  // Render body map with recovery colors
+  useEffect(() => {
+    const svg = recSvgRef.current;
+    if (!svg) return;
+    svg.innerHTML = '';
+    const isFront = recView === 'front';
+    const outlinePath = isFront ? MUSCLE_OUTLINE_FRONT : MUSCLE_OUTLINE_BACK;
+    const muscles = isFront ? MUSCLE_BODY_FRONT : MUSCLE_BODY_BACK;
+    if (outlinePath) {
+      const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d', outlinePath);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', outlineColor);
+      p.setAttribute('stroke-width', '2');
+      svg.appendChild(p);
+    }
+    muscles.forEach(m => {
+      const isSkin = MUSCLE_SKIN_SLUGS.has(m.slug);
+      const rec = recoveryData[m.slug];
+      let color;
+      if (isSkin) {
+        color = skinColor;
+      } else if (!rec) {
+        color = dark ? '#1a4a2e' : '#bbf7d0'; // fully recovered (no recent data)
+      } else {
+        color = getRecoverySkinColor(rec.recoveryPct, dark);
+      }
+      const allPaths = [];
+      if (m.path.common) allPaths.push(...m.path.common);
+      if (m.path.left) allPaths.push(...m.path.left);
+      if (m.path.right) allPaths.push(...m.path.right);
+      allPaths.forEach(d => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', d);
+        p.setAttribute('fill', color);
+        p.setAttribute('stroke', strokeColor);
+        p.setAttribute('stroke-width', '1');
+        svg.appendChild(p);
+      });
+    });
+  }, [recView, recoveryData, dark]);
+
+  // Overall recovery
+  const overallData = useMemo(() => {
+    const entries = Object.entries(recoveryData);
+    if (entries.length === 0) return null;
+    const avg = Math.round(entries.reduce((sum, [, d]) => sum + d.recoveryPct, 0) / entries.length);
+    const recovering = entries
+      .filter(([, d]) => d.recoveryPct < 100)
+      .sort((a, b) => a[1].recoveryPct - b[1].recoveryPct)
+      .map(([slug, d]) => {
+        const info = MUSCLE_RECOVERY_LABELS[slug] || { label: slug, labelEn: slug };
+        return { slug, ...d, label: LANG === 'en' ? info.labelEn : info.label };
+      });
+    return { avg, recovering };
+  }, [recoveryData]);
+
+  if (!overallData) {
+    return html`
+      <div style=${{ textAlign: 'center', padding: '40px 20px', animation: 'fadeUp 0.35s ease' }}>
+        <div style=${{ fontSize: 40, marginBottom: 12 }}>${'\uD83D\uDCAA\uD83C\uDFFC'}</div>
+        <div style=${{ fontSize: 13, color: T.muted }}>${t('Sin datos de entrenamiento reciente')}</div>
+      </div>
+    `;
+  }
+
+  const { avg, recovering } = overallData;
+  const ringColor = getRecoveryColor(avg, dark);
+  const sz = 130, sw = 12, ringR = (sz - sw) / 2, circ = 2 * Math.PI * ringR;
+  const ringOff = circ * (1 - avg / 100);
+  const viewBox = recView === 'front' ? '0 0 724 1448' : '724 0 724 1448';
+
+  const pillStyle = (active) => ({
+    padding: '6px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+    border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+    background: active ? T.accent : T.input,
+    color: active ? '#fff' : T.muted,
+  });
+
+  return html`
+    <div style=${{ animation: 'fadeUp 0.35s ease' }}>
+      <!-- Overall recovery ring -->
+      <div className="flex flex-col items-center" style=${{ marginBottom: 20 }}>
+        <div style=${{ position: 'relative', width: sz, height: sz }}>
+          <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
+            <circle cx=${sz / 2} cy=${sz / 2} r=${ringR} fill="none" stroke=${T.input} strokeWidth=${sw} />
+            <circle cx=${sz / 2} cy=${sz / 2} r=${ringR} fill="none" stroke=${ringColor} strokeWidth=${sw}
+              strokeDasharray=${circ} strokeDashoffset=${ringOff} strokeLinecap="round"
+              className="ring-circle" />
+          </svg>
+          <div style=${{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <span style=${{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 30, fontWeight: 900, color: ringColor, lineHeight: 1 }}>${avg}</span>
+            <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted, marginTop: 2 }}>%</span>
+          </div>
+        </div>
+        <div style=${{ fontSize: 14, fontWeight: 700, color: T.text, marginTop: 8 }}>
+          ${avg >= 100 ? t('Completamente recuperado') : (avg + '% ' + t('recuperado'))}
+        </div>
+        <div style=${{ fontSize: 10, color: T.muted, marginTop: 2 }}>
+          ${t('Basado en tus ultimos entrenamientos')}
+        </div>
+      </div>
+
+      <!-- Front/Back toggle -->
+      <div className="flex justify-center gap-2" style=${{ marginBottom: 14 }}>
+        <button style=${pillStyle(recView === 'front')} onClick=${() => setRecView('front')}>${t('Frontal')}</button>
+        <button style=${pillStyle(recView === 'back')} onClick=${() => setRecView('back')}>${t('Posterior')}</button>
+      </div>
+
+      <!-- SVG Body Map -->
+      <div className="flex justify-center">
+        <svg ref=${recSvgRef} width="200" height="400" viewBox=${viewBox}
+          style=${{ maxWidth: '100%', height: 'auto' }} />
+      </div>
+
+      <!-- Recovery legend -->
+      <div className="flex flex-wrap justify-center gap-3" style=${{ marginTop: 14, marginBottom: 16 }}>
+        ${[
+          { pct: 100, label: '100%' },
+          { pct: 80, label: '80-99%' },
+          { pct: 60, label: '50-79%' },
+          { pct: 25, label: '0-49%' },
+        ].map(item => html`
+          <div key=${item.pct} className="flex items-center gap-1" style=${{ fontSize: 11, fontWeight: 600, color: T.sub }}>
+            <div style=${{ width: 12, height: 12, borderRadius: 3, background: getRecoverySkinColor(item.pct, dark), border: '1px solid ' + outlineColor }} />
+            <span>${item.label}</span>
+          </div>
+        `)}
+      </div>
+
+      <!-- Muscle list -->
+      ${recovering.length > 0 ? html`
+        <div>
+          <div style=${{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 10 }}>
+            ${t('Musculos en recuperacion')}
+          </div>
+          <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            ${recovering.map(m => {
+              const recColor = getRecoveryColor(m.recoveryPct, dark);
+              return html`
+                <div key=${m.slug} style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '10px 14px' }}>
+                  <div className="flex items-center justify-between" style=${{ marginBottom: 4 }}>
+                    <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${m.label}</span>
+                    <span style=${{ fontSize: 12, fontWeight: 800, color: recColor, fontFamily: "'Inter', system-ui, sans-serif" }}>
+                      ${m.recoveryPct}%
+                    </span>
+                  </div>
+                  <div style=${{ height: 5, borderRadius: 3, background: T.input, marginBottom: 4 }}>
+                    <div style=${{ height: '100%', borderRadius: 3, background: recColor, width: m.recoveryPct + '%', transition: 'width 0.3s ease' }} />
+                  </div>
+                  <div style=${{ fontSize: 10, color: T.muted }}>
+                    ~${m.hoursRemaining}h ${t('restantes')}
+                  </div>
+                </div>
+              `;
+            })}
+          </div>
+        </div>
+      ` : html`
+        <div style=${{ textAlign: 'center', padding: '16px 0' }}>
+          <div style=${{ fontSize: 24, marginBottom: 6 }}>${'\u2705'}</div>
+          <div style=${{ fontSize: 13, fontWeight: 600, color: dark ? '#22c55e' : '#16a34a' }}>${t('Todos los musculos recuperados')}</div>
+        </div>
+      `}
+    </div>
+  `;
+}
+
 // ── Cuerpo Tab — Muscle Map ─────────────────────────────────────────
 function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
-  const [cuerpoView, setCuerpoView] = useState('mapa'); // 'mapa' | 'analytics'
+  const [cuerpoView, setCuerpoView] = useState('mapa'); // 'mapa' | 'analytics' | 'recovery'
   const [view, setView] = useState('front');
   const svgRef = useRef(null);
   const [selectedMuscle, setSelectedMuscle] = useState(null); // { slug, level }
@@ -6073,23 +6339,18 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
         </div>
       </div>
 
-      <!-- Segmented control: Mapa / Analytics -->
+      <!-- Segmented control: Mapa / Analytics / Recovery -->
       <div className="flex justify-center mb-3">
         <div style=${{ display: 'inline-flex', borderRadius: 10, overflow: 'hidden', border: '1px solid ' + T.border }}>
-          <button onClick=${() => setCuerpoView('mapa')} style=${{
-            padding: '7px 20px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-            fontFamily: "'Inter', system-ui, sans-serif",
-            background: cuerpoView === 'mapa' ? T.accent : T.card,
-            color: cuerpoView === 'mapa' ? '#fff' : T.muted,
-            transition: 'all 0.2s',
-          }}>${t('Mapa')}</button>
-          <button onClick=${() => setCuerpoView('analytics')} style=${{
-            padding: '7px 20px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-            fontFamily: "'Inter', system-ui, sans-serif",
-            background: cuerpoView === 'analytics' ? T.accent : T.card,
-            color: cuerpoView === 'analytics' ? '#fff' : T.muted,
-            transition: 'all 0.2s',
-          }}>${t('Analytics')}</button>
+          ${['mapa', 'analytics', 'recovery'].map(vid => html`
+            <button key=${vid} onClick=${() => setCuerpoView(vid)} style=${{
+              padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              background: cuerpoView === vid ? T.accent : T.card,
+              color: cuerpoView === vid ? '#fff' : T.muted,
+              transition: 'all 0.2s',
+            }}>${vid === 'mapa' ? t('Mapa') : vid === 'analytics' ? t('Analytics') : t('Recovery')}</button>
+          `)}
         </div>
       </div>
 
@@ -6183,6 +6444,12 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
       ${cuerpoView === 'analytics' && html`
       <div className="ds-card" style=${{ padding: 20, background: T.card, borderRadius: 16 }}>
         <${SunburstView} dark=${dark} />
+      </div>
+      `}
+
+      ${cuerpoView === 'recovery' && html`
+      <div className="ds-card" style=${{ padding: 20, background: T.card, borderRadius: 16 }}>
+        <${RecoveryView} dark=${dark} />
       </div>
       `}
 
