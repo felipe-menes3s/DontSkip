@@ -2530,13 +2530,14 @@ function WeekStrip() {
 // ── Rest Timer ────────────────────────────────────────────────────────
 
 // Rest time by exercise type (seconds)
-// Compound heavy: 150s, Compound moderate: 120s, Isolation: 75s, Core: 60s
+// Evidence-based rest times (Schoenfeld et al. 2016, Grgic et al. 2017)
+// Compound multi-joint: 90s, Moderate isolation: 60s, Light isolation: 45s
 const REST_TIMES = {
-  bench_press: 150, squat: 150, deadlift: 150, ohp: 150,
-  incline_press: 120, leg_press: 120, lat_pulldown: 120, cable_row: 120, bulgarian: 120, db_row: 120,
-  lateral_raise: 75, bicep_curl: 75, hammer_curl: 75, leg_ext: 75, leg_curl: 75,
-  calf_raise_a: 75, calf_raise_b: 75, rear_delt: 75, tricep_push: 75, skull_crush: 75, seated_curl: 75, glute_kickback: 75,
-  plank: 60, crunch: 60,
+  bench_press: 90, incline_press: 90, squat: 90, deadlift: 90, ohp: 90,
+  leg_press: 90, lat_pulldown: 90, cable_row: 90, db_row: 90, bulgarian: 90,
+  bicep_curl: 60, hammer_curl: 60, tricep_push: 60, skull_crush: 60,
+  leg_curl: 60, leg_ext: 60, seated_curl: 60, glute_kickback: 60,
+  lateral_raise: 45, rear_delt: 45, calf_raise_a: 45, calf_raise_b: 45, plank: 45, crunch: 45,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
 
@@ -2596,6 +2597,27 @@ function getWeeklyRecommendations(routine, todayKey, unitPref) {
   });
 }
 
+function playRestBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o1 = ctx.createOscillator();
+    const g1 = ctx.createGain();
+    o1.frequency.value = 880; o1.type = 'sine';
+    g1.gain.setValueAtTime(0.3, ctx.currentTime);
+    g1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    o1.connect(g1).connect(ctx.destination);
+    o1.start(ctx.currentTime); o1.stop(ctx.currentTime + 0.2);
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.frequency.value = 1100; o2.type = 'sine';
+    g2.gain.setValueAtTime(0.3, ctx.currentTime + 0.25);
+    g2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    o2.connect(g2).connect(ctx.destination);
+    o2.start(ctx.currentTime + 0.25); o2.stop(ctx.currentTime + 0.4);
+    setTimeout(() => ctx.close(), 1000);
+  } catch {}
+}
+
 function RestTimer({ duration = 90, onDone }) {
   const [left, setLeft] = useState(duration);
   const notified = useRef(false);
@@ -2604,6 +2626,7 @@ function RestTimer({ duration = 90, onDone }) {
       if (!notified.current) {
         notified.current = true;
         haptic([30, 100, 30, 100, 30]);
+        playRestBeep();
         try { if (Notification.permission === 'granted') new Notification('DontSkip', { body: t('¡Descanso terminado! Siguiente set'), icon: 'icon-192.png' }); } catch {}
       }
       onDone && onDone();
@@ -2614,10 +2637,9 @@ function RestTimer({ duration = 90, onDone }) {
   }, [left]);
   const pct = left / duration;
   const urgentColor = left <= 10 ? T.red : left <= 30 ? T.amber : T.accent;
-  const restLabel = duration >= 150 ? (LANG === 'en' ? 'Heavy compound' : 'Compuesto pesado')
-    : duration >= 120 ? (LANG === 'en' ? 'Compound' : 'Compuesto')
-    : duration <= 60 ? 'Core'
-    : (LANG === 'en' ? 'Isolation' : 'Aislamiento');
+  const restLabel = duration >= 90 ? (LANG === 'en' ? 'Compound' : 'Compuesto')
+    : duration >= 60 ? (LANG === 'en' ? 'Isolation' : 'Aislamiento')
+    : (LANG === 'en' ? 'Light' : 'Ligero');
   const mm = Math.floor(left / 60);
   const ss = left % 60;
   const timeStr = mm > 0 ? mm + ':' + String(ss).padStart(2, '0') : left + 's';
