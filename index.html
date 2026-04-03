@@ -6164,7 +6164,7 @@ function SunburstView({ dark }) {
       if (m.score > 0) allMuscles.push({ ...m, groupId: g.id, groupColor: g.color });
     });
   });
-  const gapOuter = 2;
+  const gapOuter = 3;
   const totalOuterGap = gapOuter * allMuscles.length;
   const usableOuter = circOuter - totalOuterGap;
   let offO = 0;
@@ -6186,7 +6186,13 @@ function SunburstView({ dark }) {
   }).sort((a, b) => b.pct - a.pct);
   const labels = [];
   labelCandidates.forEach(lbl => {
-    if (!labels.some(placed => Math.abs(placed.ly - lbl.ly) < 16)) labels.push(lbl);
+    let adjY = lbl.ly;
+    labels.forEach(placed => {
+      if (Math.abs(placed.ly - adjY) < 20) {
+        adjY = placed.ly + (adjY > placed.ly ? 20 : -20);
+      }
+    });
+    labels.push({ ...lbl, ly: adjY });
   });
 
   // Center display
@@ -6242,7 +6248,7 @@ function SunburstView({ dark }) {
               opacity=${s.dimmed ? 0.5 : 1}
               strokeDasharray=${mounted ? (s.arcLen + ' ' + (circInner - s.arcLen)) : ('0 ' + circInner)}
               strokeDashoffset=${-s.offset}
-              strokeLinecap="round" className="dual-ring-arc"
+              strokeLinecap="butt" className="dual-ring-arc"
               style=${{ cursor: 'pointer', transitionDelay: (i * 60) + 'ms' }}
               onClick=${() => handleGroupSelect(s.id)} />
           `)}
@@ -6254,7 +6260,7 @@ function SunburstView({ dark }) {
               opacity=${s.dimmed ? 0.35 : 1}
               strokeDasharray=${mounted ? (s.arcLen + ' ' + (circOuter - s.arcLen)) : ('0 ' + circOuter)}
               strokeDashoffset=${-s.offset}
-              strokeLinecap="round" className="dual-ring-arc"
+              strokeLinecap="butt" className="dual-ring-arc"
               style=${{ cursor: 'pointer', transitionDelay: (innerSegs.length * 60 + i * 40) + 'ms' }}
               onClick=${() => handleGroupSelect(s.groupId)} />
           `)}
