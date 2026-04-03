@@ -134,6 +134,11 @@ body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; p
 @keyframes greenFlash { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); } 50% { box-shadow: 0 0 0 6px rgba(22,163,74,0.15); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .green-flash { animation: greenFlash 0.6s ease-out; }
 
+/* Water wave animation */
+@keyframes waveMove1 { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes waveMove2 { 0% { transform: translateX(0); } 100% { transform: translateX(50%); } }
+@media (prefers-reduced-motion: reduce) { .water-wave { animation: none !important; } }
+
 /* Live workout */
 @keyframes livePulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; animation: livePulse 1.5s ease-in-out infinite; }
@@ -3903,17 +3908,27 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
             <!-- Glass outline — wider at top (mouth), narrower at bottom (base) -->
             <path d="M8 6 L18 110 C18 114 27 117 40 117 C53 117 62 114 62 110 L72 6 Z"
               fill=${T.input} stroke=${T.border} strokeWidth="1.5" />
-            <!-- Water fill (celeste) -->
-            ${waterMl > 0 && html`
+            <!-- Water fill with animated waves -->
+            ${waterMl > 0 && (() => {
+              const waterTop = 120 - fillH * 1.12;
+              const waterH = fillH * 1.12 + 1;
+              return html`
               <g clipPath="url(#glassClip)">
-                <rect x="0" y=${120 - fillH * 1.12} width="80" height=${fillH * 1.12 + 1}
-                  fill="#7dd3fc" opacity="0.35"
-                  style=${{ transition: 'y 0.5s ease, height 0.5s ease' }} />
-                <rect x="0" y=${120 - fillH * 1.09} width="80" height=${fillH * 1.09 + 1}
-                  fill="#38bdf8" opacity="0.30"
-                  style=${{ transition: 'y 0.5s ease, height 0.5s ease' }} />
+                <rect x="0" y=${waterTop} width="80" height=${waterH}
+                  fill="#2196c4" opacity="0.25"
+                  style=${{ transition: 'y 600ms ease, height 600ms ease' }} />
+                <g style=${{ transform: 'translateY(' + waterTop + 'px)', transition: 'transform 600ms ease' }}>
+                  <path className="water-wave" d="M0,6 C10,1 20,11 40,6 C60,1 70,11 80,6 C90,1 100,11 120,6 C140,1 150,11 160,6 V120 H0 Z"
+                    fill="#2196c4" opacity="0.8"
+                    style=${{ animation: 'waveMove1 3s linear infinite' }} />
+                </g>
+                <g style=${{ transform: 'translateY(' + (waterTop + 2) + 'px)', transition: 'transform 600ms ease' }}>
+                  <path className="water-wave" d="M0,6 C10,11 20,1 40,6 C60,11 70,1 80,6 C90,11 100,1 120,6 C140,11 150,1 160,6 V120 H0 Z"
+                    fill="#5bbfe8" opacity="0.5"
+                    style=${{ animation: 'waveMove2 4s linear infinite' }} />
+                </g>
               </g>
-            `}
+            `; })()}
             <!-- Glass rim -->
             <path d="M8 6 L72 6" stroke=${T.border} strokeWidth="2" strokeLinecap="round" />
             <!-- ML text inside -->
