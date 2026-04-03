@@ -32,9 +32,6 @@ body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; p
 .count-up { animation: countPulse 0.1s ease-out; }
 :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* Body map flip */
-.body-flip { transition: transform 0.4s ease; transform-style: preserve-3d; }
-.body-flip-exit { transform: rotateY(90deg); }
 
 /* Ring animation */
 .ring-circle { transition: stroke-dasharray 1s cubic-bezier(0.4, 0, 0.2, 1), stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -1294,8 +1291,8 @@ const ROUTINES = {
     exercises: [
       { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: 'gifs/deadlift.gif', videoId: 'op9kVnSso6Q' },
       { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif', videoId: '2C-uNgKwPLE' },
-      { id: 'seated_curl', name: 'Curl Femoral Sentado', nameEn: 'Seated Leg Curl', desc: 'Sentado, flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/seated_curl.gif', videoId: 'Orxowest56U' },
-      { id: 'glute_kickback', name: 'Glute Kickback Machine', nameEn: 'Glute Kickback Machine', desc: 'Recostado boca abajo en la máquina, empuja el rodillo hacia arriba con el talón apretando el glúteo. Rodilla doblada 90 grados. Controla la bajada.', sets: 3, reps: '12 c/p', muscle: 'Glúteos', gif: 'gifs/glute_kickback.gif', videoId: '2UQ15qXPIk4' },
+      { id: 'prone_leg_curl', name: 'Curl Femoral Acostado', nameEn: 'Prone Leg Curl', desc: 'Acostado boca abajo, flexiona las piernas contra la almohadilla', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/leg_curl.gif', videoId: 'Orxowest56U' },
+      { id: 'hip_thrust', name: 'Hip Thrust', nameEn: 'Barbell Hip Thrust', desc: 'Espalda apoyada en banco, barra sobre caderas, empuja caderas hacia arriba apretando glúteos', sets: 3, reps: '10', muscle: 'Glúteos', gif: 'gifs/hip_thrust.gif', videoId: '2UQ15qXPIk4' },
       { id: 'calf_raise_b', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
       { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales. Alternativa en máquina: usa la máquina de abdominales del gym siguiendo el mismo rango de movimiento.', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
     ]
@@ -1332,13 +1329,13 @@ const EXERCISE_MUSCLE_MAP = {
   skull_crush:   { primary: ['triceps'] },
   deadlift:      { primary: ['hamstring','gluteal','lower-back'], secondary: ['quadriceps','trapezius','forearm'] },
   bulgarian:     { primary: ['quadriceps'],     secondary: ['gluteal'],            tertiary: ['hamstring'] },
-  seated_curl:   { primary: ['hamstring'] },
-  glute_kickback:{ primary: ['gluteal'],        tertiary:  ['hamstring'] },
+  prone_leg_curl:{ primary: ['hamstring'] },
+  hip_thrust:    { primary: ['gluteal'],        secondary: ['hamstring'], tertiary: ['lower-back'] },
   calf_raise_b:  { primary: ['calves'] },
   crunch:        { primary: ['abs'],            secondary: ['obliques'] },
 };
 
-const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp']);
+const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp','hip_thrust']);
 const MUSCLE_RECOVERY_LABELS = {
   chest: { label: 'Pecho', labelEn: 'Chest' }, biceps: { label: 'Bíceps', labelEn: 'Biceps' },
   triceps: { label: 'Tríceps', labelEn: 'Triceps' }, forearm: { label: 'Antebrazo', labelEn: 'Forearm' },
@@ -1930,8 +1927,8 @@ const STARTING_WEIGHTS = {
   skull_crush: { kg: 10, lbs: 22, note: '10kg' },
   deadlift: { kg: 40, lbs: 88, note: 'Barra + 10kg cada lado' },
   bulgarian: { kg: 10, lbs: 22, note: '10kg cada mancuerna' },
-  seated_curl: { kg: 22, lbs: 48, note: 'Stack 22kg' },
-  glute_kickback: { kg: 20, lbs: 44, note: 'Stack máquina' },
+  prone_leg_curl: { kg: 22, lbs: 48, note: 'Stack 22kg' },
+  hip_thrust: { kg: 30, lbs: 66, note: 'Barra + peso' },
   calf_raise_b: { kg: 40, lbs: 88, note: 'Misma carga que peso muerto' },
   crunch: { kg: 0, lbs: 0, note: 'Peso corporal' },
 };
@@ -2565,17 +2562,17 @@ const REST_TIMES = {
   bench_press: 90, incline_press: 90, squat: 90, deadlift: 90, ohp: 90,
   leg_press: 90, lat_pulldown: 90, cable_row: 90, db_row: 90, bulgarian: 90,
   bicep_curl: 60, hammer_curl: 60, tricep_push: 60, skull_crush: 60,
-  leg_curl: 60, leg_ext: 60, seated_curl: 60, glute_kickback: 60,
+  leg_curl: 60, leg_ext: 60, prone_leg_curl: 60, hip_thrust: 90,
   lateral_raise: 45, rear_delt: 45, calf_raise_a: 45, calf_raise_b: 45, plank: 45, crunch: 45,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
 
 // Weight increment by exercise type (lbs)
 const WEIGHT_INCREMENTS = {
-  squat: 10, deadlift: 10, leg_press: 10, glute_kickback: 10,
+  squat: 10, deadlift: 10, leg_press: 10, hip_thrust: 10,
   bench_press: 5, incline_press: 5, ohp: 5, lat_pulldown: 5, cable_row: 5, db_row: 5, bulgarian: 5,
   lateral_raise: 5, bicep_curl: 5, hammer_curl: 5, leg_ext: 5, leg_curl: 5,
-  calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, seated_curl: 5,
+  calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, prone_leg_curl: 5,
 };
 
 function getTrainingWeek() {
@@ -6597,7 +6594,6 @@ function RecoveryView({ dark }) {
 function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
   const [cuerpoView, setCuerpoView] = useState('mapa'); // 'mapa' | 'analytics' | 'recovery'
   const [view, setView] = useState('front');
-  const [flipping, setFlipping] = useState(false);
   const svgRef = useRef(null);
   const [selectedMuscle, setSelectedMuscle] = useState(null); // { slug, level }
   const [selectedDay, setSelectedDay] = useState(null); // null = today (real data), 0-6 = schedule view
@@ -6730,12 +6726,8 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
 
   function handleViewFlip(newView) {
     if (newView === view) return;
-    setFlipping(true);
-    setTimeout(() => {
-      setView(newView);
-      setSelectedMuscle(null);
-      setFlipping(false);
-    }, 200);
+    setView(newView);
+    setSelectedMuscle(null);
   }
 
   function handleDaySelect(idx) {
@@ -6824,7 +6816,7 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
         </div>
 
         <!-- SVG Body -->
-        <div className="flex justify-center" style=${{ transition: 'transform 0.2s ease, opacity 0.2s ease', transform: flipping ? 'scaleX(0)' : 'scaleX(1)', opacity: flipping ? 0 : 1 }}>
+        <div className="flex justify-center">
           <svg ref=${svgRef} width="240" height="480" viewBox=${viewBox}
             style=${{ maxWidth: '100%', height: 'auto' }} />
         </div>
