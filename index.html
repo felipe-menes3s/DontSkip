@@ -3166,9 +3166,9 @@ function DualRingCard({ outer, inner }) {
               const avgPct = Math.round(((pctOuter + pctInner) / 2) * 100);
               const allDone = outerDone && innerDone;
               return html`
-                <text x=${svgSz / 2} y=${allDone ? svgSz / 2 + 1 : svgSz / 2 - 2} text-anchor="middle" dominant-baseline="central"
+                <text x=${svgSz / 2} y=${allDone ? svgSz / 2 + 1 : svgSz / 2 - 2} textAnchor="middle" dominantBaseline="central"
                   style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 22 : 20, fill: allDone ? T.green : T.text, transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
-                  ${allDone ? '✓' : avgPct + '%'}
+                  ${allDone ? '\u2713' : avgPct + '%'}
                 </text>
               `;
             })()}
