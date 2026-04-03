@@ -3165,9 +3165,11 @@ function DualRingCard({ outer, inner }) {
             ${(() => {
               const avgPct = Math.round(((pctOuter + pctInner) / 2) * 100);
               const allDone = outerDone && innerDone;
+              const cx = svgSz / 2, cy = allDone ? svgSz / 2 + 1 : svgSz / 2 - 2;
               return html`
-                <text x=${svgSz / 2} y=${allDone ? svgSz / 2 + 1 : svgSz / 2 - 2} textAnchor="middle" dominantBaseline="central"
-                  style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 22 : 20, fill: allDone ? T.green : T.text, transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
+                <text x=${cx} y=${cy} textAnchor="middle" dominantBaseline="central"
+                  transform=${'rotate(90,' + cx + ',' + cy + ')'}
+                  style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 22 : 20, fill: allDone ? T.green : T.text }}>
                   ${allDone ? '\u2713' : avgPct + '%'}
                 </text>
               `;
@@ -4000,22 +4002,30 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
               fill=${T.input} stroke=${T.border} strokeWidth="1.5" />
             <!-- Water fill with animated waves -->
             ${waterMl > 0 && (() => {
-              const waterTop = 120 - fillH * 1.12;
-              const waterH = fillH * 1.12 + 1;
+              const wTop = 120 - fillH * 1.12;
               return html`
               <g clipPath="url(#glassClip)">
-                <rect x="0" y=${waterTop} width="80" height=${waterH}
-                  fill="#2196c4" opacity="0.25"
+                <!-- Deep water base -->
+                <rect x="0" y=${wTop + 8} width="80" height=${120 - wTop}
+                  fill="#1976a8"
                   style=${{ transition: 'y 600ms ease, height 600ms ease' }} />
-                <g style=${{ transform: 'translateY(' + waterTop + 'px)', transition: 'transform 600ms ease' }}>
-                  <path className="water-wave" d="M0,6 C10,1 20,11 40,6 C60,1 70,11 80,6 C90,1 100,11 120,6 C140,1 150,11 160,6 V120 H0 Z"
-                    fill="#2196c4" opacity="0.8"
-                    style=${{ animation: 'waveMove1 3s linear infinite' }} />
+                <!-- Wave 1: darkest, slowest -->
+                <g style=${{ transform: 'translateY(' + wTop + 'px)', transition: 'transform 600ms ease' }}>
+                  <path d="M-40,8 C-25,3 -10,13 10,8 C30,3 50,13 70,8 C90,3 110,13 130,8 C150,3 170,13 200,8 V130 H-40 Z"
+                    fill="#1565c0"
+                    style=${{ animation: 'waveMove1 4s linear infinite' }} />
                 </g>
-                <g style=${{ transform: 'translateY(' + (waterTop + 2) + 'px)', transition: 'transform 600ms ease' }}>
-                  <path className="water-wave" d="M0,6 C10,11 20,1 40,6 C60,11 70,1 80,6 C90,11 100,1 120,6 C140,11 150,1 160,6 V120 H0 Z"
-                    fill="#5bbfe8" opacity="0.5"
-                    style=${{ animation: 'waveMove2 4s linear infinite' }} />
+                <!-- Wave 2: medium, medium speed -->
+                <g style=${{ transform: 'translateY(' + (wTop + 3) + 'px)', transition: 'transform 600ms ease' }}>
+                  <path d="M-40,7 C-20,12 0,2 20,7 C40,12 60,2 80,7 C100,12 120,2 140,7 C160,12 180,2 200,7 V130 H-40 Z"
+                    fill="#1e88e5" opacity="0.85"
+                    style=${{ animation: 'waveMove2 3s linear infinite' }} />
+                </g>
+                <!-- Wave 3: lightest, fastest -->
+                <g style=${{ transform: 'translateY(' + (wTop + 5) + 'px)', transition: 'transform 600ms ease' }}>
+                  <path d="M-40,6 C-15,11 5,1 30,6 C55,11 75,1 100,6 C125,11 145,1 170,6 C195,11 215,1 240,6 V130 H-40 Z"
+                    fill="#42a5f5" opacity="0.7"
+                    style=${{ animation: 'waveMove1 2.5s linear infinite' }} />
                 </g>
               </g>
             `; })()}
