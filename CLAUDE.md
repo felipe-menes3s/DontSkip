@@ -60,7 +60,7 @@ Hidden: **Perfil** (accessed via gear icon ⚙️ in Hoy header) — settings, e
 ### Key Files
 - `index.html` — Full app (~6000 lines: CSS, React components, everything)
 - `CLAUDE.md` — This file (project context for AI sessions)
-- `gifs/` — 24 exercise GIFs + 1 cardio GIF (local, no CDN)
+- `gifs/` — 24 exercise GIFs + 36 warmup/stretch GIFs + 3 cardio GIFs (local, no CDN)
 - `manifest.json` — PWA manifest (white background)
 - `logo-icon.png`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` — PWA icons (white bg)
 
@@ -94,6 +94,9 @@ Hidden: **Perfil** (accessed via gear icon ⚙️ in Hoy header) — settings, e
 - `ds_stats` — `{ startDate, totalDays, maxStreak, lastTrainDate }`
 - `ds_warmup_{date}` — array of completed warmup exercise indices
 - `ds_stretch_{date}` — array of completed stretching exercise indices
+- `ds_records_history` — PR timeline per exercise `{ [id]: [{ weight, reps, date, unit }, ...] }`
+- `ds_notify_water` — water notification toggle ('true'/'false')
+- `ds_water_notif_{date}_{window}` — dedup flag for water notifications
 
 ## Exercise Data Structure (in ROUTINES)
 Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
@@ -182,6 +185,16 @@ Each exercise: `{ id, name, nameEn, desc, sets, reps, muscle, gif, videoId }`
 2. ~~Estimated calories burned per workout~~ ✅ Done (MET 5.0 × weight × hours)
 3. ~~Body measurements with interactive SVG body map + evolution charts~~ ✅ Done
 4. ~~HIIT / interval timer (work/rest/rounds)~~ ✅ Done
+
+## Features (2026-04-03 batch)
+- **Exercise progression chart** — Line chart with area fill, gradient, trend line, delta label. 10 sessions in ExerciseItem expanded view.
+- **Consistency heatmap** — GitHub-style 90-day grid replacing StreakCalendar. Color intensity, tooltip on tap, month labels, legend.
+- **PR timeline** — `ds_records_history` stores PR progression per exercise. RecordsCard shows 135→155→175 arrows. Auto-migrates from existing `ds_records`.
+- **Enhanced CelebrationModal** — Muscle groups worked (chips), avg RPE, recovery suggestion (48h/72h).
+- **Water notifications** — Toggle in Perfil, Notification API every 2h (9:45am–9:45pm), only if goal not met.
+- **Meal favorites** — Horizontal scrollable pills in ComidasTab from `ds_meal_templates`. One-tap apply.
+- **BMI bar** — 4-zone color bar (blue/green/yellow/red) with triangle indicator in MetricsCard.
+- **DualRingCard center** — Combined avg % inside rings, green ✓ when both 100%.
 
 ## Recent Features (2026-03-30)
 - **Warmup/Stretching GIFs** — 36 exercise GIFs from ExerciseDB for all warmup and stretching exercises (66 total instances). Displayed 120×120px when exercise is expanded. Leg Swings excluded (no quality match).
