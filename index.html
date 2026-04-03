@@ -449,6 +449,23 @@ const EN = {
   'Resumen semanal': 'Weekly summary', 'Entrenamientos': 'Workouts',
   'Proteína prom.': 'Avg. protein', 'Calorías prom.': 'Avg. calories', 'Agua total': 'Total water',
   'Métricas físicas': 'Body metrics', 'Peso': 'Weight', 'Cintura': 'Waist', 'Cuello': 'Neck',
+  'IMC': 'BMI', 'Bajo peso': 'Underweight', 'Normal': 'Normal', 'Sobrepeso': 'Overweight', 'Obesidad': 'Obesity',
+  'Tendencia': 'Trend', 'en': 'in', 'semanas': 'weeks', 'sesiones': 'sessions',
+  'Récords en el gym': 'Gym records', 'sin registro aún': 'no record yet',
+  'Historial de PRs': 'PR History', 'primer PR': 'first PR',
+  'Grupos musculares': 'Muscle groups', 'Intensidad': 'Intensity',
+  'Recuperación sugerida': 'Recovery suggestion',
+  'Pecho y tríceps necesitan ~48h de descanso': 'Chest and triceps need ~48h rest',
+  'Espalda y bíceps necesitan ~48h de descanso': 'Back and biceps need ~48h rest',
+  'Piernas necesitan ~72h de descanso': 'Legs need ~72h rest',
+  'Hombros necesitan ~48h de descanso': 'Shoulders need ~48h rest',
+  'Notificaciones de agua': 'Water notifications',
+  'Recordatorio cada 2h': 'Reminder every 2h',
+  'Favoritos': 'Favorites', 'Guardar como favorito': 'Save as favorite',
+  'Aplicar': 'Apply', 'Sin favoritos aún': 'No favorites yet',
+  'Guarda tus comidas frecuentes como favoritos': 'Save your frequent meals as favorites',
+  'días': 'days', 'entrenamientos': 'workouts', 'de': 'of',
+  'Consistencia': 'Consistency',
   'Guardar medición': 'Save measurement', 'Última medición': 'Last measurement',
   'Registra tu primera medición': 'Log your first measurement',
   'Brazo': 'Arm', 'Cadera': 'Hips', 'Muslo': 'Thigh', 'mediciones': 'measurements',
@@ -2114,6 +2131,21 @@ function getRecords() {
   try { return JSON.parse(localStorage.getItem('ds_records') || '{}'); } catch { return {}; }
 }
 
+function getRecordsHistory() {
+  try {
+    let hist = JSON.parse(localStorage.getItem('ds_records_history') || '{}');
+    // Migrate: seed history from existing records if empty
+    if (Object.keys(hist).length === 0) {
+      const records = JSON.parse(localStorage.getItem('ds_records') || '{}');
+      Object.entries(records).forEach(([id, rec]) => {
+        if (rec && rec.weight > 0) hist[id] = [{ weight: rec.weight, reps: rec.reps, date: rec.date, unit: rec.unit }];
+      });
+      if (Object.keys(hist).length > 0) localStorage.setItem('ds_records_history', JSON.stringify(hist));
+    }
+    return hist;
+  } catch { return {}; }
+}
+
 function saveRecord(exerciseId, weight, reps, date, unit) {
   if (!weight || weight <= 0) return;
   const records = getRecords();
@@ -2125,6 +2157,16 @@ function saveRecord(exerciseId, weight, reps, date, unit) {
   }
   records[exerciseId] = { weight, reps, date, unit };
   localStorage.setItem('ds_records', JSON.stringify(records));
+  // Save to history
+  try {
+    const hist = getRecordsHistory();
+    if (!hist[exerciseId]) hist[exerciseId] = [];
+    const last = hist[exerciseId][hist[exerciseId].length - 1];
+    if (!last || last.weight !== weight || last.date !== date) {
+      hist[exerciseId].push({ weight, reps, date, unit });
+    }
+    localStorage.setItem('ds_records_history', JSON.stringify(hist));
+  } catch {}
 }
 
 function getFullStats() {
@@ -3119,6 +3161,17 @@ function DualRingCard({ outer, inner }) {
               stroke=${'url(#' + inner.gradientId + ')'} strokeWidth=${sw}
               strokeDasharray=${circInner} strokeDashoffset=${offInner}
               strokeLinecap="round" className="dual-ring-arc" />
+            <!-- Center content -->
+            ${(() => {
+              const avgPct = Math.round(((pctOuter + pctInner) / 2) * 100);
+              const allDone = outerDone && innerDone;
+              return htm`
+                <text x=${svgSz / 2} y=${allDone ? svgSz / 2 + 1 : svgSz / 2 - 2} text-anchor="middle" dominant-baseline="central"
+                  style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 22 : 20, fill: allDone ? T.green : T.text, transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
+                  ${allDone ? '✓' : avgPct + '%'}
+                </text>
+              `;
+            })()}
           </svg>
         </div>
       </div>
@@ -3349,33 +3402,70 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate }) {
           </div>
 
           ${(() => {
-            const hist = getExerciseHistory(index, getTodayKey(), 6);
+            const hist = getExerciseHistory(index, getTodayKey(), 10);
             if (hist.length === 0) return '';
             const chartData = [...hist].reverse();
             const maxW = Math.max(...chartData.map(h => h.weight));
             const minW = Math.min(...chartData.map(h => h.weight));
+            const flatWeights = maxW === minW;
             const range = maxW - minW || 1;
+            const cW = 280, cH = 80, pad = 8;
+            const points = chartData.map((h, i) => {
+              const xPos = chartData.length === 1 ? cW / 2 : pad + (i / (chartData.length - 1)) * (cW - pad * 2);
+              const yPos = flatWeights ? cH / 2 : pad + (1 - (h.weight - minW) / range) * (cH - pad * 2);
+              return { x: xPos, y: yPos };
+            });
+            const lineStr = points.map(p => p.x + ',' + p.y).join(' ');
+            const areaStr = points.map(p => p.x + ',' + p.y).join(' ') + ' ' + points[points.length - 1].x + ',' + cH + ' ' + points[0].x + ',' + cH;
+            const gradId = 'prog_' + exercise.id;
+            // Delta label
+            const delta = chartData.length >= 2 ? chartData[chartData.length - 1].weight - chartData[0].weight : 0;
+            const weeks = chartData.length >= 2 ? Math.max(1, Math.round((new Date(chartData[chartData.length - 1].date + 'T12:00:00') - new Date(chartData[0].date + 'T12:00:00')) / 604800000)) : 0;
+            // Trend line (linear regression)
+            let trendStr = '';
+            if (chartData.length >= 3) {
+              const n = points.length;
+              const sx = points.reduce((a, p) => a + p.x, 0);
+              const sy = points.reduce((a, p) => a + p.y, 0);
+              const sxy = points.reduce((a, p) => a + p.x * p.y, 0);
+              const sx2 = points.reduce((a, p) => a + p.x * p.x, 0);
+              const m = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+              const b = (sy - m * sx) / n;
+              trendStr = points[0].x + ',' + (m * points[0].x + b) + ' ' + points[n - 1].x + ',' + (m * points[n - 1].x + b);
+            }
             return html`
               <div className="mb-3 rounded-xl overflow-hidden" style=${{ border: '1px solid ' + T.border }}>
                 <div className="flex items-center gap-1.5 px-3 py-2" style=${{ background: T.elevated }}>
                   <${TrendUp} size=${12} weight="duotone" color=${T.muted} />
                   <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>${t('Progreso')}</span>
+                  ${delta !== 0 ? html`
+                    <span className="ml-1 px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 800, background: delta > 0 ? T.greenDim : T.amberDim, color: delta > 0 ? T.green : T.amber }}>
+                      ${delta > 0 ? '+' : ''}${delta} ${unitPref} ${t('en')} ${weeks} ${t('semanas')}
+                    </span>
+                  ` : ''}
                   <span className="ml-auto" style=${{ fontSize: 10, color: T.muted }}>${hist.length} ${t('sesiones')}</span>
                 </div>
                 ${chartData.length >= 2 ? html`
-                  <div className="flex items-end gap-1 px-3 py-3" style=${{ height: 72 }}>
-                    ${chartData.map((h, hi) => {
-                      const pct = range > 0 ? 20 + ((h.weight - minW) / range) * 80 : 50;
-                      const isLast = hi === chartData.length - 1;
-                      return html`
-                        <div key=${hi} className="flex-1 flex flex-col items-center gap-1" style=${{ height: '100%', justifyContent: 'flex-end' }}>
-                          <span style=${{ fontSize: 8, fontWeight: 700, color: isLast ? T.accent : T.muted }}>${h.weight}</span>
-                          <div style=${{ width: '100%', maxWidth: 28, height: pct + '%', minHeight: 4, borderRadius: 4,
-                            background: isLast ? T.accent : T.elevated, transition: 'height 0.3s' }} />
-                          <span style=${{ fontSize: 7, color: T.muted }}>${new Date(h.date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' }).replace(' ', '')}</span>
-                        </div>
-                      `;
-                    })}
+                  <div className="px-2 pt-2 pb-1">
+                    <svg width="100%" viewBox="0 0 ${cW} ${cH}" preserveAspectRatio="xMidYMid meet">
+                      <defs>
+                        <linearGradient id=${gradId} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color=${T.accent} stop-opacity="0.25" />
+                          <stop offset="100%" stop-color=${T.accent} stop-opacity="0.02" />
+                        </linearGradient>
+                      </defs>
+                      <polygon points=${areaStr} fill=${'url(#' + gradId + ')'} />
+                      <polyline points=${lineStr} fill="none" stroke=${T.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      ${trendStr ? html`<polyline points=${trendStr} fill="none" stroke=${T.muted} strokeWidth="1" strokeDasharray="4 3" opacity="0.5" />` : ''}
+                      ${points.map((p, pi) => html`
+                        <circle key=${pi} cx=${p.x} cy=${p.y} r=${pi === points.length - 1 ? 3.5 : 2} fill=${pi === points.length - 1 ? T.accent : T.muted} />
+                      `)}
+                    </svg>
+                    <div className="flex justify-between" style=${{ marginTop: 2 }}>
+                      <span style=${{ fontSize: 8, color: T.muted }}>${new Date(chartData[0].date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' })}</span>
+                      <span style=${{ fontSize: 8, fontWeight: 700, color: T.accent }}>${chartData[chartData.length - 1].weight} ${unitPref}</span>
+                      <span style=${{ fontSize: 8, color: T.muted }}>${new Date(chartData[chartData.length - 1].date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' })}</span>
+                    </div>
                   </div>
                 ` : ''}
                 ${hist.slice(0, 3).map((h, hi) => html`
@@ -4764,29 +4854,34 @@ function NextWeekPreview() {
 
 function StreakCalendar() {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
-  const monthName = today.toLocaleDateString(LANG === 'en' ? 'en' : 'es', { month: 'long' });
-  const dayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(l => t(l));
-  const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const todayStr = localDate(today);
+  const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const totalDays = 91; // ~13 weeks
+
+  const [tooltip, setTooltip] = useState(null);
+  const tooltipTimer = useRef(null);
 
   const cells = useMemo(() => {
     const result = [];
-    for (let i = 0; i < firstDayOfWeek; i++) result.push(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
-      const dateStr = localDate(date);
-      const todayStr = localDate(today);
-      const dayOfWeek = (date.getDay() + 6) % 7; // Mon=0
-      const dk = dayKeys[dayOfWeek];
-      const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
+    let trainedCount = 0;
+    // Find the Monday of the week 13 weeks ago
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - totalDays + 1);
+    // Align to Monday
+    const startDow = (startDate.getDay() + 6) % 7;
+    startDate.setDate(startDate.getDate() - startDow);
+
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + (6 - ((today.getDay() + 6) % 7))); // End on Sunday
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = localDate(d);
       const isFuture = dateStr > todayStr;
       const isToday = dateStr === todayStr;
-      let done = false;
+      const dk = dayKeys[d.getDay()];
+      const isRest = !!(ROUTINES[dk] && ROUTINES[dk].rest);
       let completion = 0;
-      if (!isFuture && !isRest) {
+      if (!isFuture) {
         try {
           const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
           if (saved) {
@@ -4794,43 +4889,107 @@ function StreakCalendar() {
             const totalSets = states.reduce((acc, ex) => acc + (ex.sets ? ex.sets.length : 0), 0);
             const doneSets = states.reduce((acc, ex) => acc + (ex.sets ? ex.sets.filter(s => s.done).length : 0), 0);
             completion = totalSets > 0 ? doneSets / totalSets : 0;
-            done = states.length > 0 && states.every(e => e.sets.every(s => s.done));
           }
+          // Check cardio done for Saturday
+          if (dk === 'saturday' && localStorage.getItem('ds_cardio_done_' + dateStr) === 'true') completion = 1;
         } catch {}
       }
-      result.push({ day: d, done, completion, isRest, isFuture, isToday });
+      if (completion > 0 && !isFuture) trainedCount++;
+      result.push({ date: dateStr, completion, isRest, isFuture, isToday, dk });
     }
-    return result;
+    return { cells: result, trainedCount, totalWeeks: Math.ceil(result.length / 7) };
   }, []);
 
+  const weeks = [];
+  for (let i = 0; i < cells.cells.length; i += 7) {
+    weeks.push(cells.cells.slice(i, i + 7));
+  }
+
+  // Month labels
+  const monthLabels = [];
+  let lastMonth = -1;
+  weeks.forEach((wk, wi) => {
+    const firstCell = wk.find(c => c);
+    if (firstCell) {
+      const mo = new Date(firstCell.date + 'T12:00:00').getMonth();
+      if (mo !== lastMonth) {
+        monthLabels.push({ col: wi, label: new Date(firstCell.date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { month: 'short' }) });
+        lastMonth = mo;
+      }
+    }
+  });
+
+  const dayAbbr = ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(l => t(l));
+  const sq = 12, gap = 3;
+
+  function cellColor(c) {
+    if (c.isFuture) return T.input + '30';
+    if (c.isToday && c.completion === 0) return T.accent + '40';
+    if (c.completion >= 1) return T.green;
+    if (c.completion >= 0.5) return T.green + '80';
+    if (c.completion > 0) return T.green + '40';
+    return T.input;
+  }
+
+  function handleTap(c) {
+    if (c.isFuture) return;
+    const label = new Date(c.date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'short', day: 'numeric', month: 'short' });
+    const pct = Math.round(c.completion * 100);
+    const rName = ROUTINES[c.dk] ? t(ROUTINES[c.dk].name) : '';
+    clearTimeout(tooltipTimer.current);
+    setTooltip(label + (rName ? ' · ' + rName : '') + (pct > 0 ? ' · ' + pct + '%' : ''));
+    tooltipTimer.current = setTimeout(() => setTooltip(null), 2000);
+  }
+
   return html`
-    <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
-      <${SectionHeader} title=${monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' ' + year} />
-      <div style=${{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        ${dayLabels.map(l => html`
-          <div key=${l} style=${{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: T.muted, paddingBottom: 4 }}>${l}</div>
-        `)}
-        ${cells.map((c, i) => {
-          if (!c) return html`<div key=${'e' + i} />`;
-          const bg = c.done ? T.green : c.isToday ? T.accent : c.isRest ? T.input : c.isFuture ? 'transparent' : T.elevated;
-          const opacity = c.isFuture ? 0.3 : 1;
-          const barHeight = !c.isRest && !c.isFuture && c.completion > 0 ? Math.max(2, Math.round(c.completion * 20)) : 0;
-          const barColor = c.completion >= 1 ? (c.done || c.isToday ? 'rgba(255,255,255,0.7)' : T.green) : c.completion > 0 ? (c.isToday ? 'rgba(255,255,255,0.6)' : T.amber) : T.input;
-          const barTrack = (c.done || c.isToday) ? 'rgba(255,255,255,0.25)' : T.input;
-          return html`
-            <div key=${i} style=${{
-              aspectRatio: '1', borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-              background: bg, opacity, transition: 'all 0.2s'
-            }}>
-              <span style=${{ fontSize: 10, fontWeight: 600, color: c.done || c.isToday ? '#fff' : T.sub }}>${c.day}</span>
-              ${!c.isRest && !c.isFuture ? html`
-                <div style=${{ width: 4, height: 20, borderRadius: 2, background: barTrack, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                  <div style=${{ width: '100%', height: barHeight + 'px', borderRadius: 2, background: barColor, transition: 'height 0.3s ease' }} />
+    <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 16 }}>
+      <div className="flex items-center justify-between mb-3">
+        <${SectionHeader} title=${t('Consistencia')} noMargin />
+        <span style=${{ fontSize: 11, fontWeight: 700, color: T.accent }}>${cells.trainedCount} ${t('días')}</span>
+      </div>
+      ${tooltip && html`
+        <div className="pop-in" style=${{ fontSize: 11, fontWeight: 600, color: T.text, textAlign: 'center', marginBottom: 6, padding: '4px 10px', background: T.elevated, borderRadius: 8 }}>${tooltip}</div>
+      `}
+      <div style=${{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style=${{ display: 'inline-block', position: 'relative' }}>
+          <!-- Month labels -->
+          <div className="flex" style=${{ marginLeft: 18, marginBottom: 2, height: 14, position: 'relative' }}>
+            ${monthLabels.map(ml => html`
+              <span key=${ml.col} style=${{ position: 'absolute', left: 18 + ml.col * (sq + gap), fontSize: 9, fontWeight: 700, color: T.muted }}>${ml.label}</span>
+            `)}
+          </div>
+          <div className="flex">
+            <!-- Day labels -->
+            <div style=${{ display: 'flex', flexDirection: 'column', gap, marginRight: 4, paddingTop: 0 }}>
+              ${[0,1,2,3,4,5,6].map(di => html`
+                <div key=${di} style=${{ height: sq, display: 'flex', alignItems: 'center' }}>
+                  ${di % 2 === 0 ? html`<span style=${{ fontSize: 8, fontWeight: 600, color: T.muted, width: 12 }}>${dayAbbr[di]}</span>` : html`<span style=${{ width: 12 }} />`}
                 </div>
-              ` : ''}
+              `)}
             </div>
-          `;
-        })}
+            <!-- Grid -->
+            <div className="flex" style=${{ gap }}>
+              ${weeks.map((wk, wi) => html`
+                <div key=${wi} style=${{ display: 'flex', flexDirection: 'column', gap }}>
+                  ${wk.map((c, ci) => html`
+                    <div key=${ci} onClick=${() => handleTap(c)}
+                      style=${{ width: sq, height: sq, borderRadius: 3, background: cellColor(c),
+                        border: c.isToday ? '1.5px solid ' + T.accent : 'none',
+                        transition: 'background 0.2s', cursor: c.isFuture ? 'default' : 'pointer' }} />
+                  `)}
+                </div>
+              `)}
+            </div>
+          </div>
+          <!-- Legend -->
+          <div className="flex items-center justify-end gap-1 mt-2">
+            <span style=${{ fontSize: 8, color: T.muted }}>${LANG === 'en' ? 'Less' : 'Menos'}</span>
+            ${[T.input, T.green + '40', T.green + '80', T.green].map((bg, i) => html`
+              <div key=${i} style=${{ width: 10, height: 10, borderRadius: 2, background: bg }} />
+            `)}
+            <span style=${{ fontSize: 8, color: T.muted }}>${LANG === 'en' ? 'More' : 'Más'}</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -5187,6 +5346,38 @@ function MetricsCard({ unitPref, onSaved }) {
           style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
       </div>
 
+      <!-- BMI bar -->
+      ${lastEntry?.kg ? (() => {
+        const bmi = lastEntry.kg / (1.74 * 1.74);
+        const bmiStr = bmi.toFixed(1);
+        const minBmi = 15, maxBmi = 35, range = maxBmi - minBmi;
+        const zones = [
+          { pct: (18.5 - minBmi) / range * 100, color: '#4a90d9', label: t('Bajo peso') },
+          { pct: (25 - 18.5) / range * 100, color: '#4caf50', label: t('Normal') },
+          { pct: (30 - 25) / range * 100, color: '#ff9800', label: t('Sobrepeso') },
+          { pct: (maxBmi - 30) / range * 100, color: '#ef5350', label: t('Obesidad') },
+        ];
+        const pos = Math.max(2, Math.min(98, ((bmi - minBmi) / range) * 100));
+        const triColor = bmi < 18.5 ? '#4a90d9' : bmi < 25 ? '#4caf50' : bmi < 30 ? '#ff9800' : '#ef5350';
+        return html`
+          <div className="mb-3" style=${{ padding: '10px 12px', borderRadius: 14, background: T.elevated, border: '1px solid ' + T.border }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: '0.04em' }}>${t('IMC')}</span>
+              <span style=${{ fontSize: 18, fontWeight: 800, color: triColor, fontFamily: "'Inter', sans-serif" }}>${bmiStr}</span>
+            </div>
+            <div style=${{ position: 'relative', marginBottom: 14 }}>
+              <div className="flex" style=${{ height: 10, borderRadius: 6, overflow: 'hidden' }}>
+                ${zones.map(z => html`<div style=${{ width: z.pct + '%', height: '100%', background: z.color }} />`)}
+              </div>
+              <div style=${{ position: 'absolute', top: -6, left: pos + '%', transform: 'translateX(-50%)', fontSize: 12, lineHeight: 1, color: triColor, fontWeight: 900, textShadow: '0 0 3px ' + T.bg }}>▼</div>
+            </div>
+            <div className="flex justify-between" style=${{ fontSize: 9, fontWeight: 600, color: T.muted }}>
+              ${zones.map(z => html`<span style=${{ textAlign: 'center', flex: z.pct }}>${z.label}</span>`)}
+            </div>
+          </div>
+        `;
+      })() : ''}
+
       <!-- Selected body part input -->
       ${selectedPart && html`
         <div className="mb-3 slide-down">
@@ -5372,15 +5563,21 @@ function WeightChart() {
 
 function RecordsCard({ unitPref }) {
   const records = getRecords();
+  const history = getRecordsHistory();
   const routineDays = ['monday', 'tuesday', 'thursday', 'friday'];
   const [displayUnit, setDisplayUnit] = useState(unitPref);
+  const [expandedEx, setExpandedEx] = useState(null);
+
+  function convWeight(weight, fromUnit) {
+    if (fromUnit === displayUnit) return weight;
+    if (displayUnit === 'kg' && fromUnit === 'lbs') return lbsToKg(weight);
+    if (displayUnit === 'lbs' && fromUnit === 'kg') return kgToLbs(weight);
+    return weight;
+  }
 
   function displayWeight(rec) {
     if (!rec) return null;
-    if (rec.unit === displayUnit) return rec.weight;
-    if (displayUnit === 'kg' && rec.unit === 'lbs') return lbsToKg(rec.weight);
-    if (displayUnit === 'lbs' && rec.unit === 'kg') return kgToLbs(rec.weight);
-    return rec.weight;
+    return convWeight(rec.weight, rec.unit);
   }
 
   const chipStyle = (active) => ({
@@ -5409,21 +5606,46 @@ function RecordsCard({ unitPref }) {
             ${r.exercises.map((ex, i) => {
               const rec = records[ex.id];
               const w = displayWeight(rec);
+              const hist = history[ex.id] || [];
+              const isExpanded = expandedEx === ex.id;
               return html`
-                <div key=${ex.id} className="flex items-center justify-between py-2"
-                  style=${{ borderBottom: i < r.exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
-                  <div className="flex items-center gap-2">
-                    <span style=${{ fontSize: 13, fontWeight: 600, color: T.text }}>${exName(ex)}</span>
-                  </div>
-                  ${rec ? html`
+                <div key=${ex.id} style=${{ borderBottom: i < r.exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
+                  <div className="flex items-center justify-between py-2 cursor-pointer"
+                    onClick=${() => setExpandedEx(isExpanded ? null : ex.id)}>
                     <div className="flex items-center gap-2">
-                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${displayUnit}</span>
-                      <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps}</span>
-                      <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${displayUnit}</span>
+                      <span style=${{ fontSize: 13, fontWeight: 600, color: T.text }}>${exName(ex)}</span>
                     </div>
-                  ` : html`
-                    <span style=${{ fontSize: 12, color: T.muted }}>\u2014 ${t('sin registro aún')}</span>
-                  `}
+                    ${rec ? html`
+                      <div className="flex items-center gap-2">
+                        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: T.accent }}>${w} ${displayUnit}</span>
+                        <span style=${{ fontSize: 11, color: T.muted }}>x${rec.reps}</span>
+                        <span className="px-1.5 py-0.5 rounded" style=${{ fontSize: 9, fontWeight: 700, background: T.accentDim, color: T.accent }}>1RM ${estimate1RM(Number(w), rec.reps)} ${displayUnit}</span>
+                      </div>
+                    ` : html`
+                      <span style=${{ fontSize: 12, color: T.muted }}>\u2014 ${t('sin registro aún')}</span>
+                    `}
+                  </div>
+                  ${isExpanded && hist.length > 1 ? html`
+                    <div className="slide-down" style=${{ paddingBottom: 8 }}>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        ${hist.map((h, hi) => {
+                          const wt = convWeight(h.weight, h.unit);
+                          const isLast = hi === hist.length - 1;
+                          return html`
+                            <span key=${hi} style=${{ fontSize: 11, fontWeight: isLast ? 800 : 600, color: isLast ? T.accent : T.muted }}>
+                              ${wt}${hi < hist.length - 1 ? html`<span style=${{ margin: '0 2px', color: T.border }}> → </span>` : ' ' + displayUnit}
+                            </span>
+                          `;
+                        })}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span style=${{ fontSize: 10, color: T.muted }}>${t('primer PR')}: ${new Date(hist[0].date + 'T12:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' })}</span>
+                        ${hist.length >= 2 ? html`
+                          <span style=${{ fontSize: 10, fontWeight: 700, color: T.green }}>+${convWeight(hist[hist.length - 1].weight, hist[hist.length - 1].unit) - convWeight(hist[0].weight, hist[0].unit)} ${displayUnit}</span>
+                        ` : ''}
+                      </div>
+                    </div>
+                  ` : ''}
                 </div>
               `;
             })}
@@ -7132,6 +7354,11 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
 
   const [expandedSuppInfo, setExpandedSuppInfo] = useState(null);
 
+  // Water notification toggle
+  const [waterNotify, setWaterNotify] = useState(() => {
+    try { return localStorage.getItem('ds_notify_water') === 'true'; } catch { return false; }
+  });
+
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem('ds_notes') || ''; } catch { return ''; }
   });
@@ -7481,6 +7708,36 @@ function PerfilTab({ dark, onThemeToggle, onLangToggle, unitPref, onUnitToggle }
               </div>
             `;
           })}
+        </div>
+
+        <!-- Card: Water notifications -->
+        <div className="ds-card" style=${{ padding: 20 }}>
+          ${sectionTitle('💧 ' + t('Notificaciones de agua'))}
+          <div style=${rowStyle(true)}>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span style=${{ fontSize: 16 }}>💧</span>
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${t('Recordatorio cada 2h')}</span>
+              </div>
+              <div style=${{ fontSize: 12, color: T.sub, paddingLeft: 28 }}>9:45 AM — 9:45 PM</div>
+            </div>
+            <button onClick=${() => {
+              const next = !waterNotify;
+              if (next && 'Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission().then(p => {
+                  if (p === 'granted') { setWaterNotify(true); localStorage.setItem('ds_notify_water', 'true'); }
+                });
+                return;
+              }
+              setWaterNotify(next);
+              localStorage.setItem('ds_notify_water', String(next));
+            }} className="press-scale"
+              style=${{ width: 50, height: 28, borderRadius: 14, padding: 2,
+                background: waterNotify ? T.water : T.input, border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: waterNotify ? 'flex-end' : 'flex-start' }}>
+              <div style=${{ width: 24, height: 24, borderRadius: 12, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'all 0.2s' }} />
+            </button>
+          </div>
         </div>
 
         <!-- Card 7: Exportar datos -->
@@ -8236,7 +8493,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
     const meal = meals[mealIdx];
     if (!meal) return;
     const defaultName = meal.items.map(it => it.name.split('(')[0].trim()).join(' + ');
-    const name = prompt(LANG === 'en' ? 'Template name:' : 'Nombre de la plantilla:', defaultName);
+    const name = prompt(LANG === 'en' ? 'Favorite name:' : 'Nombre del favorito:', defaultName);
     if (!name) return;
     const tpl = { id: Date.now(), name, category: meal.category || 'snack', items: meal.items.map(it => ({ name: it.name, icon: it.icon, cal: it.cal, protein: it.protein, carbs: it.carbs || 0, fat: it.fat || 0 })) };
     const next = [...templates, tpl];
@@ -8427,6 +8684,37 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
             </div>
           </div>
 
+          ${templates.length > 0 ? html`
+            <div className="ds-card mb-3 fade-up" style=${{ padding: '14px 18px' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>⭐ ${t('Favoritos')}</span>
+              </div>
+              <div className="flex gap-2" style=${{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
+                ${templates.map(tpl => {
+                  const tplCal = tpl.items.reduce((s, it) => s + (it.cal || 0), 0);
+                  const tplProt = tpl.items.reduce((s, it) => s + (it.protein || 0), 0);
+                  function applyTemplate() {
+                    const cat = MEAL_CATEGORIES.find(c => c.key === tpl.category) || MEAL_CATEGORIES[0];
+                    onAddMeal(tpl.items, cat);
+                    haptic(15);
+                  }
+                  return html`
+                    <div key=${tpl.id} className="flex-shrink-0 press-scale" style=${{ position: 'relative' }}>
+                      <button onClick=${applyTemplate}
+                        className="flex flex-col items-start rounded-xl"
+                        style=${{ padding: '10px 14px', minWidth: 130, background: T.elevated, border: '1px solid ' + T.border, textAlign: 'left' }}>
+                        <span style=${{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120, display: 'block' }}>${tpl.name}</span>
+                        <span style=${{ fontSize: 10, color: T.muted }}>${tplProt}g P · ${tplCal} kcal</span>
+                      </button>
+                      <button onClick=${() => handleDeleteTemplate(tpl.id)}
+                        style=${{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, background: T.red, color: '#fff', fontSize: 10, fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</button>
+                    </div>
+                  `;
+                })}
+              </div>
+            </div>
+          ` : ''}
+
           ${meals.map((meal, i) => {
             const isWhey = meal.category === 'whey';
             const mealTotalP = meal.items.reduce((s, it) => s + it.protein, 0);
@@ -8508,7 +8796,7 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
                   <button onClick=${() => handleSaveTemplate(i)}
                     className="text-xs font-semibold press-scale"
                     style=${{ color: T.accent, padding: '4px 0' }}>
-                    \u2B50 ${LANG === 'en' ? 'Save as template' : 'Guardar como plantilla'}
+                    ⭐ ${t('Guardar como favorito')}
                   </button>
                 </div>
               </div>
@@ -9799,6 +10087,53 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             ` : ''}
           </div>
 
+          ${(() => {
+            // Muscle groups worked today
+            const musclesWorked = new Set();
+            if (routine.exercises) {
+              routine.exercises.forEach(ex => {
+                const map = EXERCISE_MUSCLE_MAP[ex.id];
+                if (map) {
+                  (map.primary || []).forEach(m => musclesWorked.add(m));
+                  (map.secondary || []).forEach(m => musclesWorked.add(m));
+                }
+              });
+            }
+            const muscleNames = { chest: { es: 'Pecho', en: 'Chest' }, triceps: { es: 'Tríceps', en: 'Triceps' }, deltoids: { es: 'Hombros', en: 'Shoulders' }, biceps: { es: 'Bíceps', en: 'Biceps' }, quadriceps: { es: 'Cuádriceps', en: 'Quads' }, hamstring: { es: 'Isquiotibiales', en: 'Hamstrings' }, gluteal: { es: 'Glúteos', en: 'Glutes' }, calves: { es: 'Pantorrillas', en: 'Calves' }, 'upper-back': { es: 'Espalda', en: 'Back' }, 'lower-back': { es: 'Lumbar', en: 'Lower back' }, abs: { es: 'Abdomen', en: 'Abs' }, obliques: { es: 'Oblicuos', en: 'Obliques' }, trapezius: { es: 'Trapecios', en: 'Traps' }, forearm: { es: 'Antebrazo', en: 'Forearm' } };
+            const muscles = [...musclesWorked].map(m => muscleNames[m] ? (LANG === 'en' ? muscleNames[m].en : muscleNames[m].es) : m);
+            // Average RPE
+            let rpeSum = 0, rpeCount = 0;
+            exerciseStates.forEach(es => {
+              es.sets.forEach(s => { if (s.done && s.rpe > 0) { rpeSum += s.rpe; rpeCount++; } });
+            });
+            const avgRpe = rpeCount > 0 ? (rpeSum / rpeCount).toFixed(1) : null;
+            // Recovery suggestion based on primary muscles
+            const primaryMuscles = new Set();
+            if (routine.exercises) routine.exercises.forEach(ex => { const map = EXERCISE_MUSCLE_MAP[ex.id]; if (map) (map.primary || []).forEach(m => primaryMuscles.add(m)); });
+            let recoveryMsg = '';
+            if (primaryMuscles.has('quadriceps') || primaryMuscles.has('hamstring') || primaryMuscles.has('gluteal')) recoveryMsg = t('Piernas necesitan ~72h de descanso');
+            else if (primaryMuscles.has('chest') || primaryMuscles.has('triceps')) recoveryMsg = t('Pecho y tríceps necesitan ~48h de descanso');
+            else if (primaryMuscles.has('upper-back') || primaryMuscles.has('biceps')) recoveryMsg = t('Espalda y bíceps necesitan ~48h de descanso');
+            else if (primaryMuscles.has('deltoids')) recoveryMsg = t('Hombros necesitan ~48h de descanso');
+            return muscles.length > 0 ? html`
+              <div style=${{ marginBottom: 16, padding: '12px 14px', borderRadius: 14, background: T.elevated, border: '1px solid ' + T.border }}>
+                <div style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>${t('Grupos musculares')}</div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  ${muscles.map(m => html`<span key=${m} className="px-2 py-0.5 rounded-full" style=${{ fontSize: 10, fontWeight: 700, background: T.accentDim, color: T.accent }}>${m}</span>`)}
+                </div>
+                ${avgRpe ? html`
+                  <div className="flex items-center gap-2 mb-1">
+                    <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${t('Intensidad')}</span>
+                    <span style=${{ fontSize: 13, fontWeight: 800, color: Number(avgRpe) >= 8 ? T.red : Number(avgRpe) >= 6 ? T.amber : T.green }}>${avgRpe} RPE</span>
+                  </div>
+                ` : ''}
+                ${recoveryMsg ? html`
+                  <div style=${{ fontSize: 11, color: T.sub, marginTop: 4 }}>💤 ${recoveryMsg}</div>
+                ` : ''}
+              </div>
+            ` : '';
+          })()}
+
           <div className="flex gap-3">
             <button onClick=${() => setShowCelebration(false)}
               className="flex-1 py-3 rounded-xl font-bold transition-all active:scale-[0.97]"
@@ -10218,6 +10553,38 @@ function App() {
   // Request notification permission
   useEffect(() => {
     try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
+  }, []);
+
+  // Water reminder notifications (every 2h, 9:45am - 9:45pm)
+  useEffect(() => {
+    function checkWaterReminder() {
+      try {
+        if (localStorage.getItem('ds_notify_water') !== 'true') return;
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        const now = new Date();
+        const h = now.getHours(), m = now.getMinutes();
+        const timeMin = h * 60 + m;
+        // Check windows: 9:45, 11:45, 13:45, 15:45, 17:45, 19:45, 21:45
+        const windows = [585, 705, 825, 945, 1065, 1185, 1305]; // minutes from midnight
+        const tolerance = 5; // within 5 minutes
+        const inWindow = windows.some(w => Math.abs(timeMin - w) <= tolerance);
+        if (!inWindow) return;
+        const lastKey = 'ds_water_notif_' + localDate() + '_' + Math.floor(timeMin / 120);
+        if (localStorage.getItem(lastKey)) return;
+        localStorage.setItem(lastKey, '1');
+        const waterMl = Number(localStorage.getItem('ds_water_' + localDate())) || 0;
+        const goalMl = getGoal('water_ml', 2250);
+        if (waterMl >= goalMl) return; // goal already met
+        const glasses = Math.floor(waterMl / 250);
+        const goalGlasses = Math.floor(goalMl / 250);
+        const msg = LANG === 'en'
+          ? 'Time to hydrate! ' + glasses + '/' + goalGlasses + ' glasses today'
+          : '¡Hora de hidratarte! ' + glasses + '/' + goalGlasses + ' vasos hoy';
+        new Notification('DontSkip 💧', { body: msg, icon: 'icon-192.png', tag: 'water-reminder' });
+      } catch {}
+    }
+    const id = setInterval(checkWaterReminder, 60000); // check every minute
+    return () => clearInterval(id);
   }, []);
 
   // Splash screen
