@@ -3008,7 +3008,7 @@ function SupplementsCheck() {
         </span>
       </div>
       <div className="flex gap-2">
-        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), T.accent + '12', T.accent + '25', T.accent)}
+        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), T.accent + '22', T.accent + '55', T.accent)}
         ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)')}
         ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(33,150,196,0.08)', 'rgba(33,150,196,0.2)', 'rgb(33,150,196)')}
       </div>
@@ -3100,6 +3100,7 @@ function DualRingCard({ outer, inner }) {
   const circInner = 2 * Math.PI * rInner; // ~182.21
   const pctOuter = outer.max > 0 ? Math.min(outer.value / outer.max, 1) : 0;
   const pctInner = inner.max > 0 ? Math.min(inner.value / inner.max, 1) : 0;
+  const centerPctAnim = useCountUp(Math.round(((pctOuter + pctInner) / 2) * 100), 800);
   const offOuter = mounted ? circOuter * (1 - pctOuter) : circOuter;
   const offInner = mounted ? circInner * (1 - pctInner) : circInner;
   const outerDone = outer.value >= outer.max && outer.max > 0;
@@ -3166,14 +3167,13 @@ function DualRingCard({ outer, inner }) {
               strokeLinecap="round" className="dual-ring-arc" />
             <!-- Center content -->
             ${(() => {
-              const avgPct = Math.round(((pctOuter + pctInner) / 2) * 100);
               const allDone = outerDone && innerDone;
               const cx = svgSz / 2, cy = allDone ? svgSz / 2 + 1 : svgSz / 2 - 2;
               return html`
                 <text x=${cx} y=${cy} textAnchor="middle" dominantBaseline="central"
                   transform=${'rotate(90,' + cx + ',' + cy + ')'}
-                  style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 22 : 20, fill: allDone ? T.green : T.text }}>
-                  ${allDone ? '\u2713' : avgPct + '%'}
+                  style=${{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: allDone ? 16 : 14, fill: allDone ? T.green : T.text }}>
+                  ${allDone ? '\u2713' : centerPctAnim + '%'}
                 </text>
               `;
             })()}
@@ -3243,26 +3243,7 @@ function DaySummary({ protein, calories, waterMl, gymDone, gymTotal }) {
     t('¡Día perfecto! Lo diste todo \uD83D\uDCAA\uD83C\uDFFC'),
   ];
 
-  return html`
-    <div className="px-5">
-      <div className="ds-card fade-up" style=${{ padding: '16px 20px', marginBottom: 12 }}>
-        <div className="flex items-center justify-between mb-3">
-          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: allDone ? T.green : T.text }}>${msgs[completed]}</span>
-          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: allDone ? T.green : T.accent }}>${completed}/4</span>
-        </div>
-        <div className="flex gap-2">
-          ${goals.map((g, i) => html`
-            <div key=${i} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl"
-              style=${{ background: g.done ? T.greenDim : g.color + '10', border: '1px solid ' + (g.done ? T.green + '30' : g.color + '20'), transition: 'all 0.4s ease' }}>
-              <span style=${{ fontSize: 11, fontWeight: 700, color: g.done ? T.green : g.color }}>${g.label}</span>
-              ${g.done ? html`<${CheckCircle} size=${14} weight="fill" color=${T.green} />`
-              : html`<div style=${{ width: 12, height: 12, borderRadius: '50%', border: '2px solid ' + g.color + '50' }} />`}
-            </div>
-          `)}
-        </div>
-      </div>
-    </div>
-  `;
+  return html``;
 }
 
 
@@ -5348,7 +5329,7 @@ function MetricsCard({ unitPref, onSaved }) {
                 onClick=${() => { setSelectedPart(bp.key === selectedPart ? null : bp.key); setInputVal(''); setChartPart(null); }}
                 className="press-scale" style=${pillStyle}>
                 <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted }}>
-                  ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : ' cm') : (LANG === 'en' ? bp.labelEn : bp.label)}
+                  ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : 'cm') + ' \u00B7 ' + (LANG === 'en' ? bp.labelEn : bp.label) : (LANG === 'en' ? bp.labelEn : bp.label)}
                 </span>
               </button>
             `;
@@ -5377,13 +5358,13 @@ function MetricsCard({ unitPref, onSaved }) {
         const bmiStr = bmi.toFixed(1);
         const minBmi = 15, maxBmi = 35, range = maxBmi - minBmi;
         const zones = [
-          { pct: (18.5 - minBmi) / range * 100, color: '#4a90d9', label: t('Bajo peso') },
-          { pct: (25 - 18.5) / range * 100, color: '#4caf50', label: t('Normal') },
-          { pct: (30 - 25) / range * 100, color: '#ff9800', label: t('Sobrepeso') },
-          { pct: (maxBmi - 30) / range * 100, color: '#ef5350', label: t('Obesidad') },
+          { pct: (18.5 - minBmi) / range * 100, color: '#5c9fd4', label: t('Bajo peso') },
+          { pct: (25 - 18.5) / range * 100, color: '#4ec88a', label: t('Normal') },
+          { pct: (30 - 25) / range * 100, color: '#e8973a', label: t('Sobrepeso') },
+          { pct: (maxBmi - 30) / range * 100, color: '#c94f4f', label: t('Obesidad') },
         ];
         const pos = Math.max(2, Math.min(98, ((bmi - minBmi) / range) * 100));
-        const triColor = bmi < 18.5 ? '#4a90d9' : bmi < 25 ? '#4caf50' : bmi < 30 ? '#ff9800' : '#ef5350';
+        const triColor = bmi < 18.5 ? '#5c9fd4' : bmi < 25 ? '#4ec88a' : bmi < 30 ? '#e8973a' : '#c94f4f';
         return html`
           <div className="mb-3" style=${{ padding: '10px 12px', borderRadius: 14, background: T.elevated, border: '1px solid ' + T.border }}>
             <div className="flex items-center justify-between mb-2">
@@ -5570,7 +5551,7 @@ function WeightChart() {
           const dateLabel = new Date(entry.date + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' });
           return html`
             <div key=${i} className="flex-1 flex flex-col items-center" style=${{ height: '100%', justifyContent: 'flex-end' }}>
-              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: isLast ? T.accent : T.sub, marginBottom: 4 }}>${entry.kg}</span>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: isLast ? T.accent : T.text, marginBottom: 4 }}>${entry.kg}</span>
               <div style=${{
                 width: '100%', height: h, borderRadius: '8px 8px 0 0',
                 background: isLast ? T.accent : T.elevated,
@@ -6561,7 +6542,7 @@ function SunburstView({ dark }) {
           <!-- Center text -->
           <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
             <text x=${cx} y=${cy + 8} textAnchor="middle" fill=${activeGroup ? activeGroup.color : T.text}
-              style=${{ fontSize: 28, fontWeight: 900, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerPct}</text>
+              style=${{ fontSize: 19, fontWeight: 900, fontFamily: "'Inter', system-ui, sans-serif" }}>${centerPct}</text>
           </g>
           <!-- Floating labels with leader lines -->
           <g style=${{ transform: 'rotate(90deg)', transformOrigin: cx + 'px ' + cy + 'px' }}>
