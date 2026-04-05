@@ -9986,7 +9986,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
       </div>
 
       <div className="px-5">
-        <${CollapsibleSection} title=${LANG === 'en' ? 'Workout' : 'Entrenamiento'} icon=${html`<div style=${{ width: 36, height: 36, borderRadius: 10, background: 'rgba(37,99,235,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><${Barbell} size=${20} weight="duotone" color="#2563eb" /></div>`} defaultOpen=${false}
+        <${CollapsibleSection} title=${LANG === 'en' ? 'Workout' : 'Entrenamiento'} icon=${html`<div style=${{ width: 36, height: 36, borderRadius: 10, background: 'rgba(37,99,235,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><${Barbell} size=${20} weight="duotone" color="#2563eb" /></div>`} defaultOpen=${routine.cardio && !cardioDone}
           summary=${routine.rest ? t(routine.name) : t(routine.name) + ' \u00B7 ' + t(routine.focus)}
           badge=${gymTotal > 0 ? { text: gymDone + '/' + gymTotal, bg: gymDone === gymTotal ? T.greenDim : T.accentDim, color: gymDone === gymTotal ? T.green : T.accent } : null}
           extra=${workoutStartTime && !routine.rest ? html`
