@@ -4005,26 +4005,32 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
               const wTop = 120 - fillH * 1.12;
               return html`
               <g clipPath="url(#glassClip)">
-                <!-- Deep water base -->
-                <rect x="0" y=${wTop + 8} width="80" height=${120 - wTop}
-                  fill="#1976a8"
+                <defs>
+                  <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d4eaf7" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#a8d4f0" stopOpacity="0.7" />
+                  </linearGradient>
+                </defs>
+                <!-- Base fill -->
+                <rect x="0" y=${wTop + 6} width="80" height=${120 - wTop}
+                  fill="url(#waterGrad)"
                   style=${{ transition: 'y 600ms ease, height 600ms ease' }} />
-                <!-- Wave 1: darkest, slowest -->
+                <!-- Wave 1: soft, slow -->
                 <g style=${{ transform: 'translateY(' + wTop + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,8 C-25,3 -10,13 10,8 C30,3 50,13 70,8 C90,3 110,13 130,8 C150,3 170,13 200,8 V130 H-40 Z"
-                    fill="#1565c0"
+                  <path d="M-40,7 C-25,3 -10,11 10,7 C30,3 50,11 70,7 C90,3 110,11 130,7 C150,3 170,11 200,7 V130 H-40 Z"
+                    fill="#b8ddf0" opacity="0.6"
                     style=${{ animation: 'waveMove1 4s linear infinite' }} />
                 </g>
-                <!-- Wave 2: medium, medium speed -->
+                <!-- Wave 2: lighter, medium -->
                 <g style=${{ transform: 'translateY(' + (wTop + 3) + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,7 C-20,12 0,2 20,7 C40,12 60,2 80,7 C100,12 120,2 140,7 C160,12 180,2 200,7 V130 H-40 Z"
-                    fill="#1e88e5" opacity="0.85"
+                  <path d="M-40,6 C-20,10 0,2 20,6 C40,10 60,2 80,6 C100,10 120,2 140,6 C160,10 180,2 200,6 V130 H-40 Z"
+                    fill="#cce8f6" opacity="0.5"
                     style=${{ animation: 'waveMove2 3s linear infinite' }} />
                 </g>
-                <!-- Wave 3: lightest, fastest -->
+                <!-- Wave 3: near-white, fast -->
                 <g style=${{ transform: 'translateY(' + (wTop + 5) + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,6 C-15,11 5,1 30,6 C55,11 75,1 100,6 C125,11 145,1 170,6 C195,11 215,1 240,6 V130 H-40 Z"
-                    fill="#42a5f5" opacity="0.7"
+                  <path d="M-40,5 C-15,9 5,1 30,5 C55,9 75,1 100,5 C125,9 145,1 170,5 C195,9 215,1 240,5 V130 H-40 Z"
+                    fill="#e3f1fa" opacity="0.45"
                     style=${{ animation: 'waveMove1 2.5s linear infinite' }} />
                 </g>
               </g>
