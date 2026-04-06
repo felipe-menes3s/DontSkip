@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#f4f6f9">
+<meta name="theme-color" content="#e8ecf1">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -25,7 +25,7 @@ tailwind.config = {
 </script>
 <style>
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-html, body { background: var(--ds-bg, #f4f6f9); }
+html, body { background: var(--ds-bg, #e8ecf1); }
 body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; padding: 0; overscroll-behavior: none; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; font-variant-numeric: tabular-nums; }
 /* Count-up animation for stats */
 @keyframes countPulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
@@ -71,6 +71,20 @@ body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; p
 @keyframes glowPulse { 0% { box-shadow: 0 0 0 0 var(--ds-green-glow, rgba(22,163,74,0.4)); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .celebrate { animation: celebrate 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 .glow-pulse { animation: glowPulse 0.6s ease-out; }
+
+/* Exercise fire effect */
+@keyframes fireBorder {
+  0% { border-color: transparent; box-shadow: none; }
+  15% { border-color: #ff6b00; box-shadow: inset 0 0 20px rgba(255,107,0,0.3), 0 0 12px rgba(255,107,0,0.2); }
+  50% { border-color: #ff9500; box-shadow: inset 0 0 15px rgba(255,149,0,0.2), 0 0 8px rgba(255,149,0,0.15); }
+  100% { border-color: transparent; box-shadow: none; }
+}
+.fire-border { animation: fireBorder 2s ease-out forwards; }
+@keyframes flameRise {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+  50% { transform: translateY(-40px) translateX(var(--wobble, 4px)) scale(0.7); opacity: 0.7; }
+  100% { transform: translateY(-70px) translateX(calc(var(--wobble, 4px) * -1)) scale(0.2); opacity: 0; }
+}
 
 /* Celebration modal */
 @keyframes celebrateIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
@@ -137,6 +151,7 @@ body { font-family: 'Inter', system-ui, sans-serif; color: #0e1a2b; margin: 0; p
 /* Water wave animation */
 @keyframes waveMove1 { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes waveMove2 { 0% { transform: translateX(0); } 100% { transform: translateX(50%); } }
+@keyframes bubbleRise { 0% { transform: translateY(0); opacity: 0.5; } 80% { opacity: 0.3; } 100% { transform: translateY(-90px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .water-wave { animation: none !important; } }
 
 /* Live workout */
@@ -225,6 +240,11 @@ input[type=number] { -moz-appearance: textfield; }
 /* Badge unlock animation */
 @keyframes badgeUnlock { 0% { transform: scale(0) rotate(-15deg); opacity: 0; } 60% { transform: scale(1.15) rotate(3deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 .badge-unlock { animation: badgeUnlock 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes achievePop { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 1; } }
+.achieve-pop { animation: achievePop 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes achieveConfetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(-40px) rotate(180deg); opacity: 0; } }
+.carousel-scroll::-webkit-scrollbar { display: none; }
+@keyframes heroShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 </style>
 </head>
 <body>
@@ -253,7 +273,7 @@ import {
   PlayCircle, YoutubeLogo,
   House, ListChecks, TrendUp, Mountains,
   Checks, ClockCountdown, ArrowUp, ArrowDown, SkipForward,
-  GearSix, User, Lightbulb
+  GearSix, User, Lightbulb, Lock
 } from 'https://esm.sh/@phosphor-icons/react@2.1.7?deps=react@18.3.1';
 const html = htm.bind(React.createElement);
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
@@ -280,7 +300,7 @@ class ErrorBoundary extends React.Component {
 
 const THEMES = {
   light: {
-    bg: '#f4f6f9', card: '#ffffff', elevated: '#f0f2f5',
+    bg: '#e8ecf1', card: '#ffffff', elevated: '#f0f2f5',
     input: 'rgba(0,0,0,0.04)', border: 'rgba(0,0,0,0.08)', borderMed: 'rgba(0,0,0,0.12)',
     text: '#0e1a2b', sub: '#5c7aa3', muted: '#94a3b8',
     accent: '#274472', accentDim: 'rgba(39,68,114,0.07)', accentGlow: 'rgba(39,68,114,0.2)',
@@ -444,7 +464,17 @@ const EN = {
   'Entrenamiento completado': 'Workout completed', 'Compartir': 'Share',
   'No hay entrenamiento programado hoy.': 'No workout scheduled today.',
   'Recuperación activa o descanso total.': 'Active recovery or full rest.',
-  'ejercicios': 'exercises',
+  '¿Algo que anotar?': 'Anything to note?',
+  'Ej: dormí mal, dolor en hombro...': 'E.g.: slept badly, shoulder pain...',
+  'Nota guardada': 'Note saved',
+  'Nota del día': 'Day note',
+  'Músculos recuperándose': 'Muscles recovering',
+  'Sugerencias de recovery': 'Recovery tips',
+  'Próximo entrenamiento': 'Next workout',
+  'ejercicios': 'exercises', 'Listo para entrenar': 'Ready to train',
+  'min estimados': 'est. minutes', 'Músculos del día': 'Today\'s muscles',
+  'Ejercicios de hoy': 'Today\'s exercises', 'Último': 'Last',
+  'ejercicios con aumento sugerido': 'exercises with suggested increase', 'Ver': 'View',
   'Entrenamiento de hoy': 'Today\'s workout', 'Vista previa': 'Preview',
   'Próximo entreno': 'Next workout', 'Entreno pasado': 'Past workout',
   'Elige tu cardio de hoy': 'Choose your cardio today',
@@ -507,6 +537,16 @@ const EN = {
   'Veterano': 'Veteran', '25 entrenamientos': '25 workouts',
   'Leyenda': 'Legend', '50 entrenamientos': '50 workouts',
   'Rey del gym': 'Gym king', '20 récords personales': '20 personal records',
+  'Primer mes': 'First month', '30 días desde tu primer entrenamiento': '30 days since your first workout',
+  'Proteína perfecta': 'Perfect protein', '7 días seguidos cumpliendo meta de proteína': '7 consecutive days meeting protein goal',
+  'Hidratación total': 'Total hydration', '7 días seguidos cumpliendo meta de agua': '7 consecutive days meeting water goal',
+  'Constructor': 'Builder', '10,000+ de volumen en una semana': '10,000+ volume in a week',
+  'Madrugador': 'Early bird', 'Entrenar antes de las 7am': 'Work out before 7am',
+  'Primera vez': 'First time', 'Hoy toca': "Today's workout",
+  'Desbloqueado': 'Unlocked', 'Bloqueado': 'Locked', 'Cerrar': 'Close',
+  '¡Logro desbloqueado!': 'Achievement unlocked!',
+  'Borrar PR': 'Reset PR', '¿Borrar el récord de este ejercicio?': 'Reset this exercise record?',
+  'La semana pasada': 'Last week',
   // ── GeneralStats ──
   'Estadísticas generales': 'General stats', 'Días entrenados': 'Days trained',
   'Racha actual': 'Current streak', 'Racha máxima': 'Max streak', 'Semana del plan': 'Plan week',
@@ -720,6 +760,16 @@ const PROTEIN_GOAL = getGoal('protein', 150);
 const CALORIES_GOAL = getGoal('calories', 2200);
 const WATER_GOAL_ML = getGoal('water_ml', 2250); // 9 glasses × 250ml
 const WATER_GLASS_ML = 250;
+
+// ── Audio unlock for iOS ──
+let sharedAudioCtx = null;
+document.addEventListener('touchstart', function unlockAudio() {
+  try {
+    sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+  } catch {}
+  document.removeEventListener('touchstart', unlockAudio);
+}, { once: true });
 
 // ── useCountUp hook — numbers animate from 0 to target ──
 function useCountUp(target, duration = 600) {
@@ -1369,6 +1419,49 @@ const MUSCLE_RECOVERY_LABELS = {
   quadriceps: { label: 'Cuádriceps', labelEn: 'Quads' }, hamstring: { label: 'Isquiotibiales', labelEn: 'Hamstrings' },
   gluteal: { label: 'Glúteos', labelEn: 'Glutes' }, calves: { label: 'Pantorrillas', labelEn: 'Calves' },
   abs: { label: 'Abdominales', labelEn: 'Abs' }, obliques: { label: 'Oblicuos', labelEn: 'Obliques' },
+};
+
+const RECOVERY_SUGGESTIONS = {
+  chest: [
+    { es: 'Estiramiento pectoral en puerta, 30 seg cada lado', en: 'Doorway chest stretch, 30s each side' },
+    { es: 'Foam rolling pecho y hombros anteriores', en: 'Foam roll chest and front delts' },
+  ],
+  'upper-back': [
+    { es: 'Cat-cow stretch, 10 repeticiones lentas', en: 'Cat-cow stretch, 10 slow reps' },
+    { es: 'Child\'s pose con brazos extendidos, 45 seg', en: 'Child\'s pose with arms extended, 45s' },
+  ],
+  quadriceps: [
+    { es: 'Foam rolling cuádriceps, 60 seg cada pierna', en: 'Foam roll quads, 60s each leg' },
+    { es: 'Estiramiento de cuádriceps de pie, 30 seg', en: 'Standing quad stretch, 30s each' },
+  ],
+  hamstring: [
+    { es: 'Estiramiento de isquiotibiales sentado, 30 seg', en: 'Seated hamstring stretch, 30s' },
+    { es: 'Foam rolling isquiotibiales, 60 seg', en: 'Foam roll hamstrings, 60s' },
+  ],
+  gluteal: [
+    { es: 'Pigeon pose, 45 seg cada lado', en: 'Pigeon pose, 45s each side' },
+    { es: 'Estiramiento de glúteo cruzado, 30 seg', en: 'Crossed glute stretch, 30s' },
+  ],
+  deltoids: [
+    { es: 'Cross-body shoulder stretch, 30 seg', en: 'Cross-body shoulder stretch, 30s' },
+    { es: 'Rotaciones de hombro con banda, 15 reps', en: 'Band shoulder rotations, 15 reps' },
+  ],
+  biceps: [
+    { es: 'Estiramiento de bíceps en pared, 30 seg', en: 'Wall bicep stretch, 30s each arm' },
+  ],
+  triceps: [
+    { es: 'Estiramiento de tríceps overhead, 30 seg', en: 'Overhead tricep stretch, 30s each' },
+  ],
+  calves: [
+    { es: 'Estiramiento de pantorrillas en escalón, 30 seg', en: 'Calf stretch on step, 30s each' },
+  ],
+  abs: [
+    { es: 'Cobra stretch, 30 seg', en: 'Cobra stretch, 30s' },
+  ],
+  'lower-back': [
+    { es: 'Child\'s pose, 45 seg', en: 'Child\'s pose, 45s' },
+    { es: 'Knee-to-chest stretch, 30 seg cada lado', en: 'Knee-to-chest stretch, 30s each' },
+  ],
 };
 
 const MUSCLE_INTENSITY_COLORS = {
@@ -2572,7 +2665,7 @@ function WeekStrip() {
           const saved = localStorage.getItem('ds_workout_' + dk + '_' + date);
           if (saved) {
             const states = JSON.parse(saved);
-            done = states.length > 0 && states.every(e => e.sets.every(s => s.done));
+            done = Array.isArray(states) && states.length > 0 && states.every(e => e && e.sets && e.sets.every(s => s.done));
           }
         } catch {}
       }
@@ -2675,7 +2768,8 @@ function getWeeklyRecommendations(routine, todayKey, unitPref) {
 
 function playRestBeep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     const o1 = ctx.createOscillator();
     const g1 = ctx.createGain();
     o1.frequency.value = 880; o1.type = 'sine';
@@ -2690,27 +2784,53 @@ function playRestBeep() {
     g2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
     o2.connect(g2).connect(ctx.destination);
     o2.start(ctx.currentTime + 0.25); o2.stop(ctx.currentTime + 0.4);
-    setTimeout(() => ctx.close(), 1000);
+  } catch {}
+}
+
+function playFireDing() {
+  try {
+    const ctx = sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Rising sparkle chord: C5 → E5 → G5
+    [523, 659, 784].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = freq;
+      o.type = 'sine';
+      const start = ctx.currentTime + i * 0.08;
+      g.gain.setValueAtTime(0.25, start);
+      g.gain.exponentialRampToValueAtTime(0.01, start + 0.35);
+      o.connect(g).connect(ctx.destination);
+      o.start(start);
+      o.stop(start + 0.35);
+    });
   } catch {}
 }
 
 function RestTimer({ duration = 90, onDone }) {
+  const startRef = useRef(Date.now());
   const [left, setLeft] = useState(duration);
   const notified = useRef(false);
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
   useEffect(() => {
-    if (left <= 0) {
-      if (!notified.current) {
+    function tick() {
+      const elapsed = (Date.now() - startRef.current) / 1000;
+      const remaining = Math.max(0, Math.ceil(duration - elapsed));
+      setLeft(remaining);
+      if (remaining <= 0 && !notified.current) {
         notified.current = true;
         haptic([30, 100, 30, 100, 30]);
         playRestBeep();
-        try { if (Notification.permission === 'granted') new Notification('DontSkip', { body: t('¡Descanso terminado! Siguiente set'), icon: 'icon-192.png' }); } catch {}
+        try { if (Notification.permission === 'granted') new Notification('DontSkip', { body: t('\u00A1Descanso terminado! Siguiente set'), icon: 'icon-192.png' }); } catch {}
+        doneRef.current && doneRef.current();
       }
-      onDone && onDone();
-      return;
     }
-    const tid = setTimeout(() => setLeft(l => l - 1), 1000);
-    return () => clearTimeout(tid);
-  }, [left]);
+    const tid = setInterval(tick, 250);
+    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(tid); document.removeEventListener('visibilitychange', onVis); };
+  }, [duration]);
   const pct = left / duration;
   const urgentColor = left <= 10 ? T.red : left <= 30 ? T.amber : T.accent;
   const restLabel = duration >= 90 ? (LANG === 'en' ? 'Compound' : 'Compuesto')
@@ -2975,7 +3095,7 @@ function SupplementsCheck() {
 
   const allDone = creatine && whey && omega3;
 
-  const pillCard = (checked, onToggle, emoji, label, sub, colorBg, colorBorder, colorAccent) => html`
+  const pillCard = (checked, onToggle, emoji, label, sub, colorBg, colorBorder, colorAccent, image) => html`
     <button onClick=${onToggle}
       className="press-scale"
       style=${{
@@ -2986,8 +3106,15 @@ function SupplementsCheck() {
         transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
         minWidth: 0
       }}>
-      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }}>
-        <span style=${{ fontSize: 24, lineHeight: 1, opacity: checked ? 1 : 0.7, transition: 'opacity 0.2s' }}>${emoji}</span>
+      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}>
+        ${image ? html`
+          <img src=${image} alt=${label}
+            style=${{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover',
+              opacity: checked ? 1 : 0.55, transition: 'opacity 0.2s',
+              border: '2px solid ' + (checked ? colorAccent : T.border) }} />
+        ` : html`
+          <span style=${{ fontSize: 24, lineHeight: 1, opacity: checked ? 1 : 0.7, transition: 'opacity 0.2s' }}>${emoji}</span>
+        `}
         ${checked && html`
           <div style=${{ position: 'absolute', top: -2, right: -4, display: 'flex' }}>
             <${CheckCircle} size=${14} weight="fill" color=${colorAccent} />
@@ -3008,9 +3135,9 @@ function SupplementsCheck() {
         </span>
       </div>
       <div className="flex gap-2">
-        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), T.accent + '22', T.accent + '55', T.accent)}
-        ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)')}
-        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(33,150,196,0.08)', 'rgba(33,150,196,0.2)', 'rgb(33,150,196)')}
+        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), 'rgba(30,120,70,0.08)', 'rgba(30,120,70,0.25)', 'rgb(30,120,70)', 'img/creatine.jpg')}
+        ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)', 'img/whey.jpg')}
+        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(180,140,50,0.08)', 'rgba(180,140,50,0.2)', 'rgb(180,140,50)', 'img/omega3.jpg')}
       </div>
     </div>
   `;
@@ -3261,7 +3388,7 @@ function getExerciseHistory(exerciseIndex, todayKey, maxSessions) {
       const saved = localStorage.getItem(pk);
       if (saved) {
         const states = JSON.parse(saved);
-        if (states[exerciseIndex]) {
+        if (states[exerciseIndex] && states[exerciseIndex].sets) {
           const doneSets = states[exerciseIndex].sets.filter(s => s.done && s.weight > 0);
           if (doneSets.length > 0) {
             const maxW = Math.max(...doneSets.map(s => s.weight));
@@ -3279,6 +3406,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   const [expanded, setExpanded] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
+  const [fireParticles, setFireParticles] = useState([]);
   const [prSet, setPrSet] = useState(null);
   const prevAllDone = useRef(false);
   // Auto-expand when this becomes the highlighted (current) exercise
@@ -3295,10 +3423,41 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   useEffect(() => {
     if (allDone && !prevAllDone.current) {
       setCelebrating(true);
-      setTimeout(() => setCelebrating(false), 600);
+      playFireDing();
+      haptic([15, 40, 15, 40, 15]);
+      const particles = Array.from({ length: 18 }, (_, i) => {
+        const side = i < 6 ? 'top' : i < 12 ? 'left' : 'right';
+        const wobble = (Math.random() * 20 - 10).toFixed(1);
+        const delay = (Math.random() * 0.4).toFixed(2);
+        const size = 6 + Math.random() * 6;
+        let pos;
+        if (side === 'top') pos = 10 + (i / 6) * 80;
+        else if (side === 'left') pos = 10 + ((i - 6) / 6) * 80;
+        else pos = 10 + ((i - 12) / 6) * 80;
+        return { id: i, side, pos, wobble, delay, size };
+      });
+      setFireParticles(particles);
+      setTimeout(() => { setCelebrating(false); setFireParticles([]); }, 2200);
     }
     prevAllDone.current = allDone;
   }, [allDone]);
+
+  // Auto-fill: propagate set 0 weight/reps to empty subsequent sets
+  const firstWeight = sets[0]?.weight;
+  const firstReps = sets[0]?.reps;
+  useEffect(() => {
+    if (!firstWeight && !firstReps) return;
+    if (sets.length <= 1) return;
+    let changed = false;
+    const newSets = sets.map((s, i) => {
+      if (i === 0 || s.done) return s;
+      const upd = {};
+      if (firstWeight && (!s.weight || s.weight === 0)) { upd.weight = firstWeight; changed = true; }
+      if (firstReps && (!s.reps || s.reps === 0)) { upd.reps = firstReps; changed = true; }
+      return Object.keys(upd).length > 0 ? { ...s, ...upd } : s;
+    });
+    if (changed) onUpdate({ ...exerciseState, sets: newSets });
+  }, [firstWeight, firstReps]);
 
   function updateSet(si, field, val) {
     const newSets = sets.map((s, i) => i === si ? { ...s, [field]: val } : s);
@@ -3321,7 +3480,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
     const wasDone = sets[si].done;
     const newSets = sets.map((s, i) => i === si ? { ...s, done: !s.done } : s);
     onUpdate({ ...exerciseState, sets: newSets });
-    if (!wasDone) haptic(15);
+    if (!wasDone) haptic([10, 30, 10]);
     if (!wasDone && !newSets.every(s => s.done)) setShowTimer(true);
     if (!wasDone && sets[si].weight > 0) {
       const records = getRecords();
@@ -3347,7 +3506,20 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   const ytUrl = exercise.videoId ? 'https://youtube.com/watch?v=' + exercise.videoId : 'https://youtube.com/results?search_query=' + encodeURIComponent((exercise.nameEn || exercise.name) + ' exercise gym');
 
   return html`
-    <div style=${{ borderBottom: '1px solid ' + T.border, paddingBottom: 16, borderLeft: highlight && !allDone ? '3px solid ' + T.green : '3px solid transparent', transition: 'border-color 0.3s' }}>
+    <div className=${celebrating ? 'fire-border' : ''} style=${{ borderBottom: '1px solid ' + T.border, paddingBottom: 16, borderLeft: highlight && !allDone ? '4px solid ' + T.green : '4px solid transparent', boxShadow: highlight && !allDone ? 'inset 3px 0 8px -2px rgba(78,200,138,0.3)' : 'none', transition: 'border-color 0.3s, box-shadow 0.3s', position: 'relative', overflow: 'visible' }}>
+      ${fireParticles.length > 0 && fireParticles.map(p => {
+        const style = {
+          position: 'absolute', width: p.size, height: p.size, borderRadius: '50%',
+          background: ['#ff6b35', '#ff9f1c', '#ffba08', '#f94144'][p.id % 4],
+          filter: 'blur(1px)', opacity: 0, pointerEvents: 'none', zIndex: 10,
+          animation: `flameRise 1.2s ease-out ${p.delay}s forwards`,
+          '--wobble': p.wobble + 'px',
+        };
+        if (p.side === 'top') { style.top = -2; style.left = p.pos + '%'; }
+        else if (p.side === 'left') { style.left = -2; style.top = p.pos + '%'; }
+        else { style.right = -2; style.top = p.pos + '%'; }
+        return html`<div key=${p.id} style=${style} />`;
+      })}
       <div className="flex items-center gap-3 cursor-pointer" style=${{ padding: '14px 2px 0' }} onClick=${() => setExpanded(!expanded)}>
         <div className=${'flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0' + (celebrating ? ' celebrate glow-pulse' : '')}
           style=${{ background: allDone ? T.green : highlight ? T.accent : T.elevated }}>
@@ -3363,9 +3535,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
           </div>
           <div className="flex items-center gap-2" style=${{ marginTop: 3 }}>
             <span style=${{ fontSize: 12, color: T.sub }}>${exercise.sets}x${exercise.reps}</span>
-            ${doneSets > 0 && html`
-              <span className="px-1.5 py-0.5 rounded-md pop-in" style=${{ fontSize: 10, fontWeight: 700, background: allDone ? T.greenDim : T.elevated, color: allDone ? T.green : T.accent }}>${doneSets}/${sets.length}</span>
-            `}
+            <span className=${'px-1.5 py-0.5 rounded-md' + (doneSets > 0 ? ' pop-in' : '')} style=${{ fontSize: 11, fontWeight: highlight && !allDone ? 800 : 700, background: allDone ? T.greenDim : highlight ? T.accentDim : T.elevated, color: allDone ? T.green : highlight ? T.accent : T.muted }}>${doneSets}/${sets.length} sets</span>
           </div>
         </div>
         <${CaretDown} size=${16} weight="bold" color=${T.muted} style=${{ transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }} />
@@ -3997,32 +4167,44 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
               <g clipPath="url(#glassClip)">
                 <defs>
                   <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d4eaf7" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="#a8d4f0" stopOpacity="0.7" />
+                    <stop offset="0%" stopColor=${T.water} stopOpacity="0.35" />
+                    <stop offset="100%" stopColor=${T.water} stopOpacity="0.55" />
                   </linearGradient>
                 </defs>
                 <!-- Base fill -->
                 <rect x="0" y=${wTop + 6} width="80" height=${120 - wTop}
                   fill="url(#waterGrad)"
                   style=${{ transition: 'y 600ms ease, height 600ms ease' }} />
-                <!-- Wave 1: soft, slow -->
+                <!-- Wave 1: deep, slow -->
                 <g style=${{ transform: 'translateY(' + wTop + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,7 C-25,3 -10,11 10,7 C30,3 50,11 70,7 C90,3 110,11 130,7 C150,3 170,11 200,7 V130 H-40 Z"
-                    fill="#b8ddf0" opacity="0.6"
+                  <path d="M-40,8 C-25,0 -10,16 10,8 C30,0 50,16 70,8 C90,0 110,16 130,8 C150,0 170,16 200,8 V130 H-40 Z"
+                    fill=${T.water} opacity="0.5"
                     style=${{ animation: 'waveMove1 4s linear infinite' }} />
                 </g>
-                <!-- Wave 2: lighter, medium -->
+                <!-- Wave 2: mid-tone, alternate direction -->
                 <g style=${{ transform: 'translateY(' + (wTop + 3) + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,6 C-20,10 0,2 20,6 C40,10 60,2 80,6 C100,10 120,2 140,6 C160,10 180,2 200,6 V130 H-40 Z"
-                    fill="#cce8f6" opacity="0.5"
-                    style=${{ animation: 'waveMove2 3s linear infinite' }} />
+                  <path d="M-40,8 C-20,0 0,16 20,8 C40,0 60,16 80,8 C100,0 120,16 140,8 C160,0 180,16 200,8 V130 H-40 Z"
+                    fill=${T.water} opacity="0.35"
+                    style=${{ animation: 'waveMove2 5s linear infinite' }} />
                 </g>
                 <!-- Wave 3: near-white, fast -->
                 <g style=${{ transform: 'translateY(' + (wTop + 5) + 'px)', transition: 'transform 600ms ease' }}>
-                  <path d="M-40,5 C-15,9 5,1 30,5 C55,9 75,1 100,5 C125,9 145,1 170,5 C195,9 215,1 240,5 V130 H-40 Z"
-                    fill="#e3f1fa" opacity="0.45"
+                  <path d="M-40,8 C-15,0 5,16 30,8 C55,0 75,16 100,8 C125,0 145,16 170,8 C195,0 215,16 240,8 V130 H-40 Z"
+                    fill=${T.waterDim} opacity="0.5"
                     style=${{ animation: 'waveMove1 2.5s linear infinite' }} />
                 </g>
+                <!-- Bubbles -->
+                ${[
+                  { cx: 25, r: 2.5, dur: '3s', delay: '0s' },
+                  { cx: 40, r: 3, dur: '3.5s', delay: '0.8s' },
+                  { cx: 55, r: 2, dur: '2.8s', delay: '1.5s' },
+                  { cx: 33, r: 1.5, dur: '4s', delay: '2.2s' },
+                  { cx: 48, r: 2.5, dur: '3.2s', delay: '0.4s' },
+                ].map((b, i) => html`
+                  <circle key=${i} cx=${b.cx} cy="115" r=${b.r}
+                    fill=${T.card} opacity="0.5"
+                    style=${{ animation: 'bubbleRise ' + b.dur + ' ease-in infinite ' + b.delay }} />
+                `)}
               </g>
             `; })()}
             <!-- Glass rim -->
@@ -4570,8 +4752,9 @@ function WeeklyVolumeReport() {
         const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
         if (!saved) continue;
         const states = JSON.parse(saved);
+        if (!Array.isArray(states)) return;
         r.exercises.forEach((ex, i) => {
-          if (!states[i]) return;
+          if (!states[i] || !states[i].sets) return;
           states[i].sets.forEach(s => {
             if (s.done) {
               thisWeekSets++;
@@ -4600,8 +4783,9 @@ function WeeklyVolumeReport() {
         const saved = localStorage.getItem('ds_workout_' + dk + '_' + dateStr);
         if (!saved) continue;
         const states = JSON.parse(saved);
+        if (!Array.isArray(states)) return;
         r.exercises.forEach((ex, i) => {
-          if (!states[i]) return;
+          if (!states[i] || !states[i].sets) return;
           states[i].sets.forEach(s => {
             if (s.done) {
               lastWeekSets++;
@@ -4737,7 +4921,7 @@ function MuscleMap() {
         if (!saved) continue;
         const states = JSON.parse(saved);
         r2.exercises.forEach((ex, i) => {
-          if (states[i] && states[i].sets.some(s => s.done)) {
+          if (states[i] && Array.isArray(states[i].sets) && states[i].sets.some(s => s.done)) {
             const m = ex.muscle.toLowerCase();
             hits[m] = (hits[m] || 0) + 1;
           }
@@ -5056,10 +5240,12 @@ function ExerciseCatalog({ unitPref }) {
                         ${exOpen && html`
                           <div className="slide-down px-3 pb-3">
                             ${ex.gif ? html`
-                              <div className="flex justify-center mb-3">
+                              <div className="flex justify-center mb-3" style=${{ position: 'relative' }}>
+                                <div className="skeleton-gif" style=${{ width: 180, height: 180, position: 'absolute' }} />
                                 <img src=${ex.gif} alt=${exName(ex)} loading="lazy"
-                                  style=${{ height: 180, width: 180, objectFit: 'contain' }}
-                                  onError=${(e) => { e.target.style.display = 'none'; }} />
+                                  style=${{ height: 180, width: 180, objectFit: 'contain', position: 'relative', zIndex: 1 }}
+                                  onLoad=${(e) => { const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }}
+                                  onError=${(e) => { e.target.style.display = 'none'; const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }} />
                               </div>
                             ` : ''}
                             <p className="text-xs leading-relaxed mb-2" style=${{ color: T.sub }}>${ex.desc}</p>
@@ -5137,10 +5323,12 @@ function WarmupStretchCatalog() {
                             ${eOpen && html`
                               <div className="slide-down px-3 pb-3">
                                 ${ex.gif ? html`
-                                  <div className="flex justify-center mb-2">
+                                  <div className="flex justify-center mb-2" style=${{ position: 'relative' }}>
+                                    <div className="skeleton-gif" style=${{ width: 120, height: 120, position: 'absolute', borderRadius: 10 }} />
                                     <img src=${ex.gif} alt=${ex.nameEn || ex.name} loading="lazy"
-                                      style=${{ height: 120, width: 120, objectFit: 'contain', borderRadius: 10, background: T.input }}
-                                      onError=${(e) => { e.target.style.display = 'none'; }} />
+                                      style=${{ height: 120, width: 120, objectFit: 'contain', borderRadius: 10, position: 'relative', zIndex: 1 }}
+                                      onLoad=${(e) => { const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }}
+                                      onError=${(e) => { e.target.style.display = 'none'; const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }} />
                                   </div>
                                 ` : ''}
                                 <p className="text-xs leading-relaxed" style=${{ color: T.sub }}>${LANG === 'en' ? ex.howToEn : ex.howTo}</p>
@@ -5189,6 +5377,22 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
             <${SectionHeader} title="${dayLabel(selected.dayKey)} \u00B7 ${t(selected.routine.name)}" />
           </div>
           <${RoutineCard} routine=${selected.routine} dayLabel=${dayLabel(selected.dayKey)} />
+          ${(() => {
+            try {
+              const noteDate = localDate(selected.date);
+              const note = localStorage.getItem('ds_workout_note_' + noteDate);
+              if (!note) return '';
+              return html`
+                <div className="mx-5 mb-3 px-4 py-3 rounded-xl flex items-start gap-2" style=${{ background: T.elevated, border: '1px solid ' + T.border }}>
+                  <span style=${{ fontSize: 12, flexShrink: 0, marginTop: 1 }}>📝</span>
+                  <div>
+                    <div style=${{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>${t('Nota del día')}</div>
+                    <div style=${{ fontSize: 13, color: T.sub, lineHeight: 1.4 }}>${note}</div>
+                  </div>
+                </div>
+              `;
+            } catch { return ''; }
+          })()}
         </div>
 
         <${WeeklyVolumeReport} />
@@ -5568,11 +5772,26 @@ function WeightChart() {
 }
 
 function RecordsCard({ unitPref }) {
-  const records = getRecords();
-  const history = getRecordsHistory();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const records = useMemo(() => getRecords(), [refreshKey]);
+  const history = useMemo(() => getRecordsHistory(), [refreshKey]);
   const routineDays = ['monday', 'tuesday', 'thursday', 'friday'];
   const [displayUnit, setDisplayUnit] = useState(unitPref);
   const [expandedEx, setExpandedEx] = useState(null);
+
+  function resetExercisePR(exId) {
+    if (!confirm(t('\u00BFBorrar el r\u00E9cord de este ejercicio?'))) return;
+    try {
+      const recs = getRecords();
+      delete recs[exId];
+      localStorage.setItem('ds_records', JSON.stringify(recs));
+      const hist = getRecordsHistory();
+      delete hist[exId];
+      localStorage.setItem('ds_records_history', JSON.stringify(hist));
+    } catch {}
+    setExpandedEx(null);
+    setRefreshKey(k => k + 1);
+  }
 
   function convWeight(weight, fromUnit) {
     if (fromUnit === displayUnit) return weight;
@@ -5649,7 +5868,19 @@ function RecordsCard({ unitPref }) {
                         ${hist.length >= 2 ? html`
                           <span style=${{ fontSize: 10, fontWeight: 700, color: T.green }}>+${convWeight(hist[hist.length - 1].weight, hist[hist.length - 1].unit) - convWeight(hist[0].weight, hist[0].unit)} ${displayUnit}</span>
                         ` : ''}
+                        <button onClick=${(e) => { e.stopPropagation(); resetExercisePR(ex.id); }}
+                          style=${{ fontSize: 10, fontWeight: 600, color: T.red, background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto', padding: '2px 6px' }}>
+                          ${t('Borrar PR')}
+                        </button>
                       </div>
+                    </div>
+                  ` : ''}
+                  ${isExpanded && hist.length <= 1 && rec ? html`
+                    <div style=${{ paddingBottom: 8 }}>
+                      <button onClick=${(e) => { e.stopPropagation(); resetExercisePR(ex.id); }}
+                        style=${{ fontSize: 10, fontWeight: 600, color: T.red, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
+                        ${t('Borrar PR')}
+                      </button>
                     </div>
                   ` : ''}
                 </div>
@@ -5663,59 +5894,241 @@ function RecordsCard({ unitPref }) {
 }
 
 function Achievements() {
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [newlyUnlocked, setNewlyUnlocked] = useState([]);
+
   const badges = useMemo(() => {
     const streak = getStreak();
     const stats = getFullStats();
     const records = getRecords();
     const prCount = Object.keys(records).length;
     const totalDays = stats.totalDays || 0;
+    const daysSinceStart = stats.startDate
+      ? Math.floor((Date.now() - new Date(stats.startDate + 'T00:00:00').getTime()) / 86400000)
+      : 0;
 
-    const all = [
-      { id: 'first', icon: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', name: t('Primera sesión'), desc: t('Completar tu primer entrenamiento'), unlocked: totalDays >= 1 },
-      { id: 'week1', icon: '\uD83D\uDCC5', name: t('Primera semana'), desc: t('5 días de entrenamiento'), unlocked: totalDays >= 5 },
-      { id: 'streak3', icon: '\uD83D\uDD25', name: t('En racha'), desc: t('3 días seguidos'), unlocked: streak >= 3 || (stats.maxStreak && stats.maxStreak >= 3) },
-      { id: 'streak7', icon: '\u26A1', name: t('Imparable'), desc: t('7 días seguidos'), unlocked: streak >= 7 || (stats.maxStreak && stats.maxStreak >= 7) },
-      { id: 'streak30', icon: '\uD83D\uDC8E', name: t('Disciplina de hierro'), desc: t('30 días seguidos'), unlocked: streak >= 30 || (stats.maxStreak && stats.maxStreak >= 30) },
-      { id: 'pr1', icon: '\uD83C\uDFC6', name: t('Primer PR'), desc: t('Registrar tu primer récord personal'), unlocked: prCount >= 1 },
-      { id: 'pr5', icon: '\uD83E\uDD47', name: t('Caza-récords'), desc: t('5 récords personales'), unlocked: prCount >= 5 },
-      { id: 'pr10', icon: '\uD83D\uDCAA\uD83C\uDFFC', name: t('Máquina de PRs'), desc: t('10 récords personales'), unlocked: prCount >= 10 },
+    let proteinStreak = 0;
+    for (let d = 0; d < 30; d++) {
+      const ds = localDate(new Date(Date.now() - d * 86400000));
+      try {
+        const ml = JSON.parse(localStorage.getItem('ds_meals_' + ds) || '[]');
+        const prot = ml.filter(m => m.confirmed).reduce((s, m) => s + m.items.reduce((a, it) => a + (it.protein || 0), 0), 0);
+        if (prot >= PROTEIN_GOAL) proteinStreak++; else break;
+      } catch { break; }
+    }
+
+    let waterStreak = 0;
+    for (let d = 0; d < 30; d++) {
+      const ds = localDate(new Date(Date.now() - d * 86400000));
+      const w = Number(localStorage.getItem('ds_water_' + ds)) || 0;
+      if (w >= WATER_GOAL_ML) waterStreak++; else break;
+    }
+
+    let weeklyVol = 0;
+    const today = new Date();
+    const dow = today.getDay() || 7;
+    const mondayOff = dow === 0 ? 6 : dow - 1;
+    for (let d = 0; d <= mondayOff; d++) {
+      const date = new Date(today.getTime() - d * 86400000);
+      const ds = localDate(date);
+      const dk = DAYS[date.getDay()];
+      const r = ROUTINES[dk];
+      if (r.rest || r.cardio || !r.exercises) continue;
+      try {
+        const saved = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+        if (!saved) continue;
+        const states = JSON.parse(saved);
+        if (!Array.isArray(states)) return;
+        r.exercises.forEach((ex, i) => {
+          if (!states[i] || !states[i].sets) return;
+          states[i].sets.forEach(s => {
+            if (s.done && s.weight > 0) weeklyVol += s.weight * (s.reps || parseInt(ex.reps) || 0);
+          });
+        });
+      } catch {}
+    }
+
+    let hasEarlyWorkout = false;
+    try {
+      for (let d = 0; d < 30; d++) {
+        const ds = localDate(new Date(Date.now() - d * 86400000));
+        const dk = DAYS[new Date(Date.now() - d * 86400000).getDay()];
+        const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
+        if (ts && new Date(Number(ts)).getHours() < 7) { hasEarlyWorkout = true; break; }
+      }
+    } catch {}
+
+    return [
+      { id: 'first', icon: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', name: t('Primera sesi\u00F3n'), desc: t('Completar tu primer entrenamiento'), unlocked: totalDays >= 1 },
+      { id: 'week1', icon: '\uD83D\uDCC5', name: t('Primera semana'), desc: t('5 d\u00EDas de entrenamiento'), unlocked: totalDays >= 5 },
+      { id: 'streak3', icon: '\uD83D\uDD25', name: t('En racha'), desc: t('3 d\u00EDas seguidos'), unlocked: streak >= 3 || (stats.maxStreak && stats.maxStreak >= 3) },
+      { id: 'streak7', icon: '\u26A1', name: t('Imparable'), desc: t('7 d\u00EDas seguidos'), unlocked: streak >= 7 || (stats.maxStreak && stats.maxStreak >= 7) },
+      { id: 'streak30', icon: '\uD83D\uDC8E', name: t('Disciplina de hierro'), desc: t('30 d\u00EDas seguidos'), unlocked: streak >= 30 || (stats.maxStreak && stats.maxStreak >= 30) },
+      { id: 'pr1', icon: '\uD83C\uDFC6', name: t('Primer PR'), desc: t('Registrar tu primer r\u00E9cord personal'), unlocked: prCount >= 1 },
+      { id: 'pr5', icon: '\uD83E\uDD47', name: t('Caza-r\u00E9cords'), desc: t('5 r\u00E9cords personales'), unlocked: prCount >= 5 },
+      { id: 'pr10', icon: '\uD83D\uDCAA\uD83C\uDFFC', name: t('M\u00E1quina de PRs'), desc: t('10 r\u00E9cords personales'), unlocked: prCount >= 10 },
       { id: 'days10', icon: '\uD83C\uDF1F', name: t('Comprometido'), desc: t('10 entrenamientos'), unlocked: totalDays >= 10 },
       { id: 'days25', icon: '\uD83C\uDF96\uFE0F', name: t('Veterano'), desc: t('25 entrenamientos'), unlocked: totalDays >= 25 },
       { id: 'days50', icon: '\uD83D\uDE80', name: t('Leyenda'), desc: t('50 entrenamientos'), unlocked: totalDays >= 50 },
-      { id: 'pr20', icon: '\uD83D\uDC51', name: t('Rey del gym'), desc: t('20 récords personales'), unlocked: prCount >= 20 },
+      { id: 'pr20', icon: '\uD83D\uDC51', name: t('Rey del gym'), desc: t('20 r\u00E9cords personales'), unlocked: prCount >= 20 },
+      { id: 'month1', icon: '\uD83D\uDCC6', name: t('Primer mes'), desc: t('30 d\u00EDas desde tu primer entrenamiento'), unlocked: daysSinceStart >= 30 },
+      { id: 'protein7', icon: '\uD83E\uDD69', name: t('Prote\u00EDna perfecta'), desc: t('7 d\u00EDas seguidos cumpliendo meta de prote\u00EDna'), unlocked: proteinStreak >= 7 },
+      { id: 'water7', icon: '\uD83D\uDCA7', name: t('Hidrataci\u00F3n total'), desc: t('7 d\u00EDas seguidos cumpliendo meta de agua'), unlocked: waterStreak >= 7 },
+      { id: 'volume10k', icon: '\uD83C\uDFD7\uFE0F', name: t('Constructor'), desc: t('10,000+ de volumen en una semana'), unlocked: weeklyVol >= 10000 },
+      { id: 'earlybird', icon: '\uD83C\uDF05', name: t('Madrugador'), desc: t('Entrenar antes de las 7am'), unlocked: hasEarlyWorkout },
     ];
-    return all;
   }, []);
 
   const unlocked = badges.filter(b => b.unlocked);
   const locked = badges.filter(b => !b.unlocked);
 
+  useEffect(() => {
+    try {
+      const storageKey = 'ds_achievements_unlocked';
+      const prev = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const currentIds = unlocked.map(b => b.id);
+      const newIds = currentIds.filter(id => !prev.includes(id));
+      if (newIds.length > 0) {
+        setNewlyUnlocked(newIds);
+        localStorage.setItem(storageKey, JSON.stringify(currentIds));
+        haptic([30, 80, 30]);
+        const tid = setTimeout(() => setNewlyUnlocked([]), 4000);
+        return () => clearTimeout(tid);
+      } else if (currentIds.length !== prev.length) {
+        localStorage.setItem(storageKey, JSON.stringify(currentIds));
+      }
+    } catch {}
+  }, [unlocked]);
+
+  function handleBadgeTap(b) {
+    setSelectedBadge(b);
+    haptic(10);
+  }
+
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
-      <${SectionHeader} title=${"🌟 " + t('Logros')} />
+      <${SectionHeader} title=${"\uD83C\uDF1F " + t('Logros')} />
       <div style=${{ fontSize: 12, color: T.sub, marginBottom: 12 }}>${unlocked.length} ${LANG === 'en' ? 'of' : 'de'} ${badges.length} ${t('desbloqueados')}</div>
       <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-        ${unlocked.map((b, i) => html`
-          <div key=${b.id} className="badge-unlock flex flex-col items-center text-center py-3 px-2 rounded-xl"
-            style=${{ background: T.accentDim, animationDelay: (i * 0.08) + 's' }}>
-            <span style=${{ fontSize: 24 }}>${b.icon}</span>
-            <span style=${{ fontSize: 10, fontWeight: 700, color: T.accent, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
-          </div>
-        `)}
+        ${unlocked.map((b, i) => {
+          const isNew = newlyUnlocked.includes(b.id);
+          return html`
+            <div key=${b.id} className=${isNew ? 'achieve-pop' : 'badge-unlock'}
+              onClick=${() => handleBadgeTap(b)}
+              style=${{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                padding: '12px 8px', borderRadius: 14, cursor: 'pointer', position: 'relative',
+                background: T.accentDim, border: '1px solid ' + T.accent + '20',
+                animationDelay: isNew ? '0s' : (i * 0.08) + 's',
+              }}>
+              ${isNew && html`
+                <div style=${{ position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 3 }}>
+                  ${[T.accent, T.green, T.amber, T.accent, T.green].map((c, ci) => html`
+                    <div key=${ci} style=${{
+                      width: 5, height: 5, borderRadius: '50%', background: c,
+                      animation: 'achieveConfetti 0.8s ease-out both',
+                      animationDelay: (ci * 0.1) + 's',
+                    }} />
+                  `)}
+                </div>
+              `}
+              <span style=${{ fontSize: 28 }}>${b.icon}</span>
+              <span style=${{ fontSize: 11, fontWeight: 700, color: T.accent, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
+              <span style=${{ fontSize: 9, color: T.muted, marginTop: 2, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>${b.desc}</span>
+            </div>
+          `;
+        })}
         ${locked.map(b => html`
-          <div key=${b.id} className="flex flex-col items-center text-center py-3 px-2 rounded-xl"
-            style=${{ background: T.elevated, opacity: 0.5 }}>
-            <span style=${{ fontSize: 24, filter: 'grayscale(1)' }}>${b.icon}</span>
-            <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
+          <div key=${b.id} onClick=${() => handleBadgeTap(b)}
+            style=${{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+              padding: '12px 8px', borderRadius: 14, cursor: 'pointer', position: 'relative',
+              background: T.elevated, opacity: 0.45,
+            }}>
+            <span style=${{ fontSize: 28, filter: 'grayscale(1) blur(1px)' }}>${b.icon}</span>
+            <span style=${{ position: 'absolute', top: 14, fontSize: 16 }}>${'\uD83D\uDD12'}</span>
+            <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
+            <span style=${{ fontSize: 9, color: T.muted, marginTop: 2, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>${b.desc}</span>
           </div>
         `)}
       </div>
       ${locked.length > 0 && html`
         <div style=${{ fontSize: 11, color: T.muted, marginTop: 10 }}>
-          ${t('Próximo')}: ${locked[0].icon} ${locked[0].name} \u2014 ${locked[0].desc}
+          ${t('Pr\u00F3ximo')}: ${locked[0].icon} ${locked[0].name} \u2014 ${locked[0].desc}
         </div>
       `}
     </div>
+
+    ${newlyUnlocked.length > 0 && (() => {
+      const newBadge = badges.find(b => b.id === newlyUnlocked[0]);
+      if (!newBadge) return '';
+      return html`
+        <div className="achieve-pop" style=${{
+          position: 'fixed', top: 'calc(var(--safe-top, 44px) + 12px)',
+          left: 16, right: 16, zIndex: 52,
+          background: T.card, borderRadius: 16, padding: '16px 20px',
+          border: '2px solid ' + T.green + '40',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          display: 'flex', alignItems: 'center', gap: 14,
+        }}>
+          <span style=${{ fontSize: 36 }}>${newBadge.icon}</span>
+          <div>
+            <div style=${{ fontSize: 11, fontWeight: 700, color: T.green, letterSpacing: '0.5px' }}>
+              ${t('\u00A1Logro desbloqueado!')}
+            </div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, marginTop: 2 }}>
+              ${newBadge.name}
+            </div>
+            <div style=${{ fontSize: 12, color: T.sub, marginTop: 1 }}>
+              ${newBadge.desc}
+            </div>
+          </div>
+        </div>
+      `;
+    })()}
+
+    ${selectedBadge && html`
+      <div onClick=${() => setSelectedBadge(null)}
+        style=${{
+          position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }}>
+        <div onClick=${(e) => e.stopPropagation()}
+          className="achieve-pop"
+          style=${{
+            background: T.card, borderRadius: 20, padding: 28, width: '100%', maxWidth: 300,
+            textAlign: 'center', border: '1px solid ' + T.border,
+          }}>
+          <div style=${{ fontSize: 48, marginBottom: 12 }}>${selectedBadge.icon}</div>
+          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 6 }}>
+            ${selectedBadge.name}
+          </div>
+          <div style=${{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 16 }}>
+            ${selectedBadge.desc}
+          </div>
+          <div className="flex items-center justify-center gap-2" style=${{ marginBottom: 16 }}>
+            ${selectedBadge.unlocked
+              ? html`
+                <${CheckCircle} size=${16} weight="fill" color=${T.green} />
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.green }}>${t('Desbloqueado')}</span>
+              `
+              : html`
+                <${Lock} size=${16} weight="fill" color=${T.muted} />
+                <span style=${{ fontSize: 13, fontWeight: 700, color: T.muted }}>${t('Bloqueado')}</span>
+              `
+            }
+          </div>
+          <button onClick=${() => setSelectedBadge(null)}
+            style=${{
+              background: T.accent, color: '#fff', border: 'none', borderRadius: 12,
+              padding: '10px 28px', fontSize: 14, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+              cursor: 'pointer',
+            }}>
+            ${t('Cerrar')}
+          </button>
+        </div>
+      </div>
+    `}
   `;
 }
 
@@ -9079,6 +9492,49 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
     { key: 'sunday', es: 'D', en: 'S' },
   ];
 
+  // Days completed this week (green dots)
+  const weekCompleted = useMemo(() => {
+    const done = {};
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const keys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    keys.forEach((dk, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + mondayOffset + i);
+      const ds = localDate(d);
+      const r = ROUTINES[dk];
+      if (r.rest && !r.cardio) return;
+      if (r.cardio) {
+        try { done[dk] = localStorage.getItem('ds_cardio_done_' + ds) === 'true'; } catch { done[dk] = false; }
+        return;
+      }
+      try {
+        const saved = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+        if (saved) {
+          const states = JSON.parse(saved);
+          done[dk] = Array.isArray(states) && states.length > 0 && states.every(e => e.sets && e.sets.every(s => s.done));
+        }
+      } catch {}
+    });
+    return done;
+  }, []);
+
+  const weekNotes = useMemo(() => {
+    const notes = {};
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const keys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    keys.forEach((dk, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + mondayOffset + i);
+      const ds = localDate(d);
+      try { const n = localStorage.getItem('ds_workout_note_' + ds); if (n) notes[dk] = true; } catch {}
+    });
+    return notes;
+  }, [workoutNote.length > 0]);
+
   // ── Shared UI elements ──
   const headerEl = html`
     <div className="px-5 pt-2 pb-1 flex items-center justify-between">
@@ -9114,7 +9570,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 7, fontWeight: 600, color: isSelected ? 'rgba(255,255,255,0.7)' : T.muted, marginTop: 1, lineHeight: 1 }}>
                 ${isRest ? (LANG === 'en' ? 'Rest' : 'Desc') : r.cardio ? 'Cardio' : r.name}
               </div>
-              ${isTodayPill && !isSelected ? html`<div style=${{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: T.accent }} />` : ''}
+              ${weekCompleted[pill.key] && !isSelected ? html`<div style=${{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: T.green }} />` : isTodayPill && !isSelected ? html`<div style=${{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: T.accent }} />` : ''}
+              ${weekNotes[pill.key] ? html`<div style=${{ position: 'absolute', top: 2, right: 3, fontSize: 6, lineHeight: 1 }}>📝</div>` : ''}
             </button>
           `;
         })}
@@ -9346,24 +9803,101 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   // RENDER — Rest day (non-cardio)
   // ═══════════════════════════════════════
   if (routine.rest && !routine.cardio) {
+    const yesterdayKey = (() => {
+      const keys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const idx = keys.indexOf(todayKey);
+      return keys[(idx - 1 + 7) % 7];
+    })();
+    const recoveringMuscles = getMuscleIntensityForDay(yesterdayKey);
+    const recoverySuggestions = [];
+    Object.keys(recoveringMuscles).forEach(slug => {
+      const tips = RECOVERY_SUGGESTIONS[slug];
+      if (tips) tips.forEach(tip => recoverySuggestions.push({ slug, tip }));
+    });
+    const nextWorkout = (() => {
+      const keys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      const todayIdx = keys.indexOf(todayKey);
+      for (let offset = 1; offset <= 7; offset++) {
+        const dk = keys[(todayIdx + offset) % 7];
+        const r = ROUTINES[dk];
+        if (r && !r.rest) return { key: dk, routine: r };
+      }
+      return null;
+    })();
+
     return html`
       <div className="stagger">
         ${headerEl}
         ${weekNavEl}
-        <div className="text-center px-5" style=${{ paddingTop: 40 }}>
-          ${showHIIT ? html`
+
+        ${showHIIT ? html`
+          <div className="text-center px-5" style=${{ paddingTop: 20 }}>
             <${HIITTimer} onClose=${() => setShowHIIT(false)} />
-          ` : html`
-            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 48, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>${LANG === 'en' ? 'REST DAY' : 'D\u00CDA DE DESCANSO'}</div>
-            <div style=${{ fontSize: 14, color: T.sub, lineHeight: 1.5 }}>${t('No hay entrenamiento programado hoy.')}${html`<br/>`}${t('Recuperaci\u00F3n activa o descanso total.')}</div>
-            <button onClick=${() => setShowHIIT(true)}
-              className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl press-scale"
-              style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
-            </button>
-          `}
-        </div>
+          </div>
+        ` : html`
+          <div className="px-5" style=${{ paddingTop: 8 }}>
+            <div className="text-center" style=${{ marginBottom: 16 }}>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 36, fontWeight: 900, color: T.muted + '30', letterSpacing: '-2px', lineHeight: 1, marginBottom: 8 }}>${LANG === 'en' ? 'REST DAY' : 'DÍA DE DESCANSO'}</div>
+              <div style=${{ fontSize: 13, color: T.sub }}>${t('Recuperación activa o descanso total.')}</div>
+            </div>
+
+            <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', marginBottom: 12 }}>
+              ${Object.keys(recoveringMuscles).length > 0 ? html`
+                <div style=${{ padding: '14px 16px 12px' }}>
+                  <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>${t('Músculos recuperándose')}</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    ${Object.entries(recoveringMuscles).sort((a, b) => b[1] - a[1]).map(([slug, level]) => {
+                      const info = MUSCLE_RECOVERY_LABELS[slug] || { label: slug, labelEn: slug };
+                      const name = LANG === 'en' ? info.labelEn : info.label;
+                      const colors = { 3: { bg: T.accentDim, text: T.accent }, 2: { bg: T.amberDim, text: T.amber }, 1: { bg: T.elevated, text: T.muted } };
+                      const c = colors[level] || colors[1];
+                      return html`<span key=${slug} className="px-2 py-0.5 rounded-full" style=${{ fontSize: 10, fontWeight: 700, background: c.bg, color: c.text }}>${name}</span>`;
+                    })}
+                  </div>
+                </div>
+                <div style=${{ height: 1, background: T.border }} />
+              ` : ''}
+
+              ${recoverySuggestions.length > 0 ? html`
+                <div style=${{ padding: '14px 16px 12px' }}>
+                  <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>${t('Sugerencias de recovery')}</div>
+                  <div className="flex flex-col gap-2">
+                    ${recoverySuggestions.slice(0, 4).map((item, i) => html`
+                      <div key=${i} className="flex items-start gap-2">
+                        <span style=${{ fontSize: 11, color: T.green, marginTop: 1, flexShrink: 0 }}>•</span>
+                        <span style=${{ fontSize: 12, color: T.sub, lineHeight: 1.4 }}>${LANG === 'en' ? item.tip.en : item.tip.es}</span>
+                      </div>
+                    `)}
+                  </div>
+                </div>
+                <div style=${{ height: 1, background: T.border }} />
+              ` : ''}
+
+              ${nextWorkout ? html`
+                <div style=${{ padding: '14px 16px' }}>
+                  <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>${t('Próximo entrenamiento')}</div>
+                  <div className="flex items-center gap-2">
+                    <span style=${{ fontSize: 14 }}>🏋🏼</span>
+                    <div>
+                      <div style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${dayLabel(nextWorkout.key)} — ${nextWorkout.routine.name}</div>
+                      <div style=${{ fontSize: 12, color: T.sub }}>${t(nextWorkout.routine.focus)}</div>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div className="text-center">
+              <button onClick=${() => setShowHIIT(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl press-scale"
+                style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>HIIT Timer</span>
+              </button>
+            </div>
+          </div>
+        `}
+
         <div className="bottom-spacer" />
       </div>
     `;
@@ -9445,64 +9979,123 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   // RENDER — Not started
   // ═══════════════════════════════════════
   if (!workoutStartTime) {
+    const estMinutes = exercises.length * 5;
+    const heroGrad = dark
+      ? 'linear-gradient(135deg, #142640 0%, #1e3a5c 50%, #253f68 100%)'
+      : 'linear-gradient(135deg, #1a2f4e 0%, #274472 50%, #2d5088 100%)';
+
     return html`
       <div className="stagger">
         ${headerEl}
         ${weekNavEl}
-        <div className="text-center px-5" style=${{ paddingTop: 8 }}>
-          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 60, fontWeight: 900, color: T.text + '12', letterSpacing: '-3px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>00:00</div>
-          <div style=${{ marginTop: 16, marginBottom: 4 }}>
-            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: T.text, letterSpacing: '-0.5px' }}>${routine.name}</span>
-          </div>
-          <div style=${{ fontSize: 13, color: T.muted, marginBottom: 20 }}>${t(routine.focus)} \u2014 ${exercises.length} ${t('ejercicios')}</div>
 
-          <div style=${{ marginBottom: 24 }}>
-            <div style=${{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>${t('\u00BFC\u00F3mo te sientes hoy?')}</div>
-            <div className="flex justify-center gap-3">
-              ${moods.map((mo, i) => html`
-                <button key=${i} onClick=${() => pickMood(i + 1)}
-                  className="flex flex-col items-center gap-1 press-scale"
-                  style=${{ opacity: mood === i + 1 ? 1 : mood === 0 ? 0.6 : 0.3, transform: mood === i + 1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>
-                  <span style=${{ fontSize: 28 }}>${mo.emoji}</span>
-                  <span style=${{ fontSize: 9, fontWeight: 600, color: mood === i + 1 ? T.accent : T.muted }}>${mo.label}</span>
-                </button>
-              `)}
+        <!-- Hero card -->
+        <div style=${{
+          margin: '0 16px', borderRadius: 24, padding: '24px 20px 20px',
+          background: heroGrad, position: 'relative', overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(26,47,78,0.25)'
+        }}>
+          <!-- Shimmer overlay (once) -->
+          <div style=${{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
+            animation: 'heroShimmer 2s ease-out forwards', pointerEvents: 'none'
+          }} />
+
+          <!-- Routine title -->
+          <div className="text-center" style=${{ position: 'relative', zIndex: 1 }}>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.2 }}>
+              ${routine.name}
             </div>
-          </div>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
+              ${t(routine.focus)}
+            </div>
 
-          <button onClick=${onStartTimer}
-            className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl press-scale"
-            style=${{ background: T.green, boxShadow: '0 4px 24px rgba(22,163,74,0.3)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>${t('Comenzar')}</span>
-          </button>
+            <!-- Metadata pills -->
+            <div className="flex justify-center gap-2" style=${{ marginTop: 12, flexWrap: 'wrap' }}>
+              <span style=${{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+                \uD83C\uDFAF ${exercises.length} ${t('ejercicios')}
+              </span>
+              <span style=${{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+                \u23F1\uFE0F ~${estMinutes} ${t('min estimados')}
+              </span>
+              <span style=${{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+                \uD83D\uDCCB ${t('Semana')} ${trainingWeek}
+              </span>
+            </div>
 
-          ${hasRecommendations && html`
-            <button onClick=${() => setShowCoach(true)}
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl press-scale"
-              style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '20' }}>
-              <span style=${{ fontSize: 16 }}>\uD83D\uDCCB</span>
-              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.accent }}>${t('Semana')} ${trainingWeek}</span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <!-- Timer ghost -->
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 48, fontWeight: 900, color: 'rgba(255,255,255,0.2)', letterSpacing: '-3px', lineHeight: 1, fontVariantNumeric: 'tabular-nums', marginTop: 20, marginBottom: 16 }}>00:00</div>
+
+            <!-- Mood selector -->
+            <div style=${{ marginBottom: 20 }}>
+              <div style=${{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>${t('\u00BFC\u00F3mo te sientes hoy?')}</div>
+              <div className="flex justify-center gap-3">
+                ${moods.map((mo, i) => html`
+                  <button key=${i} onClick=${() => pickMood(i + 1)}
+                    className="flex flex-col items-center gap-1 press-scale"
+                    style=${{
+                      opacity: mood === i + 1 ? 1 : mood === 0 ? 0.7 : 0.35,
+                      transform: mood === i + 1 ? 'scale(1.15)' : 'scale(1)',
+                      transition: 'all 0.2s',
+                      background: mood === i + 1 ? 'rgba(255,255,255,0.15)' : 'transparent',
+                      borderRadius: 12, padding: '6px 8px'
+                    }}>
+                    <span style=${{ fontSize: 28 }}>${mo.emoji}</span>
+                    <span style=${{ fontSize: 9, fontWeight: 600, color: mood === i + 1 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)' }}>${mo.label}</span>
+                  </button>
+                `)}
+              </div>
+            </div>
+
+            <!-- Start button -->
+            <button onClick=${onStartTimer}
+              className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl press-scale"
+              style=${{ background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#274472" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: '#274472', letterSpacing: '-0.3px' }}>${t('Comenzar')}</span>
             </button>
-          `}
+
+          </div>
         </div>
 
-        <!-- Exercise list preview -->
-        <div className="px-5 mt-6">
-          ${exercises.map((ex, i) => html`
-            <div key=${i} className="flex items-center gap-3 py-3 px-1"
-              style=${{ borderBottom: i < exercises.length - 1 ? '1px solid ' + T.border : 'none' }}>
-              <div style=${{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.input }}>
-                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 900, color: T.muted }}>${i + 1}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700, color: T.text, letterSpacing: '-0.2px' }}>${exName(ex)}</div>
-                <div style=${{ fontSize: 11, color: T.muted, marginTop: 1 }}>${t(ex.muscle)} \u00B7 ${ex.sets}\u00D7${ex.reps}</div>
-              </div>
-            </div>
-          `)}
+        <${WorkoutMusclePreview} todayKey=${todayKey} dark=${dark} />
+
+        <!-- Exercise carousel preview -->
+        <div style=${{ marginTop: 20, paddingLeft: 20, marginBottom: 8 }}>
+          <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${t('Ejercicios de hoy')}</span>
         </div>
+        <${WorkoutCarousel} routine=${routine} todayKey=${todayKey} unitPref=${unitPref} />
+
+        ${hasRecommendations && html`
+          <div style=${{ margin: '12px 16px 0', padding: '14px 16px', background: T.card, border: '1px solid ' + T.accent + '20', borderRadius: 14 }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span style=${{ fontSize: 15 }}>\uD83D\uDCCB</span>
+                <div>
+                  <div style=${{ fontSize: 13, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>
+                    ${t('Semana')} ${trainingWeek}${trainingWeek % 4 === 0 ? ' \u2014 ' + t('Descarga') : ''}
+                  </div>
+                  <div style=${{ fontSize: 11, color: T.muted, marginTop: 1 }}>
+                    ${(() => {
+                      const inc = recommendations.filter(r => r.status === 'increase').length;
+                      const deload = trainingWeek % 4 === 0;
+                      if (deload) return t('Reduce la intensidad para recuperar');
+                      if (inc > 0) return inc + ' ' + t('ejercicios con aumento sugerido');
+                      return t('Basado en tu rendimiento reciente');
+                    })()}
+                  </div>
+                </div>
+              </div>
+              <button onClick=${() => setShowCoach(true)}
+                className="press-scale px-3 py-1.5 rounded-lg"
+                style=${{ background: T.accentDim, border: '1px solid ' + T.accent + '20' }}>
+                <span style=${{ fontSize: 11, fontWeight: 700, color: T.accent }}>${t('Ver')}</span>
+              </button>
+            </div>
+          </div>
+        `}
+
         <div className="bottom-spacer" />
         ${renderCoachModal()}
       </div>
@@ -9518,7 +10111,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       ${weekNavEl}
 
       <!-- Timer Hero -->
-      <div className="text-center" style=${{ paddingTop: 10, paddingBottom: 10, marginLeft: 20, marginRight: 20, marginBottom: 12, borderRadius: 20, background: T.card, border: '1px solid ' + T.border }}>
+      <div className="text-center" style=${{ paddingTop: 10, paddingBottom: 10, marginLeft: 20, marginRight: 20, marginBottom: 12, borderRadius: 20, background: T.card, border: '1px solid ' + T.border, borderTop: '4px solid ' + (allDone ? T.green : T.green), transition: 'border-color 400ms ease' }}>
         <div className="flex items-center justify-center gap-2 mb-1">
           ${isPaused
             ? html`<span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 800, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.12em' }}>${t('Pausado')}</span>`
@@ -9554,8 +10147,8 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
           </button>
         </div>
         <div className="px-6 mt-2">
-          <div style=${{ height: 3, borderRadius: 2, background: T.input, overflow: 'hidden' }}>
-            <div style=${{ height: '100%', borderRadius: 2, width: progressPct + '%', background: allDone ? T.green : T.accent, transition: 'width 0.5s ease-out' }} />
+          <div style=${{ height: 6, borderRadius: 3, background: T.input, overflow: 'hidden' }}>
+            <div style=${{ height: '100%', borderRadius: 3, width: progressPct + '%', background: T.green, transition: 'width 600ms ease' }} />
           </div>
         </div>
         <div className="flex justify-around px-4 mt-2">
@@ -9642,6 +10235,160 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   `;
 }
 
+function WorkoutMusclePreview({ todayKey, dark }) {
+  const frontRef = useRef(null);
+  const backRef = useRef(null);
+  const intensity = useMemo(() => getMuscleIntensityForDay(todayKey), [todayKey]);
+  const themeKey = dark ? 'dark' : 'light';
+  const skinColor = MUSCLE_SKIN_COLORS[themeKey];
+  const strokeColor = MUSCLE_STROKE_COLORS[themeKey];
+  const restColor = dark ? '#1e2a3a' : '#dce6f0';
+
+  useEffect(() => {
+    [
+      { ref: frontRef, muscles: MUSCLE_BODY_FRONT, outline: MUSCLE_OUTLINE_FRONT, vb: '0 0 724 1448' },
+      { ref: backRef, muscles: MUSCLE_BODY_BACK, outline: MUSCLE_OUTLINE_BACK, vb: '724 0 724 1448' },
+    ].forEach(({ ref, muscles, outline, vb }) => {
+      const svg = ref.current;
+      if (!svg) return;
+      svg.innerHTML = '';
+      svg.setAttribute('viewBox', vb);
+      if (outline) {
+        const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('d', outline);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', dark ? '#1a2744' : '#b0c4d8');
+        p.setAttribute('stroke-width', '2');
+        svg.appendChild(p);
+      }
+      muscles.forEach(m => {
+        const isSkin = MUSCLE_SKIN_SLUGS.has(m.slug);
+        const level = intensity[m.slug] || 0;
+        let color;
+        if (isSkin) color = skinColor;
+        else if (level === 3) color = dark ? 'rgba(107,158,214,0.85)' : 'rgba(39,68,114,0.85)';
+        else if (level === 2) color = dark ? 'rgba(107,158,214,0.4)' : 'rgba(39,68,114,0.4)';
+        else if (level === 1) color = dark ? 'rgba(107,158,214,0.2)' : 'rgba(39,68,114,0.2)';
+        else color = restColor;
+        const allPaths = [];
+        if (m.path.common) allPaths.push(...m.path.common);
+        if (m.path.left) allPaths.push(...m.path.left);
+        if (m.path.right) allPaths.push(...m.path.right);
+        allPaths.forEach(d => {
+          const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+          p.setAttribute('d', d);
+          p.setAttribute('fill', color);
+          p.setAttribute('stroke', strokeColor);
+          p.setAttribute('stroke-width', '1');
+          svg.appendChild(p);
+        });
+      });
+    });
+  }, [todayKey, dark, intensity]);
+
+  const slugs = Object.entries(intensity).sort((a, b) => b[1] - a[1]);
+  const primarySlugs = slugs.filter(([, v]) => v === 3);
+  const secondarySlugs = slugs.filter(([, v]) => v === 2);
+  const chips = [...primarySlugs, ...secondarySlugs].slice(0, 4);
+
+  if (chips.length === 0) return '';
+
+  return html`
+    <div style=${{ margin: '16px 16px 0', padding: 16, background: T.card, border: '1px solid ' + T.border, borderRadius: 16 }}>
+      <div style=${{ fontSize: 13, fontWeight: 800, color: T.text, letterSpacing: '-0.3px', marginBottom: 12, textAlign: 'center' }}>
+        ${t('Músculos del día')}
+      </div>
+      <div className="flex justify-center items-center" style=${{ gap: 16 }}>
+        <div className="text-center">
+          <svg ref=${frontRef} width="120" height="240" style=${{ maxWidth: '100%', height: 'auto' }} />
+          <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted, marginTop: 4 }}>${t('Frontal')}</div>
+        </div>
+        <div className="text-center">
+          <svg ref=${backRef} width="120" height="240" style=${{ maxWidth: '100%', height: 'auto' }} />
+          <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted, marginTop: 4 }}>${t('Posterior')}</div>
+        </div>
+      </div>
+      <div className="flex justify-center flex-wrap gap-2" style=${{ marginTop: 12 }}>
+        ${chips.map(([slug, level]) => {
+          const info = MUSCLE_RECOVERY_LABELS[slug];
+          const label = info ? (LANG === 'en' ? info.labelEn : info.label) : slug;
+          const isPrimary = level === 3;
+          return html`
+            <span key=${slug} style=${{
+              fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
+              background: isPrimary ? T.accent : T.accentDim,
+              color: isPrimary ? '#fff' : T.accent,
+              border: isPrimary ? 'none' : '1px solid ' + T.accent + '30'
+            }}>${label}</span>
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
+function WorkoutCarousel({ routine, todayKey, unitPref }) {
+  const exercises = routine.exercises || [];
+  const lastStates = useMemo(() => {
+    const today = localDate();
+    for (let d = 1; d <= 28; d++) {
+      const prev = localDate(new Date(Date.now() - d * 86400000));
+      if (prev === today) continue;
+      const pk = 'ds_workout_' + todayKey + '_' + prev;
+      const ps = localStorage.getItem(pk);
+      if (ps) try { return JSON.parse(ps); } catch { return null; }
+    }
+    return null;
+  }, [todayKey]);
+
+  if (exercises.length === 0) return '';
+
+  return html`
+    <div>
+      <div className="carousel-scroll" style=${{
+        display: 'flex', gap: 10, overflowX: 'auto', scrollSnapType: 'x mandatory',
+        WebkitOverflowScrolling: 'touch', paddingBottom: 12, paddingLeft: 16, paddingRight: 40
+      }}>
+        ${exercises.map((ex, i) => {
+          const prevBest = lastStates && lastStates[i] ? lastStates[i].sets.filter(s => s.done && s.weight > 0).sort((a, b) => b.weight - a.weight)[0] : null;
+          const prevLabel = prevBest
+            ? t('\u00DAltimo') + ': ' + prevBest.weight + (unitPref === 'kg' ? 'kg' : 'lbs') + ' \u00D7 ' + (prevBest.reps || parseInt(ex.reps) || 0)
+            : t('Primera vez');
+          return html`
+            <div key=${ex.id} style=${{
+              flex: '0 0 155px', scrollSnapAlign: 'start', background: T.card,
+              border: '1px solid ' + T.border, borderRadius: 14, overflow: 'hidden'
+            }}>
+              ${ex.gif ? html`
+                <div style=${{ width: '100%', height: 100, overflow: 'hidden', position: 'relative' }}>
+                  <div className="skeleton-gif" style=${{ width: '100%', height: 100, position: 'absolute', top: 0, left: 0 }} />
+                  <img src=${ex.gif} alt=${exName(ex)} loading="lazy"
+                    style=${{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1 }}
+                    onLoad=${(e) => { const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }}
+                    onError=${(e) => { e.target.style.display = 'none'; const sk = e.target.previousElementSibling; if (sk) sk.style.display = 'none'; }} />
+                </div>
+              ` : html`
+                <div style=${{ width: '100%', height: 100, background: T.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <${Barbell} size=${28} weight="duotone" color=${T.muted} />
+                </div>
+              `}
+              <div style=${{ padding: '8px 10px 10px' }}>
+                <div style=${{ fontSize: 12, fontWeight: 700, color: T.text, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  ${exName(ex)}
+                </div>
+                <div style=${{ fontSize: 11, color: T.sub, marginTop: 2 }}>${ex.sets}\u00D7${ex.reps}</div>
+                <div style=${{ fontSize: 10, color: T.muted, fontStyle: 'italic', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  ${prevLabel}
+                </div>
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
 function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddWater, onUndoWater, waterLog, unitPref, onUnitToggle, exerciseStates, onExerciseUpdate, workoutStartTime, onStartTimer, dark, onThemeToggle, onLangToggle, onOpenPerfil }) {
   const todayKey = getTodayKey();
   const routine = ROUTINES[todayKey];
@@ -9664,8 +10411,15 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
   const streak = getStreak();
   const profileName = (() => { try { return localStorage.getItem('ds_profile_name') || 'Felipe'; } catch { return 'Felipe'; } })();
 
+  // Daily motivation quote
+  const motivIdx = localDate().split('-').reduce((acc, p) => acc + parseInt(p), 0) % MOTIVATION_QUOTES.length;
+  const dailyQuote = LANG === 'en' ? MOTIVATION_QUOTES[motivIdx].en : MOTIVATION_QUOTES[motivIdx].es;
+
   // Celebration modal
   const [showCelebration, setShowCelebration] = useState(false);
+  const [workoutNote, setWorkoutNote] = useState(() => {
+    try { return localStorage.getItem('ds_workout_note_' + localDate()) || ''; } catch { return ''; }
+  });
   const celebratedKey = 'ds_workout_celebrated_' + localDate();
 
   useEffect(() => {
@@ -9749,7 +10503,10 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
           </div>
         </div>
-        <div style=${{ marginTop: 12 }}>
+        <div style=${{ textAlign: 'center', marginTop: 10 }}>
+          <span style=${{ fontSize: 12, fontStyle: 'italic', color: T.muted, lineHeight: '1.4' }}>${'\u201C'}${dailyQuote}${'\u201D'}</span>
+        </div>
+        <div style=${{ marginTop: 8 }}>
           <div style=${{ fontSize: 14, fontWeight: 500, color: T.sub, marginBottom: 2 }}>
             ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
@@ -9785,15 +10542,19 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
               ` : ''}
             </div>
           ` : null}>
-          <${WorkoutCard}
-            routine=${routine}
-            unitPref=${unitPref}
-            onUnitToggle=${onUnitToggle}
-            exercises=${exerciseStates}
-            onExerciseUpdate=${onExerciseUpdate}
-            cardioDone=${cardioDone}
-            onCardioDone=${handleCardioDone}
-          />
+          ${routine.rest || routine.cardio ? html`
+            <${WorkoutCard}
+              routine=${routine}
+              unitPref=${unitPref}
+              onUnitToggle=${onUnitToggle}
+              exercises=${exerciseStates}
+              onExerciseUpdate=${onExerciseUpdate}
+              cardioDone=${cardioDone}
+              onCardioDone=${handleCardioDone}
+            />
+          ` : html`
+            <${WorkoutCarousel} routine=${routine} todayKey=${todayKey} unitPref=${unitPref} />
+          `}
         <//>
       </div>
 
@@ -9822,8 +10583,8 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             style=${{
               left: Math.random() * 100 + '%', top: -10,
               background: ['#16a34a', '#d97706', '#2563eb', '#dc2626', '#9333ea', '#0ea5e9'][i % 6],
-              animationDelay: (Math.random() * 1.2) + 's',
-              animationDuration: (1.8 + Math.random() * 1.5) + 's',
+              animationDelay: (i * 40 + Math.random() * 200) + 'ms',
+              animationDuration: (1.5 + Math.random() * 2) + 's',
               width: (6 + Math.random() * 6) + 'px',
               height: (6 + Math.random() * 6) + 'px',
             }} />
@@ -9931,6 +10692,28 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
               </div>
             ` : '';
           })()}
+
+          <div style=${{ marginBottom: 16 }}>
+            <textarea
+              value=${workoutNote}
+              onInput=${(e) => {
+                const val = e.target.value.slice(0, 200);
+                setWorkoutNote(val);
+                try { if (val.trim()) localStorage.setItem('ds_workout_note_' + localDate(), val); else localStorage.removeItem('ds_workout_note_' + localDate()); } catch {}
+              }}
+              placeholder=${t('¿Algo que anotar?') + ' ' + t('Ej: dormí mal, dolor en hombro...')}
+              rows="2"
+              style=${{
+                width: '100%', resize: 'none', fontSize: 13, fontFamily: 'Inter, sans-serif',
+                background: T.input, color: T.text, border: '1px solid ' + T.border,
+                borderRadius: 12, padding: '10px 12px', outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus=${(e) => { e.target.style.borderColor = T.accent; }}
+              onBlur=${(e) => { e.target.style.borderColor = T.border; }}
+            />
+            <div style=${{ fontSize: 10, color: T.muted, textAlign: 'right', marginTop: 4 }}>${workoutNote.length}/200</div>
+          </div>
 
           <div className="flex gap-3">
             <button onClick=${() => setShowCelebration(false)}
@@ -10401,9 +11184,9 @@ function App() {
   return html`
     ${showSplash && html`
       <div className="splash-screen fixed inset-0 z-[100] flex flex-col items-center justify-center"
-        style=${{ background: '#f4f6f9' }}>
+        style=${{ background: T.bg }}>
         <img src="logo-icon.png" alt="" className="splash-logo" style=${{ height: 80, width: 'auto', marginBottom: 16 }} />
-        <div className="splash-text" style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: '#274472', letterSpacing: '-1px' }}>DontSkip</div>
+        <div className="splash-text" style=${{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: T.accent, letterSpacing: '-1px' }}>DontSkip</div>
       </div>
     `}
     <div id="safe-bar" style=${{ position: 'fixed', top: 0, left: 0, right: 0, height: 'var(--safe-top)', zIndex: 9999, pointerEvents: 'none', background: T.bg, transition: 'background 0.3s' }} />
