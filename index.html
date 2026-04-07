@@ -9809,6 +9809,38 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       return keys[(idx - 1 + 7) % 7];
     })();
     const recoveringMuscles = getMuscleIntensityForDay(yesterdayKey);
+
+    // Recovery battery calculation
+    const RECOVERY_HOURS = { 3: { legs: 72, upper: 48 }, 2: { legs: 36, upper: 36 }, 1: { legs: 24, upper: 24 } };
+    const LEG_MUSCLES = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
+    const lastWorkoutTime = (() => {
+      const keys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      for (let daysBack = 1; daysBack <= 3; daysBack++) {
+        const idx = (keys.indexOf(todayKey) - daysBack + 7) % 7;
+        const dk = keys[idx];
+        const d = new Date(); d.setDate(d.getDate() - daysBack);
+        const ds = localDate(d);
+        try {
+          const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
+          if (ts) return Number(ts);
+          const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+          if (ws) { const d2 = new Date(ds + 'T07:00:00'); return d2.getTime(); }
+        } catch {}
+      }
+      return null;
+    })();
+    const hoursElapsed = lastWorkoutTime ? Math.max(0, (Date.now() - lastWorkoutTime) / 3600000) : null;
+    const recoveryItems = Object.entries(recoveringMuscles)
+      .sort((a, b) => b[1] - a[1])
+      .map(([slug, level]) => {
+        const isLeg = LEG_MUSCLES.has(slug);
+        const totalH = RECOVERY_HOURS[level] ? RECOVERY_HOURS[level][isLeg ? 'legs' : 'upper'] : 24;
+        const pct = hoursElapsed != null ? Math.min(100, Math.round((hoursElapsed / totalH) * 100)) : 0;
+        const remainH = hoursElapsed != null ? Math.max(0, Math.round(totalH - hoursElapsed)) : totalH;
+        return { slug, level, pct, remainH, totalH };
+      });
+    const overallPct = recoveryItems.length > 0 ? Math.round(recoveryItems.reduce((s, r) => s + r.pct, 0) / recoveryItems.length) : 0;
+
     const recoverySuggestions = [];
     Object.keys(recoveringMuscles).forEach(slug => {
       const tips = RECOVERY_SUGGESTIONS[slug];
@@ -9842,16 +9874,37 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             </div>
 
             <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', marginBottom: 12 }}>
-              ${Object.keys(recoveringMuscles).length > 0 ? html`
-                <div style=${{ padding: '14px 16px 12px' }}>
-                  <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>${t('Músculos recuperándose')}</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    ${Object.entries(recoveringMuscles).sort((a, b) => b[1] - a[1]).map(([slug, level]) => {
-                      const info = MUSCLE_RECOVERY_LABELS[slug] || { label: slug, labelEn: slug };
+              ${recoveryItems.length > 0 ? html`
+                <div style=${{ padding: '16px 16px 14px' }}>
+                  <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
+                    <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${t('Músculos recuperándose')}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span style=${{ fontSize: 11 }}>🔋</span>
+                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: overallPct >= 80 ? T.green : overallPct >= 50 ? T.amber : T.red }}>${overallPct}%</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    ${recoveryItems.map(item => {
+                      const info = MUSCLE_RECOVERY_LABELS[item.slug] || { label: item.slug, labelEn: item.slug };
                       const name = LANG === 'en' ? info.labelEn : info.label;
-                      const colors = { 3: { bg: T.accentDim, text: T.accent }, 2: { bg: T.amberDim, text: T.amber }, 1: { bg: T.elevated, text: T.muted } };
-                      const c = colors[level] || colors[1];
-                      return html`<span key=${slug} className="px-2 py-0.5 rounded-full" style=${{ fontSize: 10, fontWeight: 700, background: c.bg, color: c.text }}>${name}</span>`;
+                      const barColor = item.pct >= 80 ? T.green : item.pct >= 50 ? T.amber : T.accent;
+                      const statusText = item.pct >= 100
+                        ? (LANG === 'en' ? 'Recovered' : 'Recuperado')
+                        : '~' + item.remainH + 'h';
+                      return html`
+                        <div key=${item.slug}>
+                          <div className="flex items-center justify-between" style=${{ marginBottom: 3 }}>
+                            <span style=${{ fontSize: 12, fontWeight: 600, color: T.text }}>${name}</span>
+                            <div className="flex items-center gap-2">
+                              <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800, color: barColor }}>${item.pct}%</span>
+                              <span style=${{ fontSize: 10, color: T.muted, minWidth: 50, textAlign: 'right' }}>${item.pct >= 100 ? '✓' : statusText}</span>
+                            </div>
+                          </div>
+                          <div style=${{ height: 6, borderRadius: 3, background: T.input, overflow: 'hidden' }}>
+                            <div style=${{ height: '100%', width: item.pct + '%', borderRadius: 3, background: barColor, transition: 'width 600ms ease' }} />
+                          </div>
+                        </div>
+                      `;
                     })}
                   </div>
                 </div>
