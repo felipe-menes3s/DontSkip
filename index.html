@@ -3137,7 +3137,7 @@ function SupplementsCheck() {
       <div className="flex gap-2">
         ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), 'rgba(30,120,70,0.08)', 'rgba(30,120,70,0.25)', 'rgb(30,120,70)', 'img/creatine.jpg')}
         ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)', 'img/whey.jpg')}
-        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(180,140,50,0.08)', 'rgba(180,140,50,0.2)', 'rgb(180,140,50)', 'img/omega3.jpg')}
+        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(234,179,8,0.08)', 'rgba(234,179,8,0.2)', 'rgb(202,138,4)', 'img/omega3.jpg')}
       </div>
     </div>
   `;
@@ -4167,8 +4167,8 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
               <g clipPath="url(#glassClip)">
                 <defs>
                   <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor=${T.water} stopOpacity="0.35" />
-                    <stop offset="100%" stopColor=${T.water} stopOpacity="0.55" />
+                    <stop offset="0%" stopColor="#d4eaf7" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#a8d4f0" stopOpacity="0.7" />
                   </linearGradient>
                 </defs>
                 <!-- Base fill -->
@@ -4178,19 +4178,19 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
                 <!-- Wave 1: deep, slow -->
                 <g style=${{ transform: 'translateY(' + wTop + 'px)', transition: 'transform 600ms ease' }}>
                   <path d="M-40,8 C-25,0 -10,16 10,8 C30,0 50,16 70,8 C90,0 110,16 130,8 C150,0 170,16 200,8 V130 H-40 Z"
-                    fill=${T.water} opacity="0.5"
+                    fill="#b8ddf0" opacity="0.6"
                     style=${{ animation: 'waveMove1 4s linear infinite' }} />
                 </g>
                 <!-- Wave 2: mid-tone, alternate direction -->
                 <g style=${{ transform: 'translateY(' + (wTop + 3) + 'px)', transition: 'transform 600ms ease' }}>
                   <path d="M-40,8 C-20,0 0,16 20,8 C40,0 60,16 80,8 C100,0 120,16 140,8 C160,0 180,16 200,8 V130 H-40 Z"
-                    fill=${T.water} opacity="0.35"
+                    fill="#a3d5ed" opacity="0.45"
                     style=${{ animation: 'waveMove2 5s linear infinite' }} />
                 </g>
                 <!-- Wave 3: near-white, fast -->
                 <g style=${{ transform: 'translateY(' + (wTop + 5) + 'px)', transition: 'transform 600ms ease' }}>
                   <path d="M-40,8 C-15,0 5,16 30,8 C55,0 75,16 100,8 C125,0 145,16 170,8 C195,0 215,16 240,8 V130 H-40 Z"
-                    fill=${T.waterDim} opacity="0.5"
+                    fill="#e3f1fa" opacity="0.45"
                     style=${{ animation: 'waveMove1 2.5s linear infinite' }} />
                 </g>
                 <!-- Bubbles -->
@@ -4202,7 +4202,7 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
                   { cx: 48, r: 2.5, dur: '3.2s', delay: '0.4s' },
                 ].map((b, i) => html`
                   <circle key=${i} cx=${b.cx} cy="115" r=${b.r}
-                    fill=${T.card} opacity="0.5"
+                    fill="#fff" opacity="0.5"
                     style=${{ animation: 'bubbleRise ' + b.dur + ' ease-in infinite ' + b.delay }} />
                 `)}
               </g>
@@ -6009,7 +6009,7 @@ function Achievements() {
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <${SectionHeader} title=${"\uD83C\uDF1F " + t('Logros')} />
       <div style=${{ fontSize: 12, color: T.sub, marginBottom: 12 }}>${unlocked.length} ${LANG === 'en' ? 'of' : 'de'} ${badges.length} ${t('desbloqueados')}</div>
-      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, overflow: 'hidden' }}>
         ${unlocked.map((b, i) => {
           const isNew = newlyUnlocked.includes(b.id);
           return html`
@@ -6017,8 +6017,9 @@ function Achievements() {
               onClick=${() => handleBadgeTap(b)}
               style=${{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                padding: '12px 8px', borderRadius: 14, cursor: 'pointer', position: 'relative',
+                padding: '12px 6px', borderRadius: 14, cursor: 'pointer', position: 'relative',
                 background: T.accentDim, border: '1px solid ' + T.accent + '20',
+                minWidth: 0, overflow: 'hidden',
                 animationDelay: isNew ? '0s' : (i * 0.08) + 's',
               }}>
               ${isNew && html`
@@ -6042,8 +6043,8 @@ function Achievements() {
           <div key=${b.id} onClick=${() => handleBadgeTap(b)}
             style=${{
               display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-              padding: '12px 8px', borderRadius: 14, cursor: 'pointer', position: 'relative',
-              background: T.elevated, opacity: 0.45,
+              padding: '12px 6px', borderRadius: 14, cursor: 'pointer', position: 'relative',
+              background: T.elevated, opacity: 0.45, minWidth: 0, overflow: 'hidden',
             }}>
             <span style=${{ fontSize: 28, filter: 'grayscale(1) blur(1px)' }}>${b.icon}</span>
             <span style=${{ position: 'absolute', top: 14, fontSize: 16 }}>${'\uD83D\uDD12'}</span>
@@ -9533,7 +9534,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       try { const n = localStorage.getItem('ds_workout_note_' + ds); if (n) notes[dk] = true; } catch {}
     });
     return notes;
-  }, [workoutNote.length > 0]);
+  }, []);
 
   // ── Shared UI elements ──
   const headerEl = html`
@@ -9803,40 +9804,46 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   // RENDER — Rest day (non-cardio)
   // ═══════════════════════════════════════
   if (routine.rest && !routine.cardio) {
-    const yesterdayKey = (() => {
-      const keys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-      const idx = keys.indexOf(todayKey);
-      return keys[(idx - 1 + 7) % 7];
-    })();
-    const recoveringMuscles = getMuscleIntensityForDay(yesterdayKey);
-
-    // Recovery battery calculation
+    // Look back up to 3 days for recovering muscles (not just yesterday)
     const RECOVERY_HOURS = { 3: { legs: 72, upper: 48 }, 2: { legs: 36, upper: 36 }, 1: { legs: 24, upper: 24 } };
     const LEG_MUSCLES = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
-    const lastWorkoutTime = (() => {
-      const keys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-      for (let daysBack = 1; daysBack <= 3; daysBack++) {
-        const idx = (keys.indexOf(todayKey) - daysBack + 7) % 7;
-        const dk = keys[idx];
-        const d = new Date(); d.setDate(d.getDate() - daysBack);
-        const ds = localDate(d);
-        try {
-          const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
-          if (ts) return Number(ts);
+    const recoveringMuscles = {};
+    const muscleWorkoutTime = {};
+    const weekKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    for (let daysBack = 1; daysBack <= 3; daysBack++) {
+      const idx = (weekKeys.indexOf(todayKey) - daysBack + 7) % 7;
+      const dk = weekKeys[idx];
+      const d = new Date(); d.setDate(d.getDate() - daysBack);
+      const ds = localDate(d);
+      const dayIntensity = getMuscleIntensityForDay(dk);
+      if (Object.keys(dayIntensity).length === 0) continue;
+      let workoutTs = null;
+      try {
+        const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
+        if (ts) workoutTs = Number(ts);
+        else {
           const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
-          if (ws) { const d2 = new Date(ds + 'T07:00:00'); return d2.getTime(); }
-        } catch {}
-      }
-      return null;
-    })();
-    const hoursElapsed = lastWorkoutTime ? Math.max(0, (Date.now() - lastWorkoutTime) / 3600000) : null;
+          if (ws) workoutTs = new Date(ds + 'T07:00:00').getTime();
+        }
+      } catch {}
+      Object.entries(dayIntensity).forEach(([slug, level]) => {
+        if (!recoveringMuscles[slug] || recoveringMuscles[slug] < level) {
+          recoveringMuscles[slug] = level;
+          if (workoutTs) muscleWorkoutTime[slug] = workoutTs;
+        }
+      });
+    }
+
+    const now = Date.now();
     const recoveryItems = Object.entries(recoveringMuscles)
       .sort((a, b) => b[1] - a[1])
       .map(([slug, level]) => {
         const isLeg = LEG_MUSCLES.has(slug);
         const totalH = RECOVERY_HOURS[level] ? RECOVERY_HOURS[level][isLeg ? 'legs' : 'upper'] : 24;
-        const pct = hoursElapsed != null ? Math.min(100, Math.round((hoursElapsed / totalH) * 100)) : 0;
-        const remainH = hoursElapsed != null ? Math.max(0, Math.round(totalH - hoursElapsed)) : totalH;
+        const wt = muscleWorkoutTime[slug];
+        const hoursEl = wt ? Math.max(0, (now - wt) / 3600000) : null;
+        const pct = hoursEl != null ? Math.min(100, Math.round((hoursEl / totalH) * 100)) : 0;
+        const remainH = hoursEl != null ? Math.max(0, Math.round(totalH - hoursEl)) : totalH;
         return { slug, level, pct, remainH, totalH };
       });
     const overallPct = recoveryItems.length > 0 ? Math.round(recoveryItems.reduce((s, r) => s + r.pct, 0) / recoveryItems.length) : 0;
@@ -9857,6 +9864,10 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
       return null;
     })();
 
+    // Battery SVG colors
+    const battColor = overallPct >= 80 ? T.green : overallPct >= 50 ? T.amber : T.red;
+    const battDimColor = overallPct >= 80 ? (T.greenDim || T.green + '20') : overallPct >= 50 ? (T.amberDim || T.amber + '20') : (T.red + '20');
+
     return html`
       <div className="stagger">
         ${headerEl}
@@ -9873,16 +9884,61 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
               <div style=${{ fontSize: 13, color: T.sub }}>${t('Recuperación activa o descanso total.')}</div>
             </div>
 
+            <!-- Battery Recovery Card -->
+            <div className="ds-card" style=${{ padding: '20px', marginBottom: 12, textAlign: 'center' }}>
+              <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+                <!-- Battery SVG -->
+                <div style=${{ position: 'relative', width: 80, height: 140 }}>
+                  <svg width="80" height="140" viewBox="0 0 80 140">
+                    <!-- Battery cap -->
+                    <rect x="24" y="2" width="32" height="10" rx="4" ry="4" fill=${T.muted + '40'} />
+                    <!-- Battery body -->
+                    <rect x="8" y="12" width="64" height="120" rx="10" ry="10" fill="none" stroke=${T.muted + '40'} strokeWidth="3" />
+                    <!-- Battery fill (from bottom) -->
+                    <clipPath id="batt-clip">
+                      <rect x="12" y=${16 + (112 * (1 - overallPct / 100))} width="56" height=${112 * overallPct / 100} rx="7" ry="7" />
+                    </clipPath>
+                    <rect x="12" y="16" width="56" height="112" rx="7" ry="7" fill=${battDimColor} />
+                    <rect x="12" y=${16 + (112 * (1 - overallPct / 100))} width="56" height=${112 * overallPct / 100} rx="7" ry="7" fill=${battColor} style=${{ transition: 'all 800ms ease' }}>
+                      <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+                    </rect>
+                    <!-- Lightning bolt (charging) -->
+                    ${overallPct < 100 ? html`
+                      <g transform="translate(28, 50)" opacity="0.9">
+                        <polygon points="12,0 0,22 10,22 8,40 24,16 14,16" fill="#fff" opacity="0.85">
+                          <animate attributeName="opacity" values="0.6;0.95;0.6" dur="1.5s" repeatCount="indefinite" />
+                        </polygon>
+                      </g>
+                    ` : html`
+                      <g transform="translate(22, 52)">
+                        <polyline points="10,18 16,24 30,10" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                      </g>
+                    `}
+                  </svg>
+                </div>
+                <!-- Battery info -->
+                <div style=${{ textAlign: 'left' }}>
+                  <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 42, fontWeight: 900, color: battColor, lineHeight: 1, letterSpacing: '-2px' }}>${overallPct}%</div>
+                  <div style=${{ fontSize: 12, fontWeight: 600, color: T.sub, marginTop: 4 }}>${overallPct >= 100
+                    ? (LANG === 'en' ? 'Fully recovered' : 'Recuperado')
+                    : overallPct >= 80
+                      ? (LANG === 'en' ? 'Almost there' : 'Casi listo')
+                      : (LANG === 'en' ? 'Recovering...' : 'Recuperando...')
+                  }</div>
+                  ${overallPct < 100 ? html`
+                    <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>
+                      ⚡ ${LANG === 'en' ? 'Charging' : 'Cargando'}...
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Muscle detail card -->
             <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', marginBottom: 12 }}>
               ${recoveryItems.length > 0 ? html`
                 <div style=${{ padding: '16px 16px 14px' }}>
-                  <div className="flex items-center justify-between" style=${{ marginBottom: 12 }}>
-                    <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>${t('Músculos recuperándose')}</div>
-                    <div className="flex items-center gap-1.5">
-                      <span style=${{ fontSize: 11 }}>🔋</span>
-                      <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 900, color: overallPct >= 80 ? T.green : overallPct >= 50 ? T.amber : T.red }}>${overallPct}%</span>
-                    </div>
-                  </div>
+                  <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>${t('Músculos recuperándose')}</div>
                   <div className="flex flex-col gap-3">
                     ${recoveryItems.map(item => {
                       const info = MUSCLE_RECOVERY_LABELS[item.slug] || { label: item.slug, labelEn: item.slug };
@@ -10556,10 +10612,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: T.amber }}>${LANG === 'en' ? 'Day' : 'Día'} ${streak}</span>
           </div>
         </div>
-        <div style=${{ textAlign: 'center', marginTop: 10 }}>
-          <span style=${{ fontSize: 12, fontStyle: 'italic', color: T.muted, lineHeight: '1.4' }}>${'\u201C'}${dailyQuote}${'\u201D'}</span>
-        </div>
-        <div style=${{ marginTop: 8 }}>
+        <div style=${{ marginTop: 12 }}>
           <div style=${{ fontSize: 14, fontWeight: 500, color: T.sub, marginBottom: 2 }}>
             ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
@@ -10572,6 +10625,9 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
             ${todayDayLabel} \u00B7 ${t(routine.name)}
           </div>
           <${WeekStrip} />
+        </div>
+        <div style=${{ marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + T.border, textAlign: 'center' }}>
+          <span style=${{ fontSize: 11, fontWeight: 500, color: T.muted, letterSpacing: '0.01em', lineHeight: 1.4 }}>${'\u201C'}${dailyQuote}${'\u201D'}</span>
         </div>
       </div>
 
@@ -10914,20 +10970,8 @@ function App() {
 
   // Swipe between tabs (#16)
   const swipeRef = useRef({ startX: 0, startY: 0 });
-  const handleTouchStart = useCallback((e) => {
-    swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY };
-  }, []);
-  const handleTouchEnd = useCallback((e) => {
-    const dx = e.changedTouches[0].clientX - swipeRef.current.startX;
-    const dy = e.changedTouches[0].clientY - swipeRef.current.startY;
-    if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.7) return; // too short or too vertical
-    setTab(prev => {
-      const idx = tabOrder.indexOf(prev);
-      if (dx < 0 && idx < tabOrder.length - 1) { setTabDir('right'); prevTabRef.current = idx + 1; setTabKey(k => k + 1); return tabOrder[idx + 1]; }
-      if (dx > 0 && idx > 0) { setTabDir('left'); prevTabRef.current = idx - 1; setTabKey(k => k + 1); return tabOrder[idx - 1]; }
-      return prev;
-    });
-  }, []);
+  const handleTouchStart = useCallback(() => {}, []);
+  const handleTouchEnd = useCallback(() => {}, []);
 
   const handleThemeToggle = useCallback(() => {
     setTheme(prev => {
