@@ -243,6 +243,10 @@ input[type=number] { -moz-appearance: textfield; }
 @keyframes achievePop { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.3); } 100% { transform: scale(1); opacity: 1; } }
 .achieve-pop { animation: achievePop 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes achieveConfetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(-40px) rotate(180deg); opacity: 0; } }
+@keyframes sheen { 0% { transform: translateX(-100%) rotate(25deg); } 100% { transform: translateX(200%) rotate(25deg); } }
+.glass-badge { position: relative; overflow: hidden; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.glass-badge::after { content: ''; position: absolute; top: -50%; left: -50%; width: 40%; height: 200%; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.18) 55%, transparent 60%); pointer-events: none; animation: sheen 4s ease-in-out infinite; }
+.glass-badge-new::after { animation: sheen 2s ease-in-out 1; }
 .carousel-scroll::-webkit-scrollbar { display: none; }
 @keyframes heroShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 </style>
@@ -2286,6 +2290,36 @@ function updateStatsOnComplete() {
   } catch {}
 }
 
+// One-time migration: recalculate totalDays including cardio Saturdays
+(function migrateStatsCount() {
+  try {
+    if (localStorage.getItem('ds_stats_migrated_v2') === 'true') return;
+    const stats = JSON.parse(localStorage.getItem('ds_stats') || '{}');
+    if (!stats.startDate) return;
+    const start = new Date(stats.startDate + 'T00:00:00');
+    const today = new Date();
+    let count = 0;
+    for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+      const ds = localDate(d);
+      const dk = DAYS[d.getDay()];
+      const r = ROUTINES[dk];
+      if (r && r.cardio) {
+        if (localStorage.getItem('ds_cardio_done_' + ds) === 'true') count++;
+      } else if (r && !r.rest && r.exercises) {
+        const saved = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+        if (saved) {
+          const st = JSON.parse(saved);
+          if (Array.isArray(st) && st.some(e => e && e.sets && e.sets.some(s => s.done))) count++;
+        }
+      }
+    }
+    if (count > (stats.totalDays || 0)) {
+      stats.totalDays = count;
+      localStorage.setItem('ds_stats', JSON.stringify(stats));
+    }
+    localStorage.setItem('ds_stats_migrated_v2', 'true');
+  } catch {}
+})();
 
 // ── Jarvis Engine ────────────────────────────────────────────────────
 
@@ -3106,12 +3140,11 @@ function SupplementsCheck() {
         transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
         minWidth: 0
       }}>
-      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}>
+      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 40 }}>
         ${image ? html`
           <img src=${image} alt=${label}
-            style=${{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover',
-              opacity: checked ? 1 : 0.55, transition: 'opacity 0.2s',
-              border: '2px solid ' + (checked ? colorAccent : T.border) }} />
+            style=${{ width: 48, height: 36, borderRadius: 8, objectFit: 'contain',
+              opacity: checked ? 1 : 0.55, transition: 'opacity 0.2s' }} />
         ` : html`
           <span style=${{ fontSize: 24, lineHeight: 1, opacity: checked ? 1 : 0.7, transition: 'opacity 0.2s' }}>${emoji}</span>
         `}
@@ -3349,6 +3382,156 @@ function DashboardStats({ protein, calories, waterMl, gymDone, gymTotal }) {
 
 
 // ── Day Summary ─────────────────────────────────────────────────────
+
+// ── Recovery Battery (compact, for Hoy tab) ──────────────────────────
+function RecoveryBattery() {
+  const RECOVERY_HRS = { 3: { legs: 72, upper: 48 }, 2: { legs: 36, upper: 36 }, 1: { legs: 24, upper: 24 } };
+  const LEG_MUSC = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
+  const weekKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const todayKey = getTodayKey();
+  const recMuscles = {};
+  const muscWt = {};
+  const now = Date.now();
+  for (let back = 1; back <= 3; back++) {
+    const idx = (weekKeys.indexOf(todayKey) - back + 7) % 7;
+    const dk = weekKeys[idx];
+    const d = new Date(); d.setDate(d.getDate() - back);
+    const ds = localDate(d);
+    const di = getMuscleIntensityForDay(dk);
+    if (Object.keys(di).length === 0) continue;
+    let wts = null;
+    try {
+      const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
+      if (ts) wts = Number(ts);
+      else { const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds); if (ws) wts = new Date(ds + 'T07:00:00').getTime(); }
+    } catch {}
+    Object.entries(di).forEach(([s, l]) => {
+      if (!recMuscles[s] || recMuscles[s] < l) { recMuscles[s] = l; if (wts) muscWt[s] = wts; }
+    });
+  }
+  const items = Object.entries(recMuscles).sort((a, b) => b[1] - a[1]).map(([slug, level]) => {
+    const isLeg = LEG_MUSC.has(slug);
+    const totalH = RECOVERY_HRS[level] ? RECOVERY_HRS[level][isLeg ? 'legs' : 'upper'] : 24;
+    const wt = muscWt[slug];
+    const hrsEl = wt ? Math.max(0, (now - wt) / 3600000) : null;
+    const pct = hrsEl != null ? Math.min(100, Math.round((hrsEl / totalH) * 100)) : 0;
+    return { slug, pct };
+  });
+  if (items.length === 0) return html``;
+  const overall = Math.round(items.reduce((s, r) => s + r.pct, 0) / items.length);
+  if (overall >= 100) return html``;
+  const battColor = overall >= 80 ? T.green : overall >= 50 ? T.amber : T.red;
+  const fillH = Math.round(28 * overall / 100);
+
+  return html`
+    <div className="px-5 fade-up" style=${{ marginBottom: 12 }}>
+      <div className="ds-card" style=${{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style=${{ position: 'relative', width: 36, height: 44, flexShrink: 0 }}>
+          <svg width="36" height="44" viewBox="0 0 36 44">
+            <rect x="11" y="1" width="14" height="5" rx="2" fill=${T.muted + '40'} />
+            <rect x="4" y="6" width="28" height="36" rx="5" fill="none" stroke=${T.muted + '40'} strokeWidth="2" />
+            <rect x="7" y=${9 + (28 - fillH)} width="22" height=${fillH} rx="3" fill=${battColor}>
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+            </rect>
+            ${overall < 100 ? html`
+              <g transform="translate(12, 16)" opacity="0.85">
+                <polygon points="6,0 0,11 5,11 4,20 12,8 7,8" fill="#fff" opacity="0.8" />
+              </g>
+            ` : ''}
+          </svg>
+        </div>
+        <div style=${{ flex: 1, minWidth: 0 }}>
+          <div className="flex items-center justify-between">
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: T.text }}>${LANG === 'en' ? 'Muscle Recovery' : 'Recuperación muscular'}</span>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 900, color: battColor }}>${overall}%</span>
+          </div>
+          <div style=${{ height: 5, borderRadius: 3, background: T.input, overflow: 'hidden', marginTop: 6 }}>
+            <div style=${{ height: '100%', width: overall + '%', borderRadius: 3, background: battColor, transition: 'width 600ms ease' }} />
+          </div>
+          <div style=${{ fontSize: 10, color: T.muted, marginTop: 4 }}>⚡ ${overall >= 80
+            ? (LANG === 'en' ? 'Almost recovered' : 'Casi recuperado')
+            : (LANG === 'en' ? 'Recovering...' : 'Recuperando...')
+          } — ${items.length} ${LANG === 'en' ? 'muscle groups' : 'grupos musculares'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Weekly Exercise Gallery ──────────────────────────────────────────
+function WeeklyExerciseGallery() {
+  const [openDay, setOpenDay] = useState(null);
+  const trainingDays = [
+    { key: 'monday', ...ROUTINES.monday },
+    { key: 'tuesday', ...ROUTINES.tuesday },
+    { key: 'thursday', ...ROUTINES.thursday },
+    { key: 'friday', ...ROUTINES.friday },
+  ];
+  const todayKey = getTodayKey();
+  const [loadedGifs, setLoadedGifs] = useState({});
+  function onGifLoad(id) { setLoadedGifs(prev => ({ ...prev, [id]: true })); }
+
+  return html`
+    <div className="px-5 fade-up" style=${{ marginBottom: 12 }}>
+      <${CollapsibleSection}
+        title=${LANG === 'en' ? 'Weekly exercises' : 'Ejercicios de la semana'}
+        icon=${html`<div style=${{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><${Barbell} size=${16} weight="duotone" color="#8b5cf6" /></div>`}
+        summary=${'4 ' + (LANG === 'en' ? 'days' : 'días') + ' · 24 ' + (LANG === 'en' ? 'exercises' : 'ejercicios')}
+        defaultOpen=${false}>
+        <div className="flex flex-col gap-4">
+          ${trainingDays.map(day => {
+            const isToday = day.key === todayKey;
+            const isOpen = openDay === day.key;
+            return html`
+              <div key=${day.key}>
+                <button onClick=${() => setOpenDay(isOpen ? null : day.key)}
+                  className="w-full press-scale"
+                  style=${{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 12, cursor: 'pointer', border: 'none',
+                    background: isToday ? T.accentDim : T.elevated,
+                    borderLeft: isToday ? ('3px solid ' + T.accent) : '3px solid transparent',
+                  }}>
+                  <div className="flex items-center gap-2">
+                    <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800, color: isToday ? T.accent : T.text }}>${day.name}</span>
+                    <span style=${{ fontSize: 11, color: T.muted }}>${dayLabel(day.key)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span style=${{ fontSize: 10, color: T.sub }}>${t(day.focus)}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </button>
+                ${isOpen && day.exercises ? html`
+                  <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10, padding: '0 2px' }}>
+                    ${day.exercises.map(ex => html`
+                      <div key=${ex.id} style=${{
+                        borderRadius: 14, overflow: 'hidden', background: T.elevated,
+                        border: '1px solid ' + T.border,
+                      }}>
+                        <div style=${{ position: 'relative', width: '100%', paddingTop: '75%', background: T.input }}>
+                          ${!loadedGifs[ex.id] ? html`
+                            <div className="skeleton-gif" style=${{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', borderRadius: 0 }} />
+                          ` : ''}
+                          <img src=${ex.gif} alt=${exName(ex)}
+                            onLoad=${() => onGifLoad(ex.id)}
+                            style=${{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', display: loadedGifs[ex.id] ? 'block' : 'block', opacity: loadedGifs[ex.id] ? 1 : 0, transition: 'opacity 0.3s' }} />
+                        </div>
+                        <div style=${{ padding: '8px 10px' }}>
+                          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: T.text, lineHeight: 1.2, marginBottom: 2 }}>${exName(ex)}</div>
+                          <div style=${{ fontSize: 10, color: T.muted }}>${t(ex.muscle)} · ${ex.sets}×${ex.reps}</div>
+                        </div>
+                      </div>
+                    `)}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          })}
+        </div>
+      <//>
+    </div>
+  `;
+}
 
 function DaySummary({ protein, calories, waterMl, gymDone, gymTotal }) {
   const waterGlasses = Math.floor(waterMl / WATER_GLASS_ML);
@@ -6013,12 +6196,13 @@ function Achievements() {
         ${unlocked.map((b, i) => {
           const isNew = newlyUnlocked.includes(b.id);
           return html`
-            <div key=${b.id} className=${isNew ? 'achieve-pop' : 'badge-unlock'}
+            <div key=${b.id} className=${(isNew ? 'achieve-pop glass-badge glass-badge-new' : 'badge-unlock glass-badge')}
               onClick=${() => handleBadgeTap(b)}
               style=${{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                 padding: '12px 6px', borderRadius: 14, cursor: 'pointer', position: 'relative',
-                background: T.accentDim, border: '1px solid ' + T.accent + '20',
+                background: T.accentDim + 'cc', border: '1px solid rgba(255,255,255,0.15)',
+                boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.08)',
                 minWidth: 0, overflow: 'hidden',
                 animationDelay: isNew ? '0s' : (i * 0.08) + 's',
               }}>
@@ -10054,7 +10238,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
                 <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: T.text, marginBottom: 4 }}>${LANG === 'en' ? selectedOption.nameEn : selectedOption.name}</div>
                 <div style=${{ fontSize: 13, color: T.sub }}>${LANG === 'en' ? selectedOption.descEn : selectedOption.desc}</div>
                 ${!cardioDoneToday ? html`
-                  <button onClick=${() => { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} haptic([10,30,10]); location.reload(); }}
+                  <button onClick=${() => { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} updateStatsOnComplete(); haptic([10,30,10]); location.reload(); }}
                     className="mt-4 px-6 py-3 rounded-2xl press-scale inline-flex items-center gap-2"
                     style=${{ background: T.green }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -10311,7 +10495,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
             </div>
           `}
           <div className="pt-4">
-            <button onClick=${() => { if (routine.cardio) { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} } onStopTimer(); }}
+            <button onClick=${() => { if (routine.cardio) { try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {} updateStatsOnComplete(); } onStopTimer(); }}
               className="w-full py-3.5 rounded-2xl press-scale flex items-center justify-center gap-2"
               style=${{ background: T.accent, border: 'none' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
@@ -10514,6 +10698,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
   function handleCardioDone() {
     try { localStorage.setItem('ds_cardio_done_' + localDate(), 'true'); } catch {}
     setCardioDone(true);
+    updateStatsOnComplete();
     haptic([10, 30, 10]);
   }
 
@@ -10679,6 +10864,10 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
       </div>
 
       <${DaySummary} protein=${protein} calories=${calories} waterMl=${waterMl} gymDone=${gymDone} gymTotal=${gymTotal} />
+
+      <${RecoveryBattery} />
+
+      <${WeeklyExerciseGallery} />
 
       <div className="bottom-spacer" />
     </div>
