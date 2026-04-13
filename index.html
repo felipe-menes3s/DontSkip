@@ -666,7 +666,7 @@ const EN = {
   'Exportar datos JSON': 'Export JSON data', 'Importar datos JSON': 'Import JSON data',
   'Archivo inválido. Debe ser un backup de DontSkip con version y data.': 'Invalid file. Must be a DontSkip backup with version and data.',
   'Datos importados correctamente': 'Data imported successfully',
-  'Rellenar sets': 'Fill all sets',
+  'Rellenar sets': 'Fill all sets', 'Aplicar a todos': 'Apply to all',
   // ── Warmup & Stretching ──
   'Calentamiento dinámico': 'Dynamic Warmup', 'Estiramientos post-entreno': 'Post-Workout Stretching',
   'Prepara tu cuerpo para el entrenamiento': 'Prepare your body for the workout',
@@ -2791,8 +2791,7 @@ function getWeeklyRecommendations(routine, todayKey, unitPref) {
       }
     } catch {}
     if (hitAllReps) {
-      const inc = WEIGHT_INCREMENTS[ex.id] || 5;
-      const incUnit = unitPref === 'kg' ? Math.round(inc / 2.20462 / 2.5) * 2.5 || 2.5 : inc;
+      const incUnit = unitPref === 'kg' ? 2.5 : 5;
       return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent + incUnit, status: 'increase' };
     }
     return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent, status: 'maintain' };
@@ -3605,6 +3604,10 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   const [celebrating, setCelebrating] = useState(false);
   const [fireParticles, setFireParticles] = useState([]);
   const [prSet, setPrSet] = useState(null);
+  const [plankDuration, setPlankDuration] = useState(45);
+  const [plankActiveSet, setPlankActiveSet] = useState(null);
+  const plankStartRef = useRef(null);
+  const [plankLeft, setPlankLeft] = useState(0);
   const prevAllDone = useRef(false);
   // Auto-expand when this becomes the highlighted (current) exercise
   const prevHighlight = useRef(highlight);
@@ -3612,6 +3615,30 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
     if (highlight && !prevHighlight.current) setExpanded(true);
     prevHighlight.current = highlight;
   }, [highlight]);
+
+  // Plank countdown timer
+  useEffect(() => {
+    if (plankActiveSet === null) return;
+    plankStartRef.current = Date.now();
+    setPlankLeft(plankDuration);
+    function tick() {
+      const elapsed = (Date.now() - plankStartRef.current) / 1000;
+      const remaining = Math.max(0, Math.ceil(plankDuration - elapsed));
+      setPlankLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(tid);
+        haptic([30, 100, 30, 100, 30]);
+        playRestBeep();
+        toggleSet(plankActiveSet);
+        setPlankActiveSet(null);
+      }
+    }
+    const tid = setInterval(tick, 250);
+    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(tid); document.removeEventListener('visibilitychange', onVis); };
+  }, [plankActiveSet, plankDuration]);
+
   const sets = exerciseState.sets || [];
   const allDone = sets.length > 0 && sets.every(s => s.done);
   const doneSets = sets.filter(s => s.done).length;
@@ -3638,23 +3665,6 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
     }
     prevAllDone.current = allDone;
   }, [allDone]);
-
-  // Auto-fill: propagate set 0 weight/reps to empty subsequent sets
-  const firstWeight = sets[0]?.weight;
-  const firstReps = sets[0]?.reps;
-  useEffect(() => {
-    if (!firstWeight && !firstReps) return;
-    if (sets.length <= 1) return;
-    let changed = false;
-    const newSets = sets.map((s, i) => {
-      if (i === 0 || s.done) return s;
-      const upd = {};
-      if (firstWeight && (!s.weight || s.weight === 0)) { upd.weight = firstWeight; changed = true; }
-      if (firstReps && (!s.reps || s.reps === 0)) { upd.reps = firstReps; changed = true; }
-      return Object.keys(upd).length > 0 ? { ...s, ...upd } : s;
-    });
-    if (changed) onUpdate({ ...exerciseState, sets: newSets });
-  }, [firstWeight, firstReps]);
 
   function updateSet(si, field, val) {
     const newSets = sets.map((s, i) => i === si ? { ...s, [field]: val } : s);
@@ -3909,12 +3919,12 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
             `;
           })()}
 
-          ${!isPlank && sets[0] && sets[0].weight > 0 && sets.some(s => !s.done && !s.weight) ? html`
+          ${!isPlank && sets.length > 1 && sets[0] && sets[0].weight > 0 && sets.some((s, i) => i > 0 && !s.done && (s.weight !== sets[0].weight || s.reps !== (sets[0].reps || null))) ? html`
             <button onClick=${fillSets}
               className="w-full flex items-center justify-center gap-1.5 mb-2 py-2 rounded-xl press-scale"
               style=${{ background: T.accentDim, color: T.accent, fontSize: 11, fontWeight: 700, border: '1px solid ' + T.accent + '15' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-              ${t('Rellenar sets')} (${sets[0].weight} ${unitPref} × ${sets[0].reps || exercise.reps})
+              ${t('Aplicar a todos')} (${sets[0].weight} ${unitPref} × ${sets[0].reps || exercise.reps})
             </button>
           ` : ''}
           <div className="space-y-2">
@@ -3923,6 +3933,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                 style=${{ background: s.done ? T.greenDim : T.input, border: s.done ? '1px solid ' + T.greenDim : '1px solid transparent', transition: 'all 0.2s', borderRadius: 12, padding: '10px 14px', position: 'relative', overflow: 'hidden' }}
                 onTouchStart=${e => { e.currentTarget._sx = e.touches[0].clientX; e.currentTarget._sy = e.touches[0].clientY; e.currentTarget._swiping = false; }}
                 onTouchMove=${e => {
+                  if (e.target.tagName === 'INPUT') return;
                   const dx = e.touches[0].clientX - (e.currentTarget._sx || 0);
                   const dy = e.touches[0].clientY - (e.currentTarget._sy || 0);
                   if (Math.abs(dy) > Math.abs(dx)) return;
@@ -3933,6 +3944,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                   }
                 }}
                 onTouchEnd=${e => {
+                  if (e.target.tagName === 'INPUT') { e.currentTarget._swiping = false; return; }
                   const dx = e.changedTouches[0].clientX - (e.currentTarget._sx || 0);
                   e.currentTarget.style.transform = '';
                   e.currentTarget.style.transition = 'transform 0.2s ease, all 0.2s';
@@ -3945,7 +3957,36 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                 <input type="checkbox" className="ds-check" checked=${s.done} onChange=${() => toggleSet(si)} />
                 <span className="text-xs font-semibold w-10" style=${{ color: T.muted }}>Set ${si + 1}</span>
                 ${isPlank ? html`
-                  <span className="text-xs flex-1 text-center" style=${{ color: T.sub }}>${exercise.reps}</span>
+                  <div className="flex items-center gap-2 flex-1">
+                    ${plankActiveSet === si ? html`
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="flex-1 h-2 rounded-full" style=${{ background: T.input, overflow: 'hidden' }}>
+                          <div className="h-full rounded-full" style=${{ width: (plankLeft / plankDuration * 100) + '%', background: plankLeft <= 5 ? T.red : plankLeft <= 15 ? T.amber : T.accent, transition: 'width 0.5s linear, background 0.5s' }} />
+                        </div>
+                        <span style=${{ fontSize: 13, fontWeight: 800, color: plankLeft <= 5 ? T.red : plankLeft <= 15 ? T.amber : T.accent, fontVariantNumeric: 'tabular-nums', minWidth: 28, textAlign: 'right' }}>${plankLeft}s</span>
+                      </div>
+                    ` : s.done ? html`
+                      <span className="text-xs flex-1 text-center" style=${{ color: T.green, fontWeight: 700 }}>${plankDuration}s \u2713</span>
+                    ` : html`
+                      <div className="flex items-center gap-1.5 flex-1">
+                        ${[15, 20, 30, 45, 60].map(sec => html`
+                          <button key=${sec} onClick=${(ev) => { ev.stopPropagation(); setPlankDuration(sec); }}
+                            className="press-scale"
+                            style=${{ padding: '3px 6px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                              background: plankDuration === sec ? T.accent : T.elevated,
+                              color: plankDuration === sec ? '#fff' : T.muted,
+                              border: plankDuration === sec ? 'none' : '1px solid ' + T.border }}>
+                            ${sec}s
+                          </button>
+                        `)}
+                        <button onClick=${(ev) => { ev.stopPropagation(); setPlankActiveSet(si); }}
+                          className="press-scale"
+                          style=${{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 800, background: T.greenDim, color: T.green, border: '1px solid ' + T.green + '30', marginLeft: 2 }}>
+                          ${LANG === 'en' ? 'Go' : 'Ir'}
+                        </button>
+                      </div>
+                    `}
+                  </div>
                 ` : html`
                   <div className="flex items-center gap-1 flex-1">
                     <input type="number" placeholder="0" value=${s.weight || ''}
@@ -7830,6 +7871,109 @@ function CuerpoTab({ dark, onThemeToggle, onLangToggle }) {
   `;
 }
 
+function WeeklyNutritionHistory() {
+  const data = useMemo(() => {
+    const stats = getStats();
+    const startDate = new Date(stats.startDate + 'T12:00:00');
+    const today = new Date();
+    const weeks = [];
+    // Iterate from startDate week to current week
+    const firstMonday = new Date(startDate);
+    firstMonday.setDate(firstMonday.getDate() - ((firstMonday.getDay() + 6) % 7));
+    const todayDate = new Date(today);
+    todayDate.setHours(12, 0, 0, 0);
+    for (let wStart = new Date(firstMonday); wStart <= todayDate; wStart.setDate(wStart.getDate() + 7)) {
+      const wEnd = new Date(wStart);
+      wEnd.setDate(wEnd.getDate() + 6);
+      let totalCal = 0, totalProt = 0, totalWater = 0, workouts = 0, daysWithMeals = 0, daysWithWater = 0;
+      for (let di = 0; di < 7; di++) {
+        const day = new Date(wStart);
+        day.setDate(day.getDate() + di);
+        if (day > todayDate) break;
+        const ds = localDate(day);
+        const dk = DAYS[day.getDay()];
+        // Meals
+        try {
+          const ml = JSON.parse(localStorage.getItem('ds_meals_' + ds) || '[]');
+          const conf = ml.filter(m => m.confirmed && m.items);
+          if (conf.length > 0) {
+            daysWithMeals++;
+            conf.forEach(m => m.items.forEach(item => { totalCal += (item.cal || 0); totalProt += (item.protein || 0); }));
+          }
+        } catch {}
+        // Water
+        try {
+          const w = Number(localStorage.getItem('ds_water_' + ds)) || 0;
+          if (w > 0) { daysWithWater++; totalWater += w; }
+        } catch {}
+        // Workouts
+        try {
+          if (dk === 'saturday') {
+            if (localStorage.getItem('ds_cardio_done_' + ds) === 'true') workouts++;
+          } else {
+            const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+            if (ws) { const st = JSON.parse(ws); if (st.some(ex => ex.sets && ex.sets.every(s => s.done))) workouts++; }
+          }
+        } catch {}
+      }
+      weeks.push({
+        num: weeks.length + 1,
+        start: new Date(wStart),
+        end: wEnd > todayDate ? todayDate : new Date(wEnd),
+        avgCal: daysWithMeals > 0 ? Math.round(totalCal / daysWithMeals) : 0,
+        avgProt: daysWithMeals > 0 ? Math.round(totalProt / daysWithMeals) : 0,
+        avgWater: daysWithWater > 0 ? Math.round(totalWater / daysWithWater) : 0,
+        workouts,
+        hasMealData: daysWithMeals > 0,
+        hasWaterData: daysWithWater > 0,
+      });
+    }
+    return weeks.reverse();
+  }, []);
+
+  if (data.length === 0) return '';
+
+  const fmtDate = (d) => d.toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' });
+  const waterGlasses = (ml) => Math.floor(ml / WATER_GLASS_ML);
+
+  return html`
+    <div className="px-5 mb-4 fade-up">
+      <div className="flex items-center gap-2 mb-3" style=${{ paddingLeft: 2 }}>
+        <${CalendarBlank} size=${14} weight="bold" color=${T.muted} />
+        <span style=${{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.muted, textTransform: 'uppercase' }}>${LANG === 'en' ? 'Weekly History' : 'Historial Semanal'}</span>
+      </div>
+      <div className="space-y-2">
+        ${data.map(wk => html`
+          <div key=${wk.num} className="ds-card" style=${{ padding: '14px 16px' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style=${{ fontSize: 13, fontWeight: 800, color: T.text }}>${LANG === 'en' ? 'Week' : 'Semana'} ${wk.num}</span>
+              <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${fmtDate(wk.start)} — ${fmtDate(wk.end)}</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center">
+                <div style=${{ fontSize: 15, fontWeight: 800, color: T.text }}>${wk.hasMealData ? wk.avgCal : '--'}</div>
+                <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted }}>kcal/${LANG === 'en' ? 'day' : 'día'}</div>
+              </div>
+              <div className="text-center">
+                <div style=${{ fontSize: 15, fontWeight: 800, color: T.copper }}>${wk.hasMealData ? wk.avgProt + 'g' : '--'}</div>
+                <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted }}>${LANG === 'en' ? 'protein' : 'proteína'}</div>
+              </div>
+              <div className="text-center">
+                <div style=${{ fontSize: 15, fontWeight: 800, color: T.water }}>${wk.hasWaterData ? waterGlasses(wk.avgWater) : '--'}</div>
+                <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted }}>${t('vasos')}/${LANG === 'en' ? 'day' : 'día'}</div>
+              </div>
+              <div className="text-center">
+                <div style=${{ fontSize: 15, fontWeight: 800, color: T.green }}>${wk.workouts}</div>
+                <div style=${{ fontSize: 9, fontWeight: 600, color: T.muted }}>${LANG === 'en' ? 'workouts' : 'entrenos'}</div>
+              </div>
+            </div>
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+}
+
 function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const handleSaved = useCallback(() => setRefreshKey(k => k + 1), []);
@@ -7897,6 +8041,7 @@ function ProgresoTab({ dark, onThemeToggle, onLangToggle, unitPref }) {
           <${ExerciseCatalog} unitPref=${unitPref} />
           <${WarmupStretchCatalog} />
           <${NextWeekPreview} />
+          <${WeeklyNutritionHistory} />
         </div>
       `}
 
