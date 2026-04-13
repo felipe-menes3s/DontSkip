@@ -1348,7 +1348,7 @@ const ROUTINES = {
       { id: 'leg_press', name: 'Prensa Piernas', nameEn: 'Leg Press', desc: 'Empuja la plataforma con ambas piernas', sets: 4, reps: '10', muscle: 'Cuádriceps', gif: 'gifs/leg_press.gif', videoId: 'IZxyjW7MPJQ' },
       { id: 'leg_ext', name: 'Extensión Cuádriceps', nameEn: 'Leg Extension', desc: 'Extiende las piernas en la máquina', sets: 3, reps: '12', muscle: 'Cuádriceps', gif: 'gifs/leg_ext.gif', videoId: 'YyvSfVjQeL0' },
       { id: 'leg_curl', name: 'Curl Femoral', nameEn: 'Leg Curl', desc: 'Flexiona las piernas en la máquina', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/leg_curl.gif', videoId: '1Tq3QdYUuHs' },
-      { id: 'calf_raise_a', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
+      { id: 'calf_raise_a', name: 'Pantorrillas de Pie', nameEn: 'Standing Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
       { id: 'plank', name: 'Plancha', nameEn: 'Plank', desc: 'Mantén posición de plancha con core activado', sets: 3, reps: '45s', muscle: 'Core', gif: 'gifs/plank.gif', videoId: 'ASdvN_XEl_c' },
     ]
   },
@@ -1370,8 +1370,8 @@ const ROUTINES = {
       { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: 'gifs/deadlift.gif', videoId: 'op9kVnSso6Q' },
       { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif', videoId: '2C-uNgKwPLE' },
       { id: 'prone_leg_curl', name: 'Curl Femoral Acostado', nameEn: 'Prone Leg Curl', desc: 'Acostado boca abajo, flexiona las piernas contra la almohadilla', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/leg_curl.gif', videoId: 'Orxowest56U' },
-      { id: 'hip_thrust', name: 'Hip Thrust', nameEn: 'Barbell Hip Thrust', desc: 'Espalda apoyada en banco, barra sobre caderas, empuja caderas hacia arriba apretando glúteos', sets: 3, reps: '10', muscle: 'Glúteos', gif: 'gifs/hip_thrust.gif', videoId: '2UQ15qXPIk4' },
-      { id: 'calf_raise_b', name: 'Elevación Pantorrillas', nameEn: 'Calf Raises', desc: 'De pie, eleva los talones lo más alto posible', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
+      { id: 'glute_bridge', name: 'Puente de Glúteos', nameEn: 'Glute Bridge', desc: 'Acostado boca arriba, rodillas dobladas, empuja caderas hacia arriba apretando glúteos', sets: 3, reps: '15', muscle: 'Glúteos', gif: 'gifs/glute_bridges.gif', videoId: 'OUgsJ8-Vi0E' },
+      { id: 'calf_raise_b', name: 'Pantorrillas Sentado', nameEn: 'Seated Calf Raises', desc: 'Sentado en la máquina, eleva los talones empujando con las rodillas', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
       { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales. Alternativa en máquina: usa la máquina de abdominales del gym siguiendo el mismo rango de movimiento.', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
     ]
   },
@@ -1408,12 +1408,12 @@ const EXERCISE_MUSCLE_MAP = {
   deadlift:      { primary: ['hamstring','gluteal','lower-back'], secondary: ['quadriceps','trapezius','forearm'] },
   bulgarian:     { primary: ['quadriceps'],     secondary: ['gluteal'],            tertiary: ['hamstring'] },
   prone_leg_curl:{ primary: ['hamstring'] },
-  hip_thrust:    { primary: ['gluteal'],        secondary: ['hamstring'], tertiary: ['lower-back'] },
+  glute_bridge:  { primary: ['gluteal'],        secondary: ['hamstring'] },
   calf_raise_b:  { primary: ['calves'] },
   crunch:        { primary: ['abs'],            secondary: ['obliques'] },
 };
 
-const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp','hip_thrust']);
+const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp']);
 const MUSCLE_RECOVERY_LABELS = {
   chest: { label: 'Pecho', labelEn: 'Chest' }, biceps: { label: 'Bíceps', labelEn: 'Biceps' },
   triceps: { label: 'Tríceps', labelEn: 'Triceps' }, forearm: { label: 'Antebrazo', labelEn: 'Forearm' },
@@ -2049,7 +2049,7 @@ const STARTING_WEIGHTS = {
   deadlift: { kg: 40, lbs: 88, note: 'Barra + 10kg cada lado' },
   bulgarian: { kg: 10, lbs: 22, note: '10kg cada mancuerna' },
   prone_leg_curl: { kg: 22, lbs: 48, note: 'Stack 22kg' },
-  hip_thrust: { kg: 30, lbs: 66, note: 'Barra + peso' },
+  glute_bridge: { kg: 0, lbs: 0, note: 'Peso corporal' },
   calf_raise_b: { kg: 40, lbs: 88, note: 'Misma carga que peso muerto' },
   crunch: { kg: 0, lbs: 0, note: 'Peso corporal' },
 };
@@ -2738,14 +2738,14 @@ const REST_TIMES = {
   bench_press: 90, incline_press: 90, squat: 90, deadlift: 90, ohp: 90,
   leg_press: 90, lat_pulldown: 90, cable_row: 90, db_row: 90, bulgarian: 90,
   bicep_curl: 60, hammer_curl: 60, tricep_push: 60, skull_crush: 60,
-  leg_curl: 60, leg_ext: 60, prone_leg_curl: 60, hip_thrust: 90,
+  leg_curl: 60, leg_ext: 60, prone_leg_curl: 60, glute_bridge: 45,
   lateral_raise: 45, rear_delt: 45, calf_raise_a: 45, calf_raise_b: 45, plank: 45, crunch: 45,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
 
 // Weight increment by exercise type (lbs)
 const WEIGHT_INCREMENTS = {
-  squat: 10, deadlift: 10, leg_press: 10, hip_thrust: 10,
+  squat: 10, deadlift: 10, leg_press: 10,
   bench_press: 5, incline_press: 5, ohp: 5, lat_pulldown: 5, cable_row: 5, db_row: 5, bulgarian: 5,
   lateral_raise: 5, bicep_curl: 5, hammer_curl: 5, leg_ext: 5, leg_curl: 5,
   calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, prone_leg_curl: 5,
@@ -3098,7 +3098,7 @@ function StatCard({ icon, label, value, max, unit, color, colorDim, context, del
 
 // ── Supplements Check ────────────────────────────────────────────────
 
-function SupplementsCheck() {
+function SupplementsCheck({ meals }) {
   const date = localDate();
   const [creatine, setCreatine] = useState(() => {
     try { return localStorage.getItem('ds_creatine_' + date) === 'true'; } catch { return false; }
@@ -3109,6 +3109,16 @@ function SupplementsCheck() {
   const [omega3, setOmega3] = useState(() => {
     try { return localStorage.getItem('ds_omega3_' + date) === 'true'; } catch { return false; }
   });
+
+  // Auto-check from meals
+  useEffect(() => {
+    if (!meals || !meals.length) return;
+    const names = meals.filter(m => m.confirmed && m.items).flatMap(m => m.items.map(i => i.name.toLowerCase()));
+    const hasWhey = names.some(n => /whey|prote[ií]na?\b.*scoop|scoop.*prote/i.test(n));
+    const hasCreatine = names.some(n => /creatina|creatine/i.test(n));
+    if (hasWhey && !whey) { setWhey(true); try { localStorage.setItem('ds_whey_' + date, 'true'); } catch {} }
+    if (hasCreatine && !creatine) { setCreatine(true); try { localStorage.setItem('ds_creatine_' + date, 'true'); } catch {} }
+  }, [meals]);
 
   function toggleCreatine() {
     const next = !creatine;
@@ -3139,10 +3149,10 @@ function SupplementsCheck() {
         transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
         minWidth: 0
       }}>
-      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 40 }}>
+      <div style=${{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48 }}>
         ${image ? html`
           <img src=${image} alt=${label}
-            style=${{ width: 48, height: 36, borderRadius: 8, objectFit: 'contain',
+            style=${{ width: 48, height: 48, objectFit: 'contain',
               opacity: checked ? 1 : 0.55, transition: 'opacity 0.2s' }} />
         ` : html`
           <span style=${{ fontSize: 24, lineHeight: 1, opacity: checked ? 1 : 0.7, transition: 'opacity 0.2s' }}>${emoji}</span>
@@ -3167,9 +3177,9 @@ function SupplementsCheck() {
         </span>
       </div>
       <div className="flex gap-2">
-        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), 'rgba(30,120,70,0.08)', 'rgba(30,120,70,0.25)', 'rgb(30,120,70)', 'img/creatine.jpg')}
-        ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)', 'img/whey.jpg')}
-        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(234,179,8,0.08)', 'rgba(234,179,8,0.2)', 'rgb(202,138,4)', 'img/omega3.jpg')}
+        ${pillCard(creatine, toggleCreatine, '\uD83E\uDDEA', t('Creatina'), t('5g diarios'), 'rgba(30,120,70,0.08)', 'rgba(30,120,70,0.25)', 'rgb(30,120,70)', 'img/creatine.png')}
+        ${pillCard(whey, toggleWhey, '\uD83E\uDD5B', 'Whey', 'Post-gym', 'rgba(224,123,42,0.08)', 'rgba(224,123,42,0.2)', 'rgb(224,123,42)', 'img/whey.png')}
+        ${pillCard(omega3, toggleOmega3, '\uD83D\uDC1F', 'Omega 3', t('2 softgels'), 'rgba(234,179,8,0.08)', 'rgba(234,179,8,0.2)', 'rgb(202,138,4)', 'img/omega3.png')}
       </div>
     </div>
   `;
@@ -3693,7 +3703,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   const ytUrl = exercise.videoId ? 'https://youtube.com/watch?v=' + exercise.videoId : 'https://youtube.com/results?search_query=' + encodeURIComponent((exercise.nameEn || exercise.name) + ' exercise gym');
 
   return html`
-    <div className=${celebrating ? 'fire-border' : ''} style=${{ borderBottom: '1px solid ' + T.border, paddingBottom: 16, borderLeft: highlight && !allDone ? '4px solid ' + T.green : '4px solid transparent', boxShadow: highlight && !allDone ? 'inset 3px 0 8px -2px rgba(78,200,138,0.3)' : 'none', transition: 'border-color 0.3s, box-shadow 0.3s', position: 'relative', overflow: 'visible' }}>
+    <div className=${celebrating ? 'fire-border' : ''} style=${{ border: '1px solid transparent', borderBottom: '1px solid ' + T.border, paddingBottom: 16, borderLeft: highlight && !allDone ? '4px solid ' + T.green : '4px solid transparent', ...(celebrating ? {} : { boxShadow: highlight && !allDone ? 'inset 3px 0 8px -2px rgba(78,200,138,0.3)' : 'none', transition: 'border-color 0.3s, box-shadow 0.3s' }), position: 'relative', overflow: 'visible' }}>
       ${fireParticles.length > 0 && fireParticles.map(p => {
         const style = {
           position: 'absolute', width: p.size, height: p.size, borderRadius: '50%',
@@ -3939,6 +3949,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                 ` : html`
                   <div className="flex items-center gap-1 flex-1">
                     <input type="number" placeholder="0" value=${s.weight || ''}
+                      onTouchStart=${e => e.stopPropagation()}
                       onChange=${e => updateSet(si, 'weight', Number(e.target.value))}
                       className="w-16 text-center text-sm font-semibold rounded-lg py-1.5"
                       style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
@@ -3946,6 +3957,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                   </div>
                   <div className="flex items-center gap-1">
                     <input type="number" placeholder=${exercise.reps} value=${s.reps || ''}
+                      onTouchStart=${e => e.stopPropagation()}
                       onChange=${e => updateSet(si, 'reps', Number(e.target.value))}
                       className="w-12 text-center text-sm font-semibold rounded-lg py-1.5"
                       style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
@@ -9059,7 +9071,7 @@ function MealEditorModal({ visible, category, initialItems, foodLibrary, onSave,
     </div>
   `;
 }
-function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem, onDeleteMeal, dark, onThemeToggle, onLangToggle }) {
+function ComidasTab({ meals: propMeals, onMealConfirm: propConfirm, onMealEdit: propEdit, onAddMeal: propAdd, onRemoveItem: propRemove, onDeleteMeal: propDelete, dark, onThemeToggle, onLangToggle }) {
   const [section, setSection] = useState('hoy');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
@@ -9076,6 +9088,44 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
   const [templates, setTemplates] = useState(() => {
     try { return JSON.parse(localStorage.getItem('ds_meal_templates') || '[]'); } catch { return []; }
   });
+
+  // ── Date selector (last 7 days) ──
+  const cToday = localDate();
+  const [selectedDate, setSelectedDate] = useState(cToday);
+  const isToday = selectedDate === cToday;
+  const [pastMeals, setPastMeals] = useState([]);
+
+  useEffect(() => {
+    if (isToday) return;
+    try {
+      const saved = localStorage.getItem('ds_meals_' + selectedDate);
+      setPastMeals(saved ? JSON.parse(saved) : []);
+    } catch { setPastMeals([]); }
+  }, [selectedDate, isToday]);
+
+  function savePastMeals(updater) {
+    setPastMeals(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try { localStorage.setItem('ds_meals_' + selectedDate, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
+
+  const meals = isToday ? propMeals : pastMeals;
+  const onMealConfirm = isToday ? propConfirm : (index) => {
+    savePastMeals(prev => prev.map((m, i) => i === index ? { ...m, confirmed: true } : m));
+  };
+  const onMealEdit = isToday ? propEdit : (index, newItems) => {
+    savePastMeals(prev => prev.map((m, i) => i === index ? { ...m, items: newItems, confirmed: true } : m));
+  };
+  const onAddMeal = isToday ? propAdd : (items, category) => {
+    const cat = category || { key: 'snack', name: 'Snack', nameEn: 'Snack', icon: '\uD83C\uDF6A' };
+    const mealName = LANG === 'en' ? (cat.nameEn || cat.name) : cat.name;
+    savePastMeals(prev => [...prev, { time: '12:00 PM', name: mealName, icon: cat.icon, category: cat.key, confirmed: true, items }]);
+  };
+  const onDeleteMeal = isToday ? propDelete : (mealIdx) => {
+    savePastMeals(prev => prev.filter((_, i) => i !== mealIdx));
+  };
 
   const consumedCal = sumMealsProp(meals, 'cal');
   const consumedProtein = sumMealsProp(meals, 'protein');
@@ -9160,11 +9210,25 @@ function ComidasTab({ meals, onMealConfirm, onMealEdit, onAddMeal, onRemoveItem,
             <${ThemeToggle} dark=${dark} onToggle=${onThemeToggle} />
           </div>
         </div>
-        <div className="text-sm" style=${{ color: T.muted }}>${dayLabel(getTodayKey())} \u00B7 ${new Date().toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'long' })}</div>
+        <div className="flex gap-1.5 mt-1 no-scrollbar" style=${{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
+          ${Array.from({ length: 7 }, (_, i) => {
+            const dd = new Date(Date.now() - i * 86400000);
+            const dateStr = localDate(dd);
+            const sel = selectedDate === dateStr;
+            const lbl = i === 0 ? (LANG === 'en' ? 'Today' : 'Hoy') : dd.toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'short' }) + ' ' + dd.getDate();
+            return html`<button key=${dateStr} onClick=${() => setSelectedDate(dateStr)}
+              className="flex-shrink-0 press-scale"
+              style=${{ padding: '5px 12px', borderRadius: 10, fontSize: 12, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+                background: sel ? T.accent : T.elevated, color: sel ? '#fff' : T.sub,
+                border: sel ? 'none' : '1px solid ' + T.border, transition: 'all 0.2s' }}>
+              ${lbl}
+            </button>`;
+          })}
+        </div>
       </div>
 
       <div className="flex gap-2 px-5 mb-4 fade-up">
-        ${[{ id: 'hoy', label: t('Hoy') }, { id: 'biblioteca', label: t('Mi Biblioteca') }].map(s => html`
+        ${[{ id: 'hoy', label: isToday ? t('Hoy') : new Date(selectedDate + 'T12:00').toLocaleDateString(LANG === 'en' ? 'en' : 'es', { day: 'numeric', month: 'short' }) }, { id: 'biblioteca', label: t('Mi Biblioteca') }].map(s => html`
           <button key=${s.id} onClick=${() => setSection(s.id)}
             className="py-2 px-4 rounded-xl text-sm font-semibold transition-all"
             style=${{ background: section === s.id ? T.accent : T.accentDim,
@@ -10717,6 +10781,51 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
   const motivIdx = localDate().split('-').reduce((acc, p) => acc + parseInt(p), 0) % MOTIVATION_QUOTES.length;
   const dailyQuote = LANG === 'en' ? MOTIVATION_QUOTES[motivIdx].en : MOTIVATION_QUOTES[motivIdx].es;
 
+  // ── Water date selector (last 7 days) ──
+  const wToday = localDate();
+  const [waterDate, setWaterDate] = useState(wToday);
+  const isWaterToday = waterDate === wToday;
+  const [localWaterMl, setLocalWaterMl] = useState(0);
+  const [localWaterLog, setLocalWaterLog] = useState([]);
+
+  useEffect(() => {
+    if (isWaterToday) return;
+    try {
+      setLocalWaterMl(Number(localStorage.getItem('ds_water_' + waterDate)) || 0);
+      const logStr = localStorage.getItem('ds_water_' + waterDate + '_log');
+      setLocalWaterLog(logStr ? JSON.parse(logStr) : []);
+    } catch { setLocalWaterMl(0); setLocalWaterLog([]); }
+  }, [waterDate, isWaterToday]);
+
+  const effectiveWaterMl = isWaterToday ? waterMl : localWaterMl;
+  const effectiveWaterLog = isWaterToday ? waterLog : localWaterLog;
+  const effectiveAddWater = isWaterToday ? onAddWater : (ml) => {
+    setLocalWaterMl(prev => {
+      const next = prev + ml;
+      try { localStorage.setItem('ds_water_' + waterDate, String(next)); } catch {}
+      return next;
+    });
+    setLocalWaterLog(prev => {
+      const next = [...prev, ml];
+      try { localStorage.setItem('ds_water_' + waterDate + '_log', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const effectiveUndoWater = isWaterToday ? onUndoWater : () => {
+    setLocalWaterLog(prev => {
+      if (prev.length === 0) return prev;
+      const lastMl = prev[prev.length - 1];
+      const next = prev.slice(0, -1);
+      try { localStorage.setItem('ds_water_' + waterDate + '_log', JSON.stringify(next)); } catch {}
+      setLocalWaterMl(w => {
+        const updated = Math.max(w - lastMl, 0);
+        try { localStorage.setItem('ds_water_' + waterDate, String(updated)); } catch {}
+        return updated;
+      });
+      return next;
+    });
+  };
+
   // Celebration modal
   const [showCelebration, setShowCelebration] = useState(false);
   const [workoutNote, setWorkoutNote] = useState(() => {
@@ -10832,7 +10941,7 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
       </div>
 
       <div className="px-5">
-        <${SupplementsCheck} />
+        <${SupplementsCheck} meals=${meals} />
       </div>
 
       <div className="px-5">
@@ -10865,13 +10974,28 @@ function TodayTab({ meals, onMealConfirm, onMealEdit, onAddMeal, waterMl, onAddW
 
 
       <div className="px-5">
-        <div className="flex items-center gap-2 mb-3" style=${{ paddingLeft: 4 }}>
+        <div className="flex items-center gap-2 mb-2" style=${{ paddingLeft: 4 }}>
           <div style=${{ width: 28, height: 28, borderRadius: 8, background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <${Drop} size=${16} weight="fill" color=${T.water} />
           </div>
           <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.muted, textTransform: 'uppercase' }}>${LANG === 'en' ? 'Hydration' : 'Hidratación'}</span>
         </div>
-        <${WaterCounter} waterMl=${waterMl} onAddWater=${onAddWater} onUndoWater=${onUndoWater} waterLog=${waterLog} />
+        <div className="flex gap-1.5 mb-3 no-scrollbar" style=${{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2, paddingLeft: 4 }}>
+          ${Array.from({ length: 7 }, (_, i) => {
+            const wd = new Date(Date.now() - i * 86400000);
+            const wDateStr = localDate(wd);
+            const wSel = waterDate === wDateStr;
+            const wLbl = i === 0 ? (LANG === 'en' ? 'Today' : 'Hoy') : wd.toLocaleDateString(LANG === 'en' ? 'en' : 'es', { weekday: 'short' }) + ' ' + wd.getDate();
+            return html`<button key=${wDateStr} onClick=${() => setWaterDate(wDateStr)}
+              className="flex-shrink-0 press-scale"
+              style=${{ padding: '5px 12px', borderRadius: 10, fontSize: 12, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+                background: wSel ? T.water : T.elevated, color: wSel ? '#fff' : T.sub,
+                border: wSel ? 'none' : '1px solid ' + T.border, transition: 'all 0.2s' }}>
+              ${wLbl}
+            </button>`;
+          })}
+        </div>
+        <${WaterCounter} waterMl=${effectiveWaterMl} onAddWater=${effectiveAddWater} onUndoWater=${effectiveUndoWater} waterLog=${effectiveWaterLog} />
       </div>
 
       <${DaySummary} protein=${protein} calories=${calories} waterMl=${waterMl} gymDone=${gymDone} gymTotal=${gymTotal} />
