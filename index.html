@@ -2773,7 +2773,24 @@ function getWeeklyRecommendations(routine, todayKey, unitPref) {
     if (isDeload) {
       return { exercise: ex, index: ei, current: roundedCurrent, recommended: Math.round(roundedCurrent * 0.8 / 5) * 5, status: 'deload' };
     }
-    // Check if user completed all reps in last session
+    // Priority 1: Check RPE feedback from last session
+    let feedbackFound = null;
+    try {
+      for (let d = 1; d <= 28; d++) {
+        const prev = localDate(new Date(Date.now() - d * 86400000));
+        const fk = 'ds_rpe_' + ex.id + '_' + prev;
+        const fv = localStorage.getItem(fk);
+        if (fv) { feedbackFound = JSON.parse(fv); break; }
+      }
+    } catch {}
+    if (feedbackFound) {
+      const incUnit = unitPref === 'kg' ? 2.5 : 5;
+      if (feedbackFound.feedback === 'heavy') {
+        return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent, status: 'maintain' };
+      }
+      return { exercise: ex, index: ei, current: roundedCurrent, recommended: roundedCurrent + incUnit, status: 'increase' };
+    }
+    // Priority 2: Check if user completed all reps in last session
     let hitAllReps = false;
     try {
       for (let d = 1; d <= 28; d++) {
@@ -3608,6 +3625,9 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
   const [plankActiveSet, setPlankActiveSet] = useState(null);
   const plankStartRef = useRef(null);
   const [plankLeft, setPlankLeft] = useState(0);
+  const [rpeFeedback, setRpeFeedback] = useState(() => {
+    try { const v = localStorage.getItem('ds_rpe_' + exercise.id + '_' + localDate()); return v ? JSON.parse(v).feedback : null; } catch { return null; }
+  });
   const prevAllDone = useRef(false);
   // Auto-expand when this becomes the highlighted (current) exercise
   const prevHighlight = useRef(highlight);
@@ -3989,7 +4009,7 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
                   </div>
                 ` : html`
                   <div className="flex items-center gap-1 flex-1">
-                    <input type="number" placeholder="0" value=${s.weight || ''}
+                    <input type="number" placeholder=${exerciseState.recommendedWeight || '0'} value=${s.weight || ''}
                       onTouchStart=${e => e.stopPropagation()}
                       onChange=${e => updateSet(si, 'weight', Number(e.target.value))}
                       className="w-16 text-center text-sm font-semibold rounded-lg py-1.5"
@@ -4034,6 +4054,35 @@ function ExerciseItem({ exercise, index, unitPref, exerciseState, onUpdate, high
               </div>
             `;
           })()}
+          ${allDone && !isPlank ? html`
+            <div className="mt-3 fade-up" style=${{ padding: '10px 12px', borderRadius: 12, background: T.elevated, border: '1px solid ' + T.border }}>
+              <div style=${{ fontSize: 11, fontWeight: 700, color: T.muted, marginBottom: 8 }}>${LANG === 'en' ? 'How did the weight feel?' : '\u00BFC\u00F3mo se sinti\u00F3 el peso?'}</div>
+              <div className="flex gap-2">
+                ${[
+                  { key: 'heavy', emoji: '\uD83E\uDD75', label: LANG === 'en' ? 'Heavy' : 'Pesado', bg: T.red + '15', border: T.red + '30', color: T.red },
+                  { key: 'good', emoji: '\uD83D\uDCAA\uD83C\uDFFC', label: LANG === 'en' ? 'Good' : 'Bien', bg: T.greenDim, border: T.green + '30', color: T.green },
+                  { key: 'easy', emoji: '\uD83E\uDEB6', label: LANG === 'en' ? 'Easy' : 'F\u00E1cil', bg: T.accentDim, border: T.accent + '30', color: T.accent },
+                ].map(opt => {
+                  const active = rpeFeedback === opt.key;
+                  function selectFeedback() {
+                    setRpeFeedback(opt.key);
+                    const maxW = Math.max(...sets.filter(s => s.done && s.weight > 0).map(s => s.weight), 0);
+                    try { localStorage.setItem('ds_rpe_' + exercise.id + '_' + localDate(), JSON.stringify({ feedback: opt.key, weight: maxW, unit: unitPref })); } catch {}
+                    haptic(10);
+                  }
+                  return html`
+                    <button key=${opt.key} onClick=${selectFeedback} className="flex-1 press-scale"
+                      style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 6px', borderRadius: 10,
+                        background: active ? opt.bg : T.input, border: active ? '1.5px solid ' + opt.border : '1px solid ' + T.border,
+                        transition: 'all 0.2s', transform: active ? 'scale(1.03)' : 'scale(1)' }}>
+                      <span style=${{ fontSize: 14 }}>${opt.emoji}</span>
+                      <span style=${{ fontSize: 11, fontWeight: 700, color: active ? opt.color : T.muted }}>${opt.label}</span>
+                    </button>
+                  `;
+                })}
+              </div>
+            </div>
+          ` : ''}
           ${!allDone && html`
             <button onClick=${completeAll}
               className="w-full flex items-center justify-center gap-2 mt-3 py-2.5 rounded-xl press-scale transition-all"
@@ -11494,12 +11543,34 @@ function App() {
         if (ps) { lastWeights = JSON.parse(ps); break; }
       }
     } catch {}
-    return routine.exercises.map((ex, ei) => ({
-      sets: Array.from({ length: ex.sets }, (_, si) => {
-        const prev = lastWeights && lastWeights[ei] && lastWeights[ei].sets && lastWeights[ei].sets[si];
-        return { weight: prev ? prev.weight : null, reps: prev && prev.reps ? prev.reps : null, done: false };
-      })
-    }));
+    return routine.exercises.map((ex, ei) => {
+      // Check RPE feedback from last session for this exercise
+      let rpeFb = null;
+      try {
+        for (let d = 1; d <= 28; d++) {
+          const prev = localDate(new Date(Date.now() - d * 86400000));
+          const fk = 'ds_rpe_' + ex.id + '_' + prev;
+          const fv = localStorage.getItem(fk);
+          if (fv) { rpeFb = JSON.parse(fv); break; }
+        }
+      } catch {}
+      if (rpeFb) {
+        const fbWeight = rpeFb.unit === unitPref ? rpeFb.weight : (unitPref === 'kg' ? Math.round(rpeFb.weight / 2.20462) : Math.round(rpeFb.weight * 2.20462));
+        const incUnit = unitPref === 'kg' ? 2.5 : 5;
+        const recWeight = rpeFb.feedback === 'heavy' ? fbWeight : fbWeight + incUnit;
+        return {
+          recommendedWeight: recWeight,
+          sets: Array.from({ length: ex.sets }, () => ({ weight: null, reps: null, done: false }))
+        };
+      }
+      const prev = lastWeights && lastWeights[ei];
+      return {
+        sets: Array.from({ length: ex.sets }, (_, si) => {
+          const ps = prev && prev.sets && prev.sets[si];
+          return { weight: ps ? ps.weight : null, reps: ps && ps.reps ? ps.reps : null, done: false };
+        })
+      };
+    });
   });
 
   const mealsKey = 'ds_meals_' + localDate();
