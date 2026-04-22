@@ -246,6 +246,22 @@ input[type=number] { -moz-appearance: textfield; }
 @keyframes badgeGlow { 0%, 100% { box-shadow: 0 0 8px 2px var(--glow-color); } 50% { box-shadow: 0 0 18px 6px var(--glow-color); } }
 .glow-badge { animation: badgeGlow 3s ease-in-out infinite; }
 .glow-badge-new { animation: badgeGlow 1s ease-in-out 3; }
+/* Trophy — Gold (unlocked) */
+.trophy-gold { background: linear-gradient(135deg, #f5c842 0%, #e8b117 50%, #d4a017 100%); background-size: 200% 200%; border: 2px solid #f5c842; box-shadow: 0 2px 10px rgba(212,160,23,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+.trophy-gold-glow { box-shadow: 0 0 14px 2px rgba(245,200,66,0.55), 0 2px 10px rgba(212,160,23,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+/* Trophy — Glass (locked) */
+.trophy-glass { background: linear-gradient(135deg, rgba(200,210,230,0.10), rgba(200,210,230,0.04)); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.08); }
+.trophy-glass-dark { background: linear-gradient(135deg, rgba(180,200,230,0.06), rgba(180,200,230,0.02)); border: 1px solid rgba(255,255,255,0.06); }
+/* Reveal animation: glass → gold with flash */
+@keyframes achieveReveal {
+  0%   { transform: scale(0.4) rotate(-180deg); opacity: 0; filter: blur(6px) brightness(2); }
+  45%  { transform: scale(1.25) rotate(8deg); opacity: 1; filter: blur(0) brightness(1.6); box-shadow: 0 0 40px 12px rgba(245,200,66,0.85), 0 0 80px 24px rgba(245,200,66,0.45); }
+  70%  { transform: scale(0.94) rotate(-2deg); filter: brightness(1.15); box-shadow: 0 0 22px 6px rgba(245,200,66,0.55); }
+  100% { transform: scale(1) rotate(0); filter: brightness(1); box-shadow: 0 2px 10px rgba(212,160,23,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+}
+.achieve-reveal { animation: achieveReveal 0.95s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes goldFlash { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.trophy-gold:active { animation: goldFlash 0.5s ease; }
 .carousel-scroll::-webkit-scrollbar { display: none; }
 @keyframes heroShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 </style>
@@ -548,6 +564,9 @@ const EN = {
   'Primera vez': 'First time', 'Hoy toca': "Today's workout",
   'Desbloqueado': 'Unlocked', 'Bloqueado': 'Locked', 'Cerrar': 'Close',
   '¡Logro desbloqueado!': 'Achievement unlocked!',
+  'Obtenido el': 'Earned on', 'Obtenido previamente': 'Earned previously',
+  'Cómo obtenerlo': 'How to earn it', 'Progreso': 'Progress',
+  '1 vaso': '1 glass', 'Botella plástica': 'Plastic bottle', 'Botella gym': 'Gym bottle', 'Botella oficina': 'Office bottle',
   'Borrar PR': 'Reset PR', '¿Borrar el récord de este ejercicio?': 'Reset this exercise record?',
   'La semana pasada': 'Last week',
   // ── GeneralStats ──
@@ -3212,6 +3231,12 @@ function SupplementsCheck({ meals }) {
     const next = !whey;
     setWhey(next);
     try { localStorage.setItem('ds_whey_' + date, String(next)); } catch {}
+    // Whey implica post-gym, y creatina siempre se toma junto con whey → auto-marcar creatina.
+    // Link unidireccional positivo: desmarcar whey NO desmarca creatina; marcar creatina NO marca whey.
+    if (next && !creatine) {
+      setCreatine(true);
+      try { localStorage.setItem('ds_creatine_' + date, 'true'); } catch {}
+    }
   }
   function toggleOmega3() {
     const next = !omega3;
@@ -4486,10 +4511,10 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
   }
 
   const quickAmounts = [
-    { ml: 150, label: '150 ml', sub: '5 oz' },
-    { ml: 250, label: '250 ml', sub: '8 oz' },
-    { ml: 500, label: '500 ml', sub: '17 oz' },
-    { ml: 750, label: '750 ml', sub: '25 oz' },
+    { ml: 250,  label: '250 ml',  sub: t('1 vaso') + ' · 8 oz' },
+    { ml: 355,  label: '355 ml',  sub: t('Botella plástica') + ' · 12 oz' },
+    { ml: 710,  label: '710 ml',  sub: t('Botella gym') + ' · 24 oz' },
+    { ml: 1182, label: '1182 ml', sub: t('Botella oficina') + ' · 40 oz' },
   ];
 
   // Glass fill: percentage from bottom
@@ -6249,11 +6274,176 @@ function RecordsCard({ unitPref }) {
   `;
 }
 
+// Rich text for each badge — long descriptions, unlock criteria, congratulation messages
+const BADGE_META = {
+  first: {
+    longDesc: 'Completaste tu primer entrenamiento. Este es el trofeo que menos se celebra pero el que más importa — 99% de la gente nunca llega aquí. Empezar es la parte difícil. Todo lo demás se construye sobre esto.',
+    longDescEn: 'You completed your first workout. This trophy gets celebrated the least but matters the most — 99% of people never make it here. Starting is the hard part. Everything else builds on top of this.',
+    criteria: 'Completa tu primer entrenamiento marcando todos los ejercicios como hechos.',
+    criteriaEn: 'Complete your first workout by marking all exercises as done.',
+    congrats: 'Estás dentro. Ahora viene lo divertido.',
+    congratsEn: "You're in. Now the fun part begins.",
+  },
+  week1: {
+    longDesc: '5 entrenamientos registrados. Pasaste de "voy a probar esto" a tener un patrón. La disciplina no se hereda, se construye una sesión a la vez — y tú ya llevas cinco.',
+    longDescEn: '5 workouts logged. You went from "let me try this" to having a pattern. Discipline isn\'t inherited, it\'s built one session at a time — and you already have five.',
+    criteria: 'Completa 5 entrenamientos en total.',
+    criteriaEn: 'Complete 5 total workouts.',
+    congrats: 'La base está puesta. Ahora no la sueltes.',
+    congratsEn: "Foundation laid. Don't let it go.",
+  },
+  streak3: {
+    longDesc: '3 días seguidos entrenando. Esto es donde la mayoría se quiebra — el día 2 el cuerpo duele, el día 3 la cama jala. Tú llegaste igual. Cuando el hábito pesa más que la excusa, pasa lo que te está pasando ahora.',
+    longDescEn: "3 days in a row. This is where most people break — day 2 the body hurts, day 3 the bed pulls. You showed up anyway. When the habit outweighs the excuse, this is exactly what happens.",
+    criteria: 'Entrena 3 días consecutivos sin romper la racha.',
+    criteriaEn: 'Train 3 consecutive days without breaking the streak.',
+    congrats: 'Esto ya no es suerte. Es hábito.',
+    congratsEn: "This isn't luck anymore. It's a habit.",
+  },
+  streak7: {
+    longDesc: '7 días seguidos. Una semana completa sin romper la cadena. A partir de aquí el gym deja de ser algo que haces y empieza a ser algo que eres. Pocos llegan a esta marca — y los que llegan rara vez vuelven atrás.',
+    longDescEn: "7 days straight. A full week without breaking the chain. From here the gym stops being something you do and starts being something you are. Few reach this mark — and those who do rarely go back.",
+    criteria: 'Mantén una racha de 7 días seguidos entrenando.',
+    criteriaEn: 'Keep a 7-day consecutive training streak.',
+    congrats: 'Semana completa. Imparable no es el nombre, es el diagnóstico.',
+    congratsEn: "Full week done. Unstoppable isn't the name, it's the diagnosis.",
+  },
+  streak30: {
+    longDesc: '30 días seguidos. Un mes entero sin saltarte un día. Esto no es motivación, esto es carácter. El tipo que se reporta al gym 30 días seguidos es el mismo que termina proyectos, cumple promesas y construye la vida que decide construir.',
+    longDescEn: "30 days in a row. An entire month without skipping a day. This isn't motivation, this is character. The person who shows up 30 days straight is the same one who finishes projects, keeps promises, and builds the life they decide to build.",
+    criteria: 'Mantén una racha ininterrumpida de 30 días entrenando.',
+    criteriaEn: 'Keep an unbroken 30-day training streak.',
+    congrats: 'Disciplina nivel hierro — ya ni te cuestionas si ir.',
+    congratsEn: "Iron-level discipline — you don't even question going anymore.",
+  },
+  pr1: {
+    longDesc: 'Registraste tu primer récord personal. Movíste más peso o hiciste más reps que nunca antes en ese ejercicio. Esa es la prueba numérica de que tu cuerpo está cambiando — y ahora hay un número que superar.',
+    longDescEn: "You set your first personal record. You moved more weight or hit more reps than ever before on that exercise. That's numerical proof your body is changing — and now there's a number to beat.",
+    criteria: 'Registra tu primer récord personal. Se desbloquea automáticamente cuando el sistema detecta que superaste un peso o repeticiones previas.',
+    criteriaEn: 'Log your first personal record. Unlocks automatically when the system detects you beat a previous weight or rep count.',
+    congrats: 'Primer número en el marcador. Ahora solo sube.',
+    congratsEn: "First number on the board. Now it only goes up.",
+  },
+  pr5: {
+    longDesc: '5 récords personales registrados. Ya no es casualidad — estás entrenando con intención, midiendo cada ejercicio, empujando el número. Esto es exactamente lo que separa al que va al gym del que entrena.',
+    longDescEn: "5 personal records logged. Not a fluke anymore — you're training with intent, measuring each exercise, pushing the number. This is exactly what separates people who go to the gym from people who train.",
+    criteria: 'Acumula 5 récords personales en ejercicios distintos.',
+    criteriaEn: 'Accumulate 5 personal records across different exercises.',
+    congrats: 'Cinco marcas nuevas. El gym te está rindiendo.',
+    congratsEn: "Five new marks. The gym is paying off.",
+  },
+  pr10: {
+    longDesc: '10 récords personales. Estás progresando en 10 ejercicios distintos — pecho, espalda, piernas, brazos. Esto es desarrollo balanceado, no solo volumen vanidoso. El cuerpo completo está subiendo.',
+    longDescEn: "10 personal records. You're progressing on 10 different exercises — chest, back, legs, arms. This is balanced development, not just vanity volume. The whole body is going up.",
+    criteria: 'Registra 10 récords personales distintos.',
+    criteriaEn: 'Log 10 distinct personal records.',
+    congrats: 'Doble dígito de PRs. Máquina es poco.',
+    congratsEn: "Double-digit PRs. 'Machine' is an understatement.",
+  },
+  days10: {
+    longDesc: '10 entrenamientos completados. Ya no cuentan los días — cuentan las sesiones. 10 veces que elegiste el gym en vez del sofá, el café en vez de la alarma pospuesta. Cada una suma.',
+    longDescEn: "10 workouts completed. Days don't count anymore — sessions do. 10 times you chose the gym over the couch, the coffee over the snoozed alarm. Each one adds up.",
+    criteria: 'Completa 10 entrenamientos en total.',
+    criteriaEn: 'Complete 10 total workouts.',
+    congrats: 'Diez sesiones en el banco. Esto ya es serio.',
+    congratsEn: "Ten sessions banked. This is serious now.",
+  },
+  days25: {
+    longDesc: '25 entrenamientos. Si entrenas 4 veces por semana, acabas de cumplir ~6 semanas. Ya sabes cómo se siente el gym vacío a las 6:10 AM, ya tienes tus ejercicios favoritos, ya conoces tus debilidades. Eso es veteranía real.',
+    longDescEn: "25 workouts. If you train 4 times a week, you just hit ~6 weeks. You know what the empty gym feels like at 6:10 AM, you have your favorite exercises, you know your weaknesses. That's real veteran status.",
+    criteria: 'Completa 25 entrenamientos.',
+    criteriaEn: 'Complete 25 workouts.',
+    congrats: 'Veterano oficial del gym del edificio.',
+    congratsEn: "Official veteran of the building gym.",
+  },
+  days50: {
+    longDesc: '50 entrenamientos. Medio centenar de sesiones. A este punto tu cuerpo ya cambió visiblemente, tu fuerza ya subió medible, y tu rutina matinal ya no requiere fuerza de voluntad — requiere solo ponerte los tenis. Eso es la transformación completa.',
+    longDescEn: "50 workouts. Half a hundred sessions. At this point your body has visibly changed, your strength has measurably gone up, and your morning routine no longer requires willpower — it just requires putting the shoes on. That's full transformation.",
+    criteria: 'Alcanza 50 entrenamientos totales.',
+    criteriaEn: 'Reach 50 total workouts.',
+    congrats: 'Leyenda. El Felipe de hace 50 sesiones no te reconocería.',
+    congratsEn: "Legend. The Felipe from 50 sessions ago wouldn't recognize you.",
+  },
+  pr20: {
+    longDesc: '20 récords personales. Dominaste cada grupo muscular con progresión medible. A este nivel ya no estás aprendiendo los ejercicios, los estás perfeccionando. Eres el tipo que otros miran de reojo cuando entra al gym.',
+    longDescEn: "20 personal records. You've dominated every muscle group with measurable progression. At this level you're not learning exercises anymore, you're perfecting them. You're the guy other people side-eye when he walks in.",
+    criteria: 'Registra 20 récords personales distintos.',
+    criteriaEn: 'Log 20 distinct personal records.',
+    congrats: 'Veinte PRs. El gym es tu reino.',
+    congratsEn: "Twenty PRs. The gym is your kingdom.",
+  },
+  month1: {
+    longDesc: '30 días desde tu primer entrenamiento. Este trofeo mide tiempo, no sesiones — estuviste con este hábito un mes completo. Los primeros 30 días son el filtro que elimina al 90% de la gente. Tú pasaste.',
+    longDescEn: "30 days since your first workout. This trophy measures time, not sessions — you stuck with this habit a full month. The first 30 days are the filter that eliminates 90% of people. You passed.",
+    criteria: 'Cumple 30 días desde tu primer entrenamiento registrado.',
+    criteriaEn: 'Complete 30 days since your first logged workout.',
+    congrats: 'Un mes adentro. Ya estás del otro lado del filtro.',
+    congratsEn: "A month in. You're on the other side of the filter.",
+  },
+  protein7: {
+    longDesc: '7 días seguidos cumpliendo tu meta de 150g de proteína. El músculo se construye en la cocina — y tú te estás alimentando para construirlo. Sin esto, el gym es solo cardio disfrazado.',
+    longDescEn: "7 days straight hitting your 150g protein goal. Muscle is built in the kitchen — and you're feeding it to build. Without this, the gym is just cardio in disguise.",
+    criteria: 'Alcanza tu meta diaria de proteína durante 7 días consecutivos.',
+    criteriaEn: 'Hit your daily protein goal for 7 consecutive days.',
+    congrats: 'Semana perfecta de proteína. Los músculos están comiendo bien.',
+    congratsEn: "Perfect protein week. The muscles are eating well.",
+  },
+  water7: {
+    longDesc: '7 días seguidos tomando tus 2,250 ml de agua. Parece simple pero casi nadie lo hace consistentemente. Bien hidratado rindes más en el gym, recuperas mejor, y el cuerpo transporta nutrientes sin fricción.',
+    longDescEn: "7 days straight hitting your 2,250 ml water goal. Sounds simple but almost nobody does it consistently. Well hydrated you perform better in the gym, recover better, and the body moves nutrients without friction.",
+    criteria: 'Cumple tu meta de agua durante 7 días consecutivos.',
+    criteriaEn: 'Hit your water goal for 7 consecutive days.',
+    congrats: 'Semana entera hidratado. El cuerpo te lo agradece.',
+    congratsEn: "Full week hydrated. The body thanks you.",
+  },
+  volume10k: {
+    longDesc: '10,000+ de volumen en una sola semana. Esto es trabajo duro medible — suma de peso × reps × sets a través de Upper A, Lower A, Upper B, Lower B. No llegaste aquí flojeando entre sets.',
+    longDescEn: "10,000+ volume in a single week. This is measurable hard work — sum of weight × reps × sets across Upper A, Lower A, Upper B, Lower B. You didn't get here slacking between sets.",
+    criteria: 'Acumula 10,000 o más de volumen total (peso × reps × sets) en una semana.',
+    criteriaEn: 'Accumulate 10,000 or more total volume (weight × reps × sets) in a week.',
+    congrats: 'Diez mil de volumen en 7 días. Se nota quién vino a trabajar.',
+    congratsEn: "Ten thousand volume in 7 days. It shows who came to work.",
+  },
+  earlybird: {
+    longDesc: 'Entrenaste antes de las 7 AM. Mientras la mayoría de Utah todavía duerme, tú ya estás sumando reps. El gym del edificio te da esa ventana de 6:05 — aprovecharla consistentemente es un superpoder invisible.',
+    longDescEn: "You trained before 7 AM. While most of Utah still sleeps, you're already banking reps. The building gym gives you that 6:05 window — using it consistently is an invisible superpower.",
+    criteria: 'Inicia un entrenamiento cualquier día antes de las 7:00 AM (hora local).',
+    criteriaEn: 'Start a workout any day before 7:00 AM (local time).',
+    congrats: '6 AM squad. El día ya lo ganaste antes del café.',
+    congratsEn: "6 AM squad. You already won the day before coffee.",
+  },
+};
+
+// Progress-value extractors per badge — returns { current, target } for locked progress display
+function getBadgeProgress(id, ctx) {
+  switch (id) {
+    case 'first':      return { current: ctx.totalDays, target: 1 };
+    case 'week1':      return { current: ctx.totalDays, target: 5 };
+    case 'streak3':    return { current: Math.max(ctx.streak, ctx.maxStreak || 0), target: 3 };
+    case 'streak7':    return { current: Math.max(ctx.streak, ctx.maxStreak || 0), target: 7 };
+    case 'streak30':   return { current: Math.max(ctx.streak, ctx.maxStreak || 0), target: 30 };
+    case 'pr1':        return { current: ctx.prCount, target: 1 };
+    case 'pr5':        return { current: ctx.prCount, target: 5 };
+    case 'pr10':       return { current: ctx.prCount, target: 10 };
+    case 'pr20':       return { current: ctx.prCount, target: 20 };
+    case 'days10':     return { current: ctx.totalDays, target: 10 };
+    case 'days25':     return { current: ctx.totalDays, target: 25 };
+    case 'days50':     return { current: ctx.totalDays, target: 50 };
+    case 'month1':     return { current: ctx.daysSinceStart, target: 30 };
+    case 'protein7':   return { current: ctx.proteinStreak, target: 7 };
+    case 'water7':     return { current: ctx.waterStreak, target: 7 };
+    case 'volume10k':  return { current: Math.round(ctx.weeklyVol), target: 10000 };
+    case 'earlybird':  return { current: ctx.hasEarlyWorkout ? 1 : 0, target: 1 };
+    default:           return null;
+  }
+}
+
 function Achievements() {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [newlyUnlocked, setNewlyUnlocked] = useState([]);
+  const isDark = (() => { try { return localStorage.getItem('ds_theme') === 'dark'; } catch { return false; } })();
 
-  const badges = useMemo(() => {
+  const memo = useMemo(() => {
     const streak = getStreak();
     const stats = getFullStats();
     const records = getRecords();
@@ -6314,7 +6504,9 @@ function Achievements() {
       }
     } catch {}
 
-    return [
+    const maxStreak = stats.maxStreak || 0;
+    const ctx = { streak, maxStreak, prCount, totalDays, daysSinceStart, proteinStreak, waterStreak, weeklyVol, hasEarlyWorkout };
+    const badges = [
       { id: 'first', icon: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', name: t('Primera sesi\u00F3n'), desc: t('Completar tu primer entrenamiento'), unlocked: totalDays >= 1 },
       { id: 'week1', icon: '\uD83D\uDCC5', name: t('Primera semana'), desc: t('5 d\u00EDas de entrenamiento'), unlocked: totalDays >= 5 },
       { id: 'streak3', icon: '\uD83D\uDD25', name: t('En racha'), desc: t('3 d\u00EDas seguidos'), unlocked: streak >= 3 || (stats.maxStreak && stats.maxStreak >= 3) },
@@ -6333,21 +6525,29 @@ function Achievements() {
       { id: 'volume10k', icon: '\uD83C\uDFD7\uFE0F', name: t('Constructor'), desc: t('10,000+ de volumen en una semana'), unlocked: weeklyVol >= 10000 },
       { id: 'earlybird', icon: '\uD83C\uDF05', name: t('Madrugador'), desc: t('Entrenar antes de las 7am'), unlocked: hasEarlyWorkout },
     ];
+    return { badges, ctx };
   }, []);
 
+  const badges = memo.badges;
+  const ctx = memo.ctx;
   const unlocked = badges.filter(b => b.unlocked);
   const locked = badges.filter(b => !b.unlocked);
 
   useEffect(() => {
     try {
       const storageKey = 'ds_achievements_unlocked';
+      const datesKey = 'ds_achievements_dates';
       const prev = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const dates = JSON.parse(localStorage.getItem(datesKey) || '{}');
       const currentIds = unlocked.map(b => b.id);
       const newIds = currentIds.filter(id => !prev.includes(id));
       if (newIds.length > 0) {
+        const nowIso = localDate();
+        newIds.forEach(id => { if (!dates[id]) dates[id] = nowIso; });
+        localStorage.setItem(datesKey, JSON.stringify(dates));
         setNewlyUnlocked(newIds);
         localStorage.setItem(storageKey, JSON.stringify(currentIds));
-        haptic([30, 80, 30]);
+        haptic([30, 80, 30, 40, 50]);
         const tid = setTimeout(() => setNewlyUnlocked([]), 4000);
         return () => clearTimeout(tid);
       } else if (currentIds.length !== prev.length) {
@@ -6356,10 +6556,20 @@ function Achievements() {
     } catch {}
   }, [unlocked]);
 
+  function getUnlockDate(id) {
+    try {
+      const dates = JSON.parse(localStorage.getItem('ds_achievements_dates') || '{}');
+      return dates[id] || null;
+    } catch { return null; }
+  }
+
   function handleBadgeTap(b) {
     setSelectedBadge(b);
     haptic(10);
   }
+
+  const goldText = '#3d2e0a';
+  const goldTextSub = '#5c4710';
 
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
@@ -6368,20 +6578,19 @@ function Achievements() {
       <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, overflow: 'hidden' }}>
         ${unlocked.map((b, i) => {
           const isNew = newlyUnlocked.includes(b.id);
+          const cls = isNew ? 'trophy-gold achieve-reveal trophy-gold-glow' : 'trophy-gold';
           return html`
-            <div key=${b.id} className=${(isNew ? 'achieve-pop glow-badge-new' : 'badge-unlock glow-badge')}
+            <div key=${b.id} className=${cls}
               onClick=${() => handleBadgeTap(b)}
               style=${{
-                '--glow-color': T.accent + '40',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                padding: '12px 6px', borderRadius: 14, cursor: 'pointer', position: 'relative',
-                background: T.accentDim, border: '1px solid ' + T.accent + '30',
+                padding: '14px 6px 10px', borderRadius: 14, cursor: 'pointer', position: 'relative',
                 minWidth: 0, overflow: 'hidden',
-                animationDelay: isNew ? '0s' : (i * 0.08) + 's',
+                animationDelay: isNew ? '0s' : (i * 0.05) + 's',
               }}>
               ${isNew && html`
                 <div style=${{ position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 3 }}>
-                  ${[T.accent, T.green, T.amber, T.accent, T.green].map((c, ci) => html`
+                  ${['#f5c842', '#ffd95b', '#ffeb8a', '#f5c842', '#ffd95b'].map((c, ci) => html`
                     <div key=${ci} style=${{
                       width: 5, height: 5, borderRadius: '50%', background: c,
                       animation: 'achieveConfetti 0.8s ease-out both',
@@ -6390,25 +6599,28 @@ function Achievements() {
                   `)}
                 </div>
               `}
-              <span style=${{ fontSize: 28 }}>${b.icon}</span>
-              <span style=${{ fontSize: 11, fontWeight: 700, color: T.accent, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
-              <span style=${{ fontSize: 9, color: T.muted, marginTop: 2, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>${b.desc}</span>
+              <span style=${{ fontSize: 32, filter: 'drop-shadow(0 1px 2px rgba(61,46,10,0.25))' }}>${b.icon}</span>
+              <span style=${{ fontSize: 11, fontWeight: 800, color: goldText, marginTop: 6, lineHeight: 1.2, textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>${b.name}</span>
             </div>
           `;
         })}
-        ${locked.map(b => html`
-          <div key=${b.id} onClick=${() => handleBadgeTap(b)}
-            style=${{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-              padding: '12px 6px', borderRadius: 14, cursor: 'pointer', position: 'relative',
-              background: T.elevated, opacity: 0.45, minWidth: 0, overflow: 'hidden',
-            }}>
-            <span style=${{ fontSize: 28, filter: 'grayscale(1) blur(1px)' }}>${b.icon}</span>
-            <span style=${{ position: 'absolute', top: 14, fontSize: 16 }}>${'\uD83D\uDD12'}</span>
-            <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, marginTop: 4, lineHeight: 1.2 }}>${b.name}</span>
-            <span style=${{ fontSize: 9, color: T.muted, marginTop: 2, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>${b.desc}</span>
-          </div>
-        `)}
+        ${locked.map(b => {
+          const glassCls = 'trophy-glass' + (isDark ? ' trophy-glass-dark' : '');
+          return html`
+            <div key=${b.id} className=${glassCls} onClick=${() => handleBadgeTap(b)}
+              style=${{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                padding: '14px 6px 10px', borderRadius: 14, cursor: 'pointer', position: 'relative',
+                minWidth: 0, overflow: 'hidden', opacity: 0.55,
+              }}>
+              <span style=${{ fontSize: 32, filter: 'grayscale(0.85) blur(1.5px)', opacity: 0.65 }}>${b.icon}</span>
+              <div style=${{ position: 'absolute', bottom: 32, right: 10, background: isDark ? 'rgba(30,40,60,0.85)' : 'rgba(255,255,255,0.85)', borderRadius: '50%', padding: 3, display: 'flex' }}>
+                <${Lock} size=${12} weight="fill" color=${T.muted} />
+              </div>
+              <span style=${{ fontSize: 11, fontWeight: 700, color: T.muted, marginTop: 6, lineHeight: 1.2 }}>${b.name}</span>
+            </div>
+          `;
+        })}
       </div>
       ${locked.length > 0 && html`
         <div style=${{ fontSize: 11, color: T.muted, marginTop: 10 }}>
@@ -6424,20 +6636,21 @@ function Achievements() {
         <div className="achieve-pop" style=${{
           position: 'fixed', top: 'calc(var(--safe-top, 44px) + 12px)',
           left: 16, right: 16, zIndex: 52,
-          background: T.card, borderRadius: 16, padding: '16px 20px',
-          border: '2px solid ' + T.green + '40',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          background: 'linear-gradient(135deg, #f5c842 0%, #e8b117 100%)',
+          borderRadius: 16, padding: '16px 20px',
+          border: '2px solid #f5c842',
+          boxShadow: '0 8px 32px rgba(212,160,23,0.45), 0 0 24px rgba(245,200,66,0.5)',
           display: 'flex', alignItems: 'center', gap: 14,
         }}>
-          <span style=${{ fontSize: 36 }}>${newBadge.icon}</span>
+          <span style=${{ fontSize: 40, filter: 'drop-shadow(0 2px 3px rgba(61,46,10,0.3))' }}>${newBadge.icon}</span>
           <div>
-            <div style=${{ fontSize: 11, fontWeight: 700, color: T.green, letterSpacing: '0.5px' }}>
+            <div style=${{ fontSize: 11, fontWeight: 800, color: goldText, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               ${t('\u00A1Logro desbloqueado!')}
             </div>
-            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 800, color: T.text, marginTop: 2 }}>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 900, color: goldText, marginTop: 2, textShadow: '0 1px 0 rgba(255,255,255,0.25)' }}>
               ${newBadge.name}
             </div>
-            <div style=${{ fontSize: 12, color: T.sub, marginTop: 1 }}>
+            <div style=${{ fontSize: 12, color: goldTextSub, marginTop: 1, fontWeight: 600 }}>
               ${newBadge.desc}
             </div>
           </div>
@@ -6445,48 +6658,113 @@ function Achievements() {
       `;
     })()}
 
-    ${selectedBadge && html`
-      <div onClick=${() => setSelectedBadge(null)}
-        style=${{
-          position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-        }}>
-        <div onClick=${(e) => e.stopPropagation()}
-          className="achieve-pop"
+    ${selectedBadge && (() => {
+      const meta = BADGE_META[selectedBadge.id] || {};
+      const longDesc = LANG === 'en' ? (meta.longDescEn || selectedBadge.desc) : (meta.longDesc || selectedBadge.desc);
+      const criteria = LANG === 'en' ? (meta.criteriaEn || selectedBadge.desc) : (meta.criteria || selectedBadge.desc);
+      const congrats = LANG === 'en' ? (meta.congratsEn || '') : (meta.congrats || '');
+      const prog = getBadgeProgress(selectedBadge.id, ctx);
+      const unlockedAt = selectedBadge.unlocked ? getUnlockDate(selectedBadge.id) : null;
+      const isGold = selectedBadge.unlocked;
+      const headerBg = isGold
+        ? 'linear-gradient(135deg, #f5c842 0%, #e8b117 50%, #d4a017 100%)'
+        : (isDark ? 'linear-gradient(135deg, rgba(180,200,230,0.08), rgba(180,200,230,0.02))' : 'linear-gradient(135deg, rgba(200,210,230,0.18), rgba(200,210,230,0.06))');
+      const headerBorder = isGold ? '2px solid #f5c842' : ('1px solid ' + T.border);
+      const progressPct = prog ? Math.min(100, Math.round((prog.current / prog.target) * 100)) : 0;
+      const dateLabel = unlockedAt
+        ? (t('Obtenido el') + ' ' + new Date(unlockedAt + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en-US' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' }))
+        : t('Obtenido previamente');
+      return html`
+        <div onClick=${() => setSelectedBadge(null)}
           style=${{
-            background: T.card, borderRadius: 20, padding: 28, width: '100%', maxWidth: 300,
-            textAlign: 'center', border: '1px solid ' + T.border,
+            position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
           }}>
-          <div style=${{ fontSize: 48, marginBottom: 12 }}>${selectedBadge.icon}</div>
-          <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 6 }}>
-            ${selectedBadge.name}
-          </div>
-          <div style=${{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 16 }}>
-            ${selectedBadge.desc}
-          </div>
-          <div className="flex items-center justify-center gap-2" style=${{ marginBottom: 16 }}>
-            ${selectedBadge.unlocked
-              ? html`
-                <${CheckCircle} size=${16} weight="fill" color=${T.green} />
-                <span style=${{ fontSize: 13, fontWeight: 700, color: T.green }}>${t('Desbloqueado')}</span>
-              `
-              : html`
-                <${Lock} size=${16} weight="fill" color=${T.muted} />
-                <span style=${{ fontSize: 13, fontWeight: 700, color: T.muted }}>${t('Bloqueado')}</span>
-              `
-            }
-          </div>
-          <button onClick=${() => setSelectedBadge(null)}
+          <div onClick=${(e) => e.stopPropagation()}
+            className="achieve-pop"
             style=${{
-              background: T.accent, color: '#fff', border: 'none', borderRadius: 12,
-              padding: '10px 28px', fontSize: 14, fontWeight: 700, fontFamily: 'Inter, sans-serif',
-              cursor: 'pointer',
+              background: T.card, borderRadius: 22, width: '100%', maxWidth: 340,
+              border: '1px solid ' + T.border, overflow: 'hidden',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
             }}>
-            ${t('Cerrar')}
-          </button>
+            <div style=${{ background: headerBg, borderBottom: headerBorder, padding: '28px 20px 22px', textAlign: 'center', position: 'relative' }}>
+              <div style=${{ fontSize: 72, lineHeight: 1, marginBottom: 10, filter: isGold ? 'drop-shadow(0 2px 4px rgba(61,46,10,0.25))' : 'grayscale(0.7) blur(0.5px)', opacity: isGold ? 1 : 0.7 }}>
+                ${selectedBadge.icon}
+              </div>
+              <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 22, fontWeight: 900, color: isGold ? goldText : T.text, lineHeight: 1.15, textShadow: isGold ? '0 1px 0 rgba(255,255,255,0.25)' : 'none' }}>${selectedBadge.name}</div>
+              <div className="flex items-center justify-center gap-1" style=${{ marginTop: 8 }}>
+                ${isGold
+                  ? html`
+                    <${CheckCircle} size=${14} weight="fill" color=${goldText} />
+                    <span style=${{ fontSize: 11, fontWeight: 800, color: goldText, letterSpacing: '0.08em', textTransform: 'uppercase', marginLeft: 4 }}>${t('Desbloqueado')}</span>
+                  `
+                  : html`
+                    <${Lock} size=${14} weight="fill" color=${T.muted} />
+                    <span style=${{ fontSize: 11, fontWeight: 800, color: T.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginLeft: 4 }}>${t('Bloqueado')}</span>
+                  `
+                }
+              </div>
+            </div>
+
+            <div style=${{ padding: '20px 22px 22px' }}>
+              <div style=${{ fontSize: 14, color: T.text, lineHeight: 1.55, marginBottom: 16 }}>
+                ${longDesc}
+              </div>
+
+              ${isGold ? html`
+                <div style=${{ background: 'linear-gradient(135deg, rgba(245,200,66,0.12) 0%, rgba(212,160,23,0.08) 100%)', border: '1px solid rgba(245,200,66,0.3)', borderRadius: 12, padding: '12px 14px', marginBottom: 14 }}>
+                  <div style=${{ fontSize: 10, fontWeight: 800, color: '#b8880f', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+                    ${dateLabel}
+                  </div>
+                  ${congrats && html`
+                    <div style=${{ fontSize: 13, fontWeight: 600, color: T.text, lineHeight: 1.4, fontStyle: 'italic' }}>
+                      “${congrats}”
+                    </div>
+                  `}
+                </div>
+              ` : html`
+                <div style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '12px 14px', marginBottom: 14 }}>
+                  <div style=${{ fontSize: 10, fontWeight: 800, color: T.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                    ${t('Cómo obtenerlo')}
+                  </div>
+                  <div style=${{ fontSize: 13, color: T.sub, lineHeight: 1.45, marginBottom: prog ? 10 : 0 }}>
+                    ${criteria}
+                  </div>
+                  ${prog && prog.target > 1 && html`
+                    <div>
+                      <div className="flex items-center justify-between" style=${{ marginBottom: 4 }}>
+                        <span style=${{ fontSize: 11, fontWeight: 700, color: T.sub }}>${t('Progreso')}</span>
+                        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800, color: T.accent }}>
+                          ${prog.current.toLocaleString()} / ${prog.target.toLocaleString()}
+                        </span>
+                      </div>
+                      <div style=${{ height: 6, borderRadius: 3, background: T.input, overflow: 'hidden' }}>
+                        <div style=${{ height: '100%', width: progressPct + '%', borderRadius: 3, background: T.accent, transition: 'width 600ms ease' }} />
+                      </div>
+                    </div>
+                  `}
+                </div>
+              `}
+
+              <button onClick=${() => setSelectedBadge(null)}
+                className="press-scale"
+                style=${{
+                  width: '100%',
+                  background: isGold ? 'linear-gradient(135deg, #f5c842 0%, #d4a017 100%)' : T.accent,
+                  color: isGold ? goldText : '#fff',
+                  border: 'none', borderRadius: 12,
+                  padding: '12px 28px', fontSize: 14, fontWeight: 800, fontFamily: 'Inter, sans-serif',
+                  cursor: 'pointer', letterSpacing: '0.02em',
+                  boxShadow: isGold ? '0 2px 8px rgba(212,160,23,0.35)' : 'none',
+                }}>
+                ${t('Cerrar')}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    `}
+      `;
+    })()}
   `;
 }
 
