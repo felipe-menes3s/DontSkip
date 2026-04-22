@@ -1367,12 +1367,13 @@ const ROUTINES = {
   friday: {
     name: 'Lower B', focus: 'Posterior + Glúteos + Core', color: '#e67e22',
     exercises: [
-      { id: 'deadlift', name: 'Peso Muerto', nameEn: 'Barbell Deadlift', desc: 'Levanta la barra del suelo con espalda recta', sets: 4, reps: '6', muscle: 'Posterior', gif: 'gifs/deadlift.gif', videoId: 'op9kVnSso6Q' },
-      { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif', videoId: '2C-uNgKwPLE' },
+      { id: 'crunch_machine', name: 'Crunch en Máquina Inclinada', nameEn: 'Incline Machine Crunch', desc: 'En banco declinado o máquina abdominal, manos cruzadas al pecho. Contrae los abdominales elevando el torso, exhala al subir. Baja lento controlando la bajada.', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
       { id: 'prone_leg_curl', name: 'Curl Femoral Acostado', nameEn: 'Prone Leg Curl', desc: 'Acostado boca abajo, flexiona las piernas contra la almohadilla', sets: 3, reps: '12', muscle: 'Isquiotibiales', gif: 'gifs/leg_curl.gif', videoId: 'Orxowest56U' },
-      { id: 'glute_bridge', name: 'Puente de Glúteos', nameEn: 'Glute Bridge', desc: 'Acostado boca arriba, rodillas dobladas, empuja caderas hacia arriba apretando glúteos', sets: 3, reps: '15', muscle: 'Glúteos', gif: 'gifs/glute_bridges.gif', videoId: 'OUgsJ8-Vi0E' },
+      { id: 'leg_ext', name: 'Extensión Cuádriceps', nameEn: 'Leg Extension', desc: 'Sentado en la máquina, extiende las piernas hasta la contracción total', sets: 3, reps: '12', muscle: 'Cuádriceps', gif: 'gifs/leg_ext.gif', videoId: 'YyvSfVjQeL0' },
+      { id: 'bulgarian', name: 'Sentadilla Búlgara', nameEn: 'Bulgarian Split Squat', desc: 'Pie trasero elevado, baja en una pierna', sets: 3, reps: '10 c/l', muscle: 'Cuádriceps', gif: 'gifs/bulgarian.gif', videoId: '2C-uNgKwPLE' },
       { id: 'calf_raise_b', name: 'Pantorrillas Sentado', nameEn: 'Seated Calf Raises', desc: 'Sentado en la máquina, eleva los talones empujando con las rodillas', sets: 4, reps: '15', muscle: 'Pantorrillas', gif: 'gifs/calf_raise.gif', videoId: 'gwLzBJYoWlI' },
-      { id: 'crunch', name: 'Crunch', nameEn: 'Crunch', desc: 'Acostado, eleva el torso contrayendo abdominales. Alternativa en máquina: usa la máquina de abdominales del gym siguiendo el mismo rango de movimiento.', sets: 3, reps: '20', muscle: 'Core', gif: 'gifs/crunch.gif', videoId: 'Xyd_fa5zoEU' },
+      { id: 'plank', name: 'Plancha', nameEn: 'Plank', desc: 'Mantén posición de plancha con core activado', sets: 3, reps: '45s', muscle: 'Core', gif: 'gifs/plank.gif', videoId: 'ASdvN_XEl_c' },
+      { id: 'incline_walk_lb', name: 'Caminata Inclinada', nameEn: 'Incline Walk', desc: 'Caminadora al 10-15% de inclinación, ritmo moderado. Zona 2 para quema de grasa sin afectar recuperación.', sets: 1, reps: '15-20 min', muscle: 'Cardio', gif: 'gifs/incline_walk.gif', videoId: 'oAPCPjnU1wA', cardio: true },
     ]
   },
   saturday: { name: 'Cardio', focus: 'LISS o HIIT (opcional)', rest: true, cardio: true },
@@ -1411,6 +1412,8 @@ const EXERCISE_MUSCLE_MAP = {
   glute_bridge:  { primary: ['gluteal'],        secondary: ['hamstring'] },
   calf_raise_b:  { primary: ['calves'] },
   crunch:        { primary: ['abs'],            secondary: ['obliques'] },
+  crunch_machine:{ primary: ['abs'],            secondary: ['obliques'] },
+  incline_walk_lb:{ tertiary: ['calves','gluteal','hamstring'] },
 };
 
 const COMPOUND_EXERCISES = new Set(['bench_press','incline_press','squat','leg_press','deadlift','bulgarian','lat_pulldown','cable_row','db_row','ohp']);
@@ -1688,6 +1691,7 @@ function getMuscleRecoveryData() {
     let states;
     try { states = JSON.parse(saved); } catch { continue; }
     routine.exercises.forEach((ex, ei) => {
+      if (ex.cardio) return;
       const st = states[ei];
       if (!st) return;
       const doneSets = st.sets ? st.sets.filter(s => s.done) : [];
@@ -1727,6 +1731,68 @@ function getMuscleRecoveryData() {
     result[slug] = { recoveryPct, hoursRemaining, lastTrainedMs: data.lastTrainedMs, volume: data.totalLoad };
   }
   return result;
+}
+
+// Intensity-based recovery: uses primary/secondary/tertiary from the last 3 training days
+// and assigns hours based on muscle group (legs need longer recovery at high intensity).
+const INTENSITY_RECOVERY_HOURS = { 3: { legs: 72, upper: 48 }, 2: { legs: 36, upper: 36 }, 1: { legs: 24, upper: 24 } };
+const INTENSITY_LEG_MUSCLES = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
+function getIntensityRecoveryData() {
+  const todayKey = getTodayKey();
+  const recoveringMuscles = {};
+  const muscleWorkoutTime = {};
+  const weekKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  for (let daysBack = 1; daysBack <= 3; daysBack++) {
+    const idx = (weekKeys.indexOf(todayKey) - daysBack + 7) % 7;
+    const dk = weekKeys[idx];
+    const d = new Date(); d.setDate(d.getDate() - daysBack);
+    const ds = localDate(d);
+    const dayIntensity = getMuscleIntensityForDay(dk);
+    if (Object.keys(dayIntensity).length === 0) continue;
+    let workoutTs = null;
+    try {
+      const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
+      if (ts) workoutTs = Number(ts);
+      else {
+        const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
+        if (ws) workoutTs = new Date(ds + 'T07:00:00').getTime();
+      }
+    } catch {}
+    Object.entries(dayIntensity).forEach(([slug, level]) => {
+      if (!recoveringMuscles[slug] || recoveringMuscles[slug] < level) {
+        recoveringMuscles[slug] = level;
+        if (workoutTs) muscleWorkoutTime[slug] = workoutTs;
+      }
+    });
+  }
+  const now = Date.now();
+  const recoveryItems = Object.entries(recoveringMuscles)
+    .sort((a, b) => b[1] - a[1])
+    .map(([slug, level]) => {
+      const isLeg = INTENSITY_LEG_MUSCLES.has(slug);
+      const totalH = INTENSITY_RECOVERY_HOURS[level] ? INTENSITY_RECOVERY_HOURS[level][isLeg ? 'legs' : 'upper'] : 24;
+      const wt = muscleWorkoutTime[slug];
+      const hoursEl = wt ? Math.max(0, (now - wt) / 3600000) : null;
+      const pct = hoursEl != null ? Math.min(100, Math.round((hoursEl / totalH) * 100)) : 0;
+      const remainH = hoursEl != null ? Math.max(0, Math.round(totalH - hoursEl)) : totalH;
+      return { slug, level, pct, remainH, totalH };
+    });
+  const overallPct = recoveryItems.length > 0 ? Math.round(recoveryItems.reduce((s, r) => s + r.pct, 0) / recoveryItems.length) : 0;
+  const recoverySuggestions = [];
+  Object.keys(recoveringMuscles).forEach(slug => {
+    const tips = RECOVERY_SUGGESTIONS[slug];
+    if (tips) tips.forEach(tip => recoverySuggestions.push({ slug, tip }));
+  });
+  const nextWorkout = (() => {
+    const todayIdx = weekKeys.indexOf(todayKey);
+    for (let offset = 1; offset <= 7; offset++) {
+      const dk = weekKeys[(todayIdx + offset) % 7];
+      const r = ROUTINES[dk];
+      if (r && !r.rest) return { key: dk, routine: r };
+    }
+    return null;
+  })();
+  return { recoveryItems, overallPct, recoverySuggestions, nextWorkout };
 }
 
 function getRecoveryColor(pct, isDark) {
@@ -2739,7 +2805,7 @@ const REST_TIMES = {
   leg_press: 90, lat_pulldown: 90, cable_row: 90, db_row: 90, bulgarian: 90,
   bicep_curl: 60, hammer_curl: 60, tricep_push: 60, skull_crush: 60,
   leg_curl: 60, leg_ext: 60, prone_leg_curl: 60, glute_bridge: 45,
-  lateral_raise: 45, rear_delt: 45, calf_raise_a: 45, calf_raise_b: 45, plank: 45, crunch: 45,
+  lateral_raise: 45, rear_delt: 45, calf_raise_a: 45, calf_raise_b: 45, plank: 45, crunch: 45, crunch_machine: 45, incline_walk_lb: 0,
 };
 function getRestTime(exerciseId) { return REST_TIMES[exerciseId] || 90; }
 
@@ -2749,6 +2815,7 @@ const WEIGHT_INCREMENTS = {
   bench_press: 5, incline_press: 5, ohp: 5, lat_pulldown: 5, cable_row: 5, db_row: 5, bulgarian: 5,
   lateral_raise: 5, bicep_curl: 5, hammer_curl: 5, leg_ext: 5, leg_curl: 5,
   calf_raise_a: 5, calf_raise_b: 5, rear_delt: 5, tricep_push: 5, skull_crush: 5, prone_leg_curl: 5,
+  crunch_machine: 5,
 };
 
 function getTrainingWeek() {
@@ -7343,6 +7410,7 @@ function RecoveryView({ dark }) {
   const [recView, setRecView] = useState('front');
   const recSvgRef = useRef(null);
   const recoveryData = useMemo(() => getMuscleRecoveryData(), []);
+  const intensityRec = useMemo(() => getIntensityRecoveryData(), []);
 
   const themeKey = dark ? 'dark' : 'light';
   const skinColor = MUSCLE_SKIN_COLORS[themeKey];
@@ -7406,7 +7474,10 @@ function RecoveryView({ dark }) {
     return { avg, recovering };
   }, [recoveryData]);
 
-  if (!overallData) {
+  const { recoveryItems: intItems, overallPct: intPct, recoverySuggestions: intSugg, nextWorkout: intNext } = intensityRec;
+  const recovering = overallData ? overallData.recovering : [];
+
+  if (!overallData && intItems.length === 0) {
     return html`
       <div style=${{ textAlign: 'center', padding: '40px 20px', animation: 'fadeUp 0.35s ease' }}>
         <div style=${{ marginBottom: 12 }}>
@@ -7418,10 +7489,6 @@ function RecoveryView({ dark }) {
     `;
   }
 
-  const { avg, recovering } = overallData;
-  const ringColor = getRecoveryColor(avg, dark);
-  const sz = 130, sw = 12, ringR = (sz - sw) / 2, circ = 2 * Math.PI * ringR;
-  const ringOff = circ * (1 - avg / 100);
   const viewBox = recView === 'front' ? '0 0 724 1448' : '724 0 724 1448';
 
   const pillStyle = (active) => ({
@@ -7431,32 +7498,116 @@ function RecoveryView({ dark }) {
     color: active ? '#fff' : T.muted,
   });
 
+  // Battery colors based on intensity-recovery overall pct
+  const battColor = intPct >= 80 ? T.green : intPct >= 50 ? T.amber : T.red;
+  const battDimColor = intPct >= 80 ? (T.greenDim || T.green + '20') : intPct >= 50 ? (T.amberDim || T.amber + '20') : (T.red + '20');
+
   return html`
     <div style=${{ animation: 'fadeUp 0.35s ease' }}>
-      <!-- Overall recovery ring -->
-      <div className="flex flex-col items-center" style=${{ marginBottom: 20 }}>
-        <div style=${{ position: 'relative', width: sz, height: sz }}>
-          <svg width=${sz} height=${sz} style=${{ transform: 'rotate(-90deg)' }}>
-            <circle cx=${sz / 2} cy=${sz / 2} r=${ringR} fill="none" stroke=${T.input} strokeWidth=${sw} />
-            <circle cx=${sz / 2} cy=${sz / 2} r=${ringR} fill="none" stroke=${ringColor} strokeWidth=${sw}
-              strokeDasharray=${circ} strokeDashoffset=${ringOff} strokeLinecap="round"
-              className="ring-circle" />
-          </svg>
-          <div style=${{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <span style=${{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 30, fontWeight: 900, color: ringColor, lineHeight: 1 }}>${avg}</span>
-            <span style=${{ fontSize: 10, fontWeight: 600, color: T.muted, marginTop: 2 }}>%</span>
+      <!-- Battery Recovery Card -->
+      <div className="ds-card" style=${{ padding: '20px', marginBottom: 12, textAlign: 'center' }}>
+        <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <div style=${{ position: 'relative', width: 80, height: 140 }}>
+            <svg width="80" height="140" viewBox="0 0 80 140">
+              <rect x="24" y="2" width="32" height="10" rx="4" ry="4" fill=${T.muted + '40'} />
+              <rect x="8" y="12" width="64" height="120" rx="10" ry="10" fill="none" stroke=${T.muted + '40'} strokeWidth="3" />
+              <rect x="12" y="16" width="56" height="112" rx="7" ry="7" fill=${battDimColor} />
+              <rect x="12" y=${16 + (112 * (1 - intPct / 100))} width="56" height=${112 * intPct / 100} rx="7" ry="7" fill=${battColor} style=${{ transition: 'all 800ms ease' }}>
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+              </rect>
+              ${intPct < 100 ? html`
+                <g transform="translate(28, 50)" opacity="0.9">
+                  <polygon points="12,0 0,22 10,22 8,40 24,16 14,16" fill="#fff" opacity="0.85">
+                    <animate attributeName="opacity" values="0.6;0.95;0.6" dur="1.5s" repeatCount="indefinite" />
+                  </polygon>
+                </g>
+              ` : html`
+                <g transform="translate(22, 52)">
+                  <polyline points="10,18 16,24 30,10" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                </g>
+              `}
+            </svg>
+          </div>
+          <div style=${{ textAlign: 'left' }}>
+            <div style=${{ fontFamily: 'Inter, sans-serif', fontSize: 42, fontWeight: 900, color: battColor, lineHeight: 1, letterSpacing: '-2px' }}>${intPct}%</div>
+            <div style=${{ fontSize: 12, fontWeight: 600, color: T.sub, marginTop: 4 }}>${intPct >= 100
+              ? (LANG === 'en' ? 'Fully recovered' : 'Recuperado')
+              : intPct >= 80
+                ? (LANG === 'en' ? 'Almost there' : 'Casi listo')
+                : (LANG === 'en' ? 'Recovering...' : 'Recuperando...')
+            }</div>
+            ${intPct < 100 ? html`
+              <div style=${{ fontSize: 11, color: T.muted, marginTop: 2 }}>
+                ⚡ ${LANG === 'en' ? 'Charging' : 'Cargando'}...
+              </div>
+            ` : ''}
           </div>
         </div>
-        <div style=${{ fontSize: 14, fontWeight: 700, color: T.text, marginTop: 8 }}>
-          ${avg >= 100 ? t('Completamente recuperado') : (avg + '% ' + t('recuperado'))}
-        </div>
-        <div style=${{ fontSize: 11, fontWeight: 600, color: avg >= 80 ? (dark ? '#22c55e' : '#16a34a') : avg >= 50 ? T.amber : (dark ? '#f87171' : '#dc2626'), marginTop: 4, padding: '3px 12px', borderRadius: 8, background: avg >= 80 ? (dark ? '#22c55e18' : '#16a34a12') : avg >= 50 ? T.amberDim : (dark ? '#f8717118' : '#dc262612') }}>
-          ${avg >= 80 ? t('Listo para entrenar') : avg >= 50 ? t('Recuperacion parcial') : t('Necesitas descanso')}
-        </div>
-        <div style=${{ fontSize: 10, color: T.muted, marginTop: 4 }}>
-          ${t('Basado en tus ultimos entrenamientos')}
-        </div>
       </div>
+
+      <!-- Intensity recovery stack + suggestions + next workout -->
+      ${intItems.length > 0 || intSugg.length > 0 || intNext ? html`
+        <div className="ds-card" style=${{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+          ${intItems.length > 0 ? html`
+            <div style=${{ padding: '16px 16px 14px' }}>
+              <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>${t('Músculos recuperándose')}</div>
+              <div className="flex flex-col gap-3">
+                ${intItems.map(item => {
+                  const info = MUSCLE_RECOVERY_LABELS[item.slug] || { label: item.slug, labelEn: item.slug };
+                  const name = LANG === 'en' ? info.labelEn : info.label;
+                  const barColor = item.pct >= 80 ? T.green : item.pct >= 50 ? T.amber : T.accent;
+                  const statusText = item.pct >= 100
+                    ? (LANG === 'en' ? 'Recovered' : 'Recuperado')
+                    : '~' + item.remainH + 'h';
+                  return html`
+                    <div key=${item.slug}>
+                      <div className="flex items-center justify-between" style=${{ marginBottom: 3 }}>
+                        <span style=${{ fontSize: 12, fontWeight: 600, color: T.text }}>${name}</span>
+                        <div className="flex items-center gap-2">
+                          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 800, color: barColor }}>${item.pct}%</span>
+                          <span style=${{ fontSize: 10, color: T.muted, minWidth: 50, textAlign: 'right' }}>${item.pct >= 100 ? '✓' : statusText}</span>
+                        </div>
+                      </div>
+                      <div style=${{ height: 6, borderRadius: 3, background: T.input, overflow: 'hidden' }}>
+                        <div style=${{ height: '100%', width: item.pct + '%', borderRadius: 3, background: barColor, transition: 'width 600ms ease' }} />
+                      </div>
+                    </div>
+                  `;
+                })}
+              </div>
+            </div>
+            ${intSugg.length > 0 || intNext ? html`<div style=${{ height: 1, background: T.border }} />` : ''}
+          ` : ''}
+
+          ${intSugg.length > 0 ? html`
+            <div style=${{ padding: '14px 16px 12px' }}>
+              <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>${t('Sugerencias de recovery')}</div>
+              <div className="flex flex-col gap-2">
+                ${intSugg.slice(0, 4).map((item, i) => html`
+                  <div key=${i} className="flex items-start gap-2">
+                    <span style=${{ fontSize: 11, color: T.green, marginTop: 1, flexShrink: 0 }}>•</span>
+                    <span style=${{ fontSize: 12, color: T.sub, lineHeight: 1.4 }}>${LANG === 'en' ? item.tip.en : item.tip.es}</span>
+                  </div>
+                `)}
+              </div>
+            </div>
+            ${intNext ? html`<div style=${{ height: 1, background: T.border }} />` : ''}
+          ` : ''}
+
+          ${intNext ? html`
+            <div style=${{ padding: '14px 16px' }}>
+              <div style=${{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>${t('Próximo entrenamiento')}</div>
+              <div className="flex items-center gap-2">
+                <span style=${{ fontSize: 14 }}>🏋🏼</span>
+                <div>
+                  <div style=${{ fontSize: 14, fontWeight: 700, color: T.text }}>${dayLabel(intNext.key)} — ${intNext.routine.name}</div>
+                  <div style=${{ fontSize: 12, color: T.sub }}>${t(intNext.routine.focus)}</div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
 
       <!-- Ready muscles suggestion -->
       ${(() => {
@@ -7505,40 +7656,12 @@ function RecoveryView({ dark }) {
         `)}
       </div>
 
-      <!-- Muscle list -->
-      ${recovering.length > 0 ? html`
-        <div>
-          <div style=${{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 10 }}>
-            ${t('Musculos en recuperacion')}
-          </div>
-          <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            ${recovering.map(m => {
-              const recColor = getRecoveryColor(m.recoveryPct, dark);
-              return html`
-                <div key=${m.slug} style=${{ background: T.elevated, border: '1px solid ' + T.border, borderRadius: 12, padding: '10px 14px' }}>
-                  <div className="flex items-center justify-between" style=${{ marginBottom: 4 }}>
-                    <span style=${{ fontSize: 13, fontWeight: 700, color: T.text }}>${m.label}</span>
-                    <span style=${{ fontSize: 12, fontWeight: 800, color: recColor, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                      ${m.recoveryPct}%
-                    </span>
-                  </div>
-                  <div style=${{ height: 5, borderRadius: 3, background: T.input, marginBottom: 4 }}>
-                    <div style=${{ height: '100%', borderRadius: 3, background: recColor, width: m.recoveryPct + '%', transition: 'width 0.3s ease' }} />
-                  </div>
-                  <div style=${{ fontSize: 10, color: T.muted }}>
-                    ~${m.hoursRemaining}h ${t('restantes')}
-                  </div>
-                </div>
-              `;
-            })}
-          </div>
-        </div>
-      ` : html`
+      ${intItems.length === 0 && recovering.length === 0 ? html`
         <div style=${{ textAlign: 'center', padding: '16px 0' }}>
           <div style=${{ fontSize: 24, marginBottom: 6 }}>${'\u2705'}</div>
           <div style=${{ fontSize: 13, fontWeight: 600, color: dark ? '#22c55e' : '#16a34a' }}>${t('Todos los musculos recuperados')}</div>
         </div>
-      `}
+      ` : ''}
     </div>
   `;
 }
@@ -10250,65 +10373,7 @@ function LiveTab({ routine, exerciseStates, onExerciseUpdate, unitPref, workoutS
   // RENDER — Rest day (non-cardio)
   // ═══════════════════════════════════════
   if (routine.rest && !routine.cardio) {
-    // Look back up to 3 days for recovering muscles (not just yesterday)
-    const RECOVERY_HOURS = { 3: { legs: 72, upper: 48 }, 2: { legs: 36, upper: 36 }, 1: { legs: 24, upper: 24 } };
-    const LEG_MUSCLES = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
-    const recoveringMuscles = {};
-    const muscleWorkoutTime = {};
-    const weekKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-    for (let daysBack = 1; daysBack <= 3; daysBack++) {
-      const idx = (weekKeys.indexOf(todayKey) - daysBack + 7) % 7;
-      const dk = weekKeys[idx];
-      const d = new Date(); d.setDate(d.getDate() - daysBack);
-      const ds = localDate(d);
-      const dayIntensity = getMuscleIntensityForDay(dk);
-      if (Object.keys(dayIntensity).length === 0) continue;
-      let workoutTs = null;
-      try {
-        const ts = localStorage.getItem('ds_workout_timer_' + dk + '_' + ds);
-        if (ts) workoutTs = Number(ts);
-        else {
-          const ws = localStorage.getItem('ds_workout_' + dk + '_' + ds);
-          if (ws) workoutTs = new Date(ds + 'T07:00:00').getTime();
-        }
-      } catch {}
-      Object.entries(dayIntensity).forEach(([slug, level]) => {
-        if (!recoveringMuscles[slug] || recoveringMuscles[slug] < level) {
-          recoveringMuscles[slug] = level;
-          if (workoutTs) muscleWorkoutTime[slug] = workoutTs;
-        }
-      });
-    }
-
-    const now = Date.now();
-    const recoveryItems = Object.entries(recoveringMuscles)
-      .sort((a, b) => b[1] - a[1])
-      .map(([slug, level]) => {
-        const isLeg = LEG_MUSCLES.has(slug);
-        const totalH = RECOVERY_HOURS[level] ? RECOVERY_HOURS[level][isLeg ? 'legs' : 'upper'] : 24;
-        const wt = muscleWorkoutTime[slug];
-        const hoursEl = wt ? Math.max(0, (now - wt) / 3600000) : null;
-        const pct = hoursEl != null ? Math.min(100, Math.round((hoursEl / totalH) * 100)) : 0;
-        const remainH = hoursEl != null ? Math.max(0, Math.round(totalH - hoursEl)) : totalH;
-        return { slug, level, pct, remainH, totalH };
-      });
-    const overallPct = recoveryItems.length > 0 ? Math.round(recoveryItems.reduce((s, r) => s + r.pct, 0) / recoveryItems.length) : 0;
-
-    const recoverySuggestions = [];
-    Object.keys(recoveringMuscles).forEach(slug => {
-      const tips = RECOVERY_SUGGESTIONS[slug];
-      if (tips) tips.forEach(tip => recoverySuggestions.push({ slug, tip }));
-    });
-    const nextWorkout = (() => {
-      const keys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-      const todayIdx = keys.indexOf(todayKey);
-      for (let offset = 1; offset <= 7; offset++) {
-        const dk = keys[(todayIdx + offset) % 7];
-        const r = ROUTINES[dk];
-        if (r && !r.rest) return { key: dk, routine: r };
-      }
-      return null;
-    })();
+    const { recoveryItems, overallPct, recoverySuggestions, nextWorkout } = getIntensityRecoveryData();
 
     // Battery SVG colors
     const battColor = overallPct >= 80 ? T.green : overallPct >= 50 ? T.amber : T.red;
