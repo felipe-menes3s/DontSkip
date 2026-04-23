@@ -246,9 +246,34 @@ input[type=number] { -moz-appearance: textfield; }
 @keyframes badgeGlow { 0%, 100% { box-shadow: 0 0 8px 2px var(--glow-color); } 50% { box-shadow: 0 0 18px 6px var(--glow-color); } }
 .glow-badge { animation: badgeGlow 3s ease-in-out infinite; }
 .glow-badge-new { animation: badgeGlow 1s ease-in-out 3; }
-/* Trophy — Gold (unlocked) */
-.trophy-gold { background: linear-gradient(135deg, #f5c842 0%, #e8b117 50%, #d4a017 100%); background-size: 200% 200%; border: 2px solid #f5c842; box-shadow: 0 2px 10px rgba(212,160,23,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
-.trophy-gold-glow { box-shadow: 0 0 14px 2px rgba(245,200,66,0.55), 0 2px 10px rgba(212,160,23,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+/* Trophy — Gold (unlocked) — vitrina/espejo effect with diagonal sheen */
+.trophy-gold {
+  background:
+    linear-gradient(135deg,
+      #c89010 0%,
+      #e8b117 14%,
+      #f5c842 30%,
+      #ffe385 44%,
+      #fff8d6 50%,
+      #ffe385 56%,
+      #f5c842 70%,
+      #e8b117 86%,
+      #c89010 100%);
+  border: 2px solid #e8b117;
+  box-shadow:
+    0 2px 10px rgba(212,160,23,0.4),
+    0 0 18px rgba(255,220,90,0.22),
+    inset 0 1.5px 1px rgba(255,255,255,0.6),
+    inset 0 -1px 1px rgba(120,80,10,0.22);
+}
+.trophy-gold-glow {
+  box-shadow:
+    0 0 16px 3px rgba(255,220,90,0.6),
+    0 2px 10px rgba(212,160,23,0.45),
+    0 0 24px rgba(255,220,90,0.35),
+    inset 0 1.5px 1px rgba(255,255,255,0.7),
+    inset 0 -1px 1px rgba(120,80,10,0.2);
+}
 /* Trophy — Glass (locked) */
 .trophy-glass { background: linear-gradient(135deg, rgba(200,210,230,0.10), rgba(200,210,230,0.04)); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.08); }
 .trophy-glass-dark { background: linear-gradient(135deg, rgba(180,200,230,0.06), rgba(180,200,230,0.02)); border: 1px solid rgba(255,255,255,0.06); }
@@ -561,6 +586,13 @@ const EN = {
   'Hidratación total': 'Total hydration', '7 días seguidos cumpliendo meta de agua': '7 consecutive days meeting water goal',
   'Constructor': 'Builder', '10,000+ de volumen en una semana': '10,000+ volume in a week',
   'Madrugador': 'Early bird', 'Entrenar antes de las 7am': 'Work out before 7am',
+  'Proteína alcanzada': 'Protein hit', 'Cumplir meta de proteína en un día': 'Hit protein goal in a day',
+  'Hidratado': 'Hydrated', 'Cumplir meta de agua en un día': 'Hit water goal in a day',
+  'Trío completo': 'Full stack', 'Creatina + whey + omega 3 mismo día': 'Creatine + whey + omega 3 same day',
+  '3 días proteicos': '3-day protein', '3 días seguidos cumpliendo proteína': '3 days in a row hitting protein',
+  '3 días hidratado': '3-day hydrated', '3 días seguidos cumpliendo agua': '3 days in a row hitting water',
+  'Semana completa': 'Full week',
+  'Volumen base': 'Base volume', '5,000 de volumen en una semana': '5,000 volume in a week',
   'Primera vez': 'First time', 'Hoy toca': "Today's workout",
   'Desbloqueado': 'Unlocked', 'Bloqueado': 'Locked', 'Cerrar': 'Close',
   '¡Logro desbloqueado!': 'Achievement unlocked!',
@@ -2280,13 +2312,27 @@ function getPlanWeek() {
 // ── Progreso Data ────────────────────────────────────────────────────
 
 function getWeightLog() {
-  try { return JSON.parse(localStorage.getItem('ds_weight_log') || '[]'); } catch { return []; }
+  try {
+    const raw = JSON.parse(localStorage.getItem('ds_weight_log') || '[]');
+    if (!Array.isArray(raw) || raw.length === 0) return [];
+    // Collapse duplicate-date entries (older saves pushed without dedupe) and sort chronologically.
+    const byDate = {};
+    raw.forEach(e => { if (e && e.date) byDate[e.date] = { ...(byDate[e.date] || {}), ...e }; });
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  } catch { return []; }
 }
 
 function saveWeightEntry(entry) {
   const log = getWeightLog();
-  log.push(entry);
-  localStorage.setItem('ds_weight_log', JSON.stringify(log));
+  // Merge with existing entry for the same date (same-day updates extend, not duplicate).
+  const idx = log.findIndex(e => e.date === entry.date);
+  if (idx >= 0) log[idx] = { ...log[idx], ...entry };
+  else log.push(entry);
+  // Collapse any pre-existing duplicates by date and keep chronological order.
+  const byDate = {};
+  log.forEach(e => { byDate[e.date] = { ...(byDate[e.date] || {}), ...e }; });
+  const dedup = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem('ds_weight_log', JSON.stringify(dedup));
 }
 
 // 1RM estimator (Epley formula)
@@ -4511,10 +4557,10 @@ function WaterCounter({ waterMl, onAddWater, onUndoWater, waterLog }) {
   }
 
   const quickAmounts = [
-    { ml: 250,  label: '250 ml',  sub: t('1 vaso') + ' · 8 oz' },
-    { ml: 355,  label: '355 ml',  sub: t('Botella plástica') + ' · 12 oz' },
-    { ml: 710,  label: '710 ml',  sub: t('Botella gym') + ' · 24 oz' },
-    { ml: 1182, label: '1182 ml', sub: t('Botella oficina') + ' · 40 oz' },
+    { ml: 250,  label: '8 oz',  sub: '250 ml' },
+    { ml: 355,  label: '12 oz', sub: '355 ml' },
+    { ml: 710,  label: '24 oz', sub: '710 ml' },
+    { ml: 1182, label: '40 oz', sub: '1182 ml' },
   ];
 
   // Glass fill: percentage from bottom
@@ -5794,28 +5840,39 @@ function SemanaTab({ dark, onThemeToggle, onLangToggle }) {
 // ── Progreso Tab ──────────────────────────────────────────────────────
 
 function MetricsCard({ unitPref, onSaved }) {
+  // Body parts with anatomical dot coordinates (body-figure.png is 110x220 centered at x=140 in 280x220 container).
+  // dotX is the x-coordinate of the anatomical landmark on the figure; side controls which side the label pill sits.
   const BODY_PARTS = [
-    { key: 'cuello', label: 'Cuello', labelEn: 'Neck', placeholder: 38, y: 40, side: 'right' },
-    { key: 'pecho', label: 'Pecho', labelEn: 'Chest', placeholder: 95, y: 68, side: 'right' },
-    { key: 'brazo', label: 'Brazo', labelEn: 'Arm', placeholder: 32, y: 80, side: 'left' },
-    { key: 'cintura', label: 'Cintura', labelEn: 'Waist', placeholder: 85, y: 100, side: 'right' },
-    { key: 'cadera', label: 'Cadera', labelEn: 'Hips', placeholder: 95, y: 116, side: 'left' },
-    { key: 'muslo', label: 'Muslo', labelEn: 'Thigh', placeholder: 55, y: 148, side: 'right' },
+    { key: 'cuello',  label: 'Cuello',  labelEn: 'Neck',  placeholder: 38,  y: 40,  dotX: 150, side: 'right',
+      helper: 'Justo bajo la nuez de Adán',   helperEn: "Just below Adam's apple" },
+    { key: 'pecho',   label: 'Pecho',   labelEn: 'Chest', placeholder: 95,  y: 65,  dotX: 114, side: 'left',
+      helper: 'Línea del pezón, exhalado',    helperEn: 'At nipple line, exhaled' },
+    { key: 'brazo',   label: 'Brazo',   labelEn: 'Arm',   placeholder: 32,  y: 80,  dotX: 178, side: 'right',
+      helper: 'Bíceps flexionado, punto más ancho', helperEn: 'Flexed bicep, widest point' },
+    { key: 'cintura', label: 'Cintura', labelEn: 'Waist', placeholder: 85,  y: 104, dotX: 126, side: 'left',
+      helper: 'Al nivel del ombligo, relajada',     helperEn: 'At navel level, relaxed' },
+    { key: 'cadera',  label: 'Cadera',  labelEn: 'Hips',  placeholder: 95,  y: 122, dotX: 162, side: 'right',
+      helper: 'Punto más ancho (glúteos)',          helperEn: 'Widest point (glutes)' },
+    { key: 'muslo',   label: 'Muslo',   labelEn: 'Thigh', placeholder: 55,  y: 150, dotX: 125, side: 'left',
+      helper: 'A 10 cm debajo de la ingle',         helperEn: '10 cm below the groin' },
   ];
 
-  const [selectedPart, setSelectedPart] = useState(null);
-  const [inputVal, setInputVal] = useState('');
-  const [weightVal, setWeightVal] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [showBodyComp, setShowBodyComp] = useState(false);
   const [weightUnit, setWeightUnit] = useState(unitPref);
   const [measureUnit, setMeasureUnit] = useState('cm');
-  const [showBodyComp, setShowBodyComp] = useState(false);
+  const [chartPart, setChartPart] = useState(null);
+
+  // One input state per field (peso, 6 body parts, 5 body comp)
+  const [weightVal, setWeightVal] = useState('');
+  const [partVals, setPartVals] = useState({ cuello: '', pecho: '', brazo: '', cintura: '', cadera: '', muslo: '' });
   const [bodyFatVal, setBodyFatVal] = useState('');
   const [muscleMassVal, setMuscleMassVal] = useState('');
   const [visceralFatVal, setVisceralFatVal] = useState('');
   const [bmrVal, setBmrVal] = useState('');
   const [metAgeVal, setMetAgeVal] = useState('');
+
   const [lastEntry, setLastEntry] = useState(() => {
-    // Seed baseline if not present
     const log = getWeightLog();
     if (!log.some(e => e.date === BASELINE.date)) {
       const entry = { ...BASELINE };
@@ -5824,25 +5881,36 @@ function MetricsCard({ unitPref, onSaved }) {
     }
     return log.length ? log[log.length - 1] : null;
   });
-  const [chartPart, setChartPart] = useState(null);
 
   const cmToIn = (v) => Math.round(v / 2.54 * 10) / 10;
   const inToCm = (v) => Math.round(v * 2.54 * 10) / 10;
   const dispMeasure = (cm) => measureUnit === 'in' ? cmToIn(cm) : cm;
 
+  function setPart(key, val) { setPartVals(prev => ({ ...prev, [key]: val })); }
+
+  function resetForm() {
+    setWeightVal('');
+    setPartVals({ cuello: '', pecho: '', brazo: '', cintura: '', cadera: '', muslo: '' });
+    setBodyFatVal(''); setMuscleMassVal(''); setVisceralFatVal(''); setBmrVal(''); setMetAgeVal('');
+    setShowBodyComp(false);
+  }
+
   const handleSave = useCallback(() => {
-    const w = parseFloat(weightVal);
-    const kg = w && w > 0 ? (weightUnit === 'lbs' ? lbsToKg(w) : w) : null;
     const entry = { date: localDate() };
-    if (kg) entry.kg = Math.round(kg * 10) / 10;
-    // Collect all body part values from last entry as base
-    BODY_PARTS.forEach(bp => { if (lastEntry && lastEntry[bp.key]) entry[bp.key] = lastEntry[bp.key]; });
-    // Override the selected part if we have input
-    if (selectedPart && inputVal) {
-      const v = parseFloat(inputVal);
-      if (v > 0) entry[selectedPart] = measureUnit === 'in' ? Math.round(inToCm(v) * 10) / 10 : Math.round(v * 10) / 10;
-    }
-    // Body composition fields
+    // Weight
+    const w = parseFloat(weightVal);
+    if (w && w > 0) entry.kg = Math.round((weightUnit === 'lbs' ? lbsToKg(w) : w) * 10) / 10;
+    // Body parts — carry previous values, override any new ones
+    BODY_PARTS.forEach(bp => {
+      const prev = lastEntry && lastEntry[bp.key];
+      const v = parseFloat(partVals[bp.key]);
+      if (v && v > 0) {
+        entry[bp.key] = Math.round((measureUnit === 'in' ? inToCm(v) : v) * 10) / 10;
+      } else if (prev) {
+        entry[bp.key] = prev;
+      }
+    });
+    // Body composition
     if (bodyFatVal) entry.bodyFat = parseFloat(bodyFatVal);
     if (muscleMassVal) {
       const mm = parseFloat(muscleMassVal);
@@ -5851,94 +5919,102 @@ function MetricsCard({ unitPref, onSaved }) {
     if (visceralFatVal) entry.visceralFat = parseInt(visceralFatVal);
     if (bmrVal) entry.bmr = parseInt(bmrVal);
     if (metAgeVal) entry.metabolicAge = parseInt(metAgeVal);
-    const hasBodyComp = bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal;
-    if (!entry.kg && !hasBodyComp && !Object.keys(entry).some(k => BODY_PARTS.map(b => b.key).includes(k) && entry[k])) return;
+
+    // Only save if something new was entered (not just copied from previous)
+    const hasNewData = entry.kg || BODY_PARTS.some(bp => parseFloat(partVals[bp.key]) > 0)
+      || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal;
+    if (!hasNewData) return;
     if (!entry.kg && lastEntry) entry.kg = lastEntry.kg;
+
     saveWeightEntry(entry);
     setLastEntry(entry);
-    setWeightVal(''); setInputVal(''); setSelectedPart(null);
-    setBodyFatVal(''); setMuscleMassVal(''); setVisceralFatVal(''); setBmrVal(''); setMetAgeVal(''); setShowBodyComp(false);
+    resetForm();
+    setEditing(false);
     if (onSaved) onSaved();
-  }, [weightVal, inputVal, selectedPart, weightUnit, measureUnit, lastEntry, onSaved, bodyFatVal, muscleMassVal, visceralFatVal, bmrVal, metAgeVal]);
+  }, [weightVal, partVals, weightUnit, measureUnit, lastEntry, onSaved, bodyFatVal, muscleMassVal, visceralFatVal, bmrVal, metAgeVal]);
 
   const log = getWeightLog();
   const chipStyle = (active) => ({
-    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8, cursor: 'pointer',
+    fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 8, cursor: 'pointer',
     background: active ? T.accent : 'transparent', color: active ? '#fff' : T.muted,
     border: active ? 'none' : '1px solid ' + T.border, transition: 'all 0.2s',
   });
 
-  // Mini chart for a selected body part
+  // Mini chart for a selected body part (from history pills)
   const chartData = useMemo(() => {
     if (!chartPart) return [];
     return log.filter(e => e[chartPart] != null).slice(-8).map(e => ({ date: e.date, value: e[chartPart] }));
   }, [chartPart, log]);
 
+  const hasAnyInput = weightVal || Object.values(partVals).some(v => v) || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal;
+
+  // Input field helper (label + helper text + unit + input)
+  const inputField = (label, helper, val, setter, placeholder, unit) => html`
+    <div style=${{ marginBottom: 10 }}>
+      <div className="flex items-baseline justify-between" style=${{ marginBottom: 3 }}>
+        <label style=${{ fontSize: 12, fontWeight: 700, color: T.text }}>${label}</label>
+        ${unit && html`<span style=${{ fontSize: 10, fontWeight: 600, color: T.muted }}>${unit}</span>`}
+      </div>
+      ${helper && html`<div style=${{ fontSize: 10, color: T.muted, marginBottom: 4, lineHeight: 1.3 }}>${helper}</div>`}
+      <input type="number" inputMode="decimal" placeholder=${placeholder} value=${val}
+        onInput=${e => setter(e.target.value)}
+        className="w-full text-sm font-semibold rounded-xl py-2 px-3"
+        style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
+    </div>
+  `;
+
   return html`
     <div className="ds-card fade-up mx-5 mb-4" style=${{ padding: 20 }}>
       <${SectionHeader} title=${t("Métricas físicas")} />
 
-      <!-- Body Map -->
-      <div className="flex justify-center" style=${{ marginBottom: 16, position: 'relative' }}>
+      <!-- Body Map (visual display only, anatomical dots + value labels) -->
+      <div className="flex justify-center" style=${{ marginBottom: 14, position: 'relative' }}>
         <div style=${{ position: 'relative', width: 280, height: 220 }}>
           <!-- Anatomical body figure centered -->
           <div style=${{ position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)', width: 110, height: 220 }}>
             <img src="body-figure.png" width="110" style=${{ display: 'block', height: 220, objectFit: 'contain', opacity: 0.85 }} />
           </div>
-          <!-- Connector lines -->
+          <!-- Connector lines from dot to pill (short horizontal) -->
           <svg width="280" height="220" viewBox="0 0 280 220" fill="none" style=${{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1 }}>
             ${BODY_PARTS.map(bp => {
-              const cy = bp.y + 10;
-              const bodyEdge = bp.side === 'left' ? 92 : 188;
-              const pillEdge = bp.side === 'left' ? 75 : 205;
-              return html`<line x1=${bodyEdge} y1=${cy} x2=${pillEdge} y2=${cy} stroke=${T.border} strokeWidth="1" strokeDasharray="3 2" />`;
+              const cy = bp.y;
+              const pillEdgeX = bp.side === 'left' ? 78 : 202;
+              return html`
+                <line key=${bp.key} x1=${bp.dotX} y1=${cy} x2=${pillEdgeX} y2=${cy}
+                  stroke=${T.accent + '55'} strokeWidth="1.2" />
+                <circle cx=${bp.dotX} cy=${cy} r="3.5" fill=${T.accent} stroke=${T.bg} strokeWidth="1.5" />
+              `;
             })}
           </svg>
-          <!-- Tappable measurement points on sides -->
+          <!-- Value label pills -->
           ${BODY_PARTS.map(bp => {
             const hasData = lastEntry && lastEntry[bp.key];
-            const isSelected = selectedPart === bp.key;
+            const label = LANG === 'en' ? bp.labelEn : bp.label;
             const pillStyle = {
-              position: 'absolute', top: bp.y,
-              display: 'flex', alignItems: 'center', gap: 3,
-              padding: '3px 10px', borderRadius: 10,
-              background: isSelected ? T.accent : hasData ? T.greenDim : T.elevated,
-              border: '1.5px solid ' + (isSelected ? T.accent : hasData ? T.green + '40' : T.border),
+              position: 'absolute', top: bp.y - 11,
+              display: 'flex', flexDirection: 'column', alignItems: bp.side === 'left' ? 'flex-end' : 'flex-start',
+              padding: '2px 8px', borderRadius: 8,
+              background: hasData ? T.greenDim : T.elevated,
+              border: '1px solid ' + (hasData ? T.green + '35' : T.border),
               transition: 'all 0.2s', zIndex: 2,
-              whiteSpace: 'nowrap',
+              whiteSpace: 'nowrap', lineHeight: 1.05,
             };
             if (bp.side === 'left') { pillStyle.right = '50%'; pillStyle.marginRight = 62; }
             else { pillStyle.left = '50%'; pillStyle.marginLeft = 62; }
             return html`
-              <button key=${bp.key}
-                onClick=${() => { setSelectedPart(bp.key === selectedPart ? null : bp.key); setInputVal(''); setChartPart(null); }}
-                className="press-scale" style=${pillStyle}>
-                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, color: isSelected ? '#fff' : hasData ? T.green : T.muted }}>
-                  ${hasData ? dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : 'cm') + ' \u00B7 ' + (LANG === 'en' ? bp.labelEn : bp.label) : (LANG === 'en' ? bp.labelEn : bp.label)}
+              <div key=${bp.key} style=${pillStyle}>
+                <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 800, color: hasData ? T.green : T.text }}>
+                  ${hasData ? (dispMeasure(lastEntry[bp.key]) + (measureUnit === 'in' ? '"' : ' cm')) : '—'}
                 </span>
-              </button>
+                <span style=${{ fontSize: 9, fontWeight: 600, color: T.muted, marginTop: 1 }}>${label}</span>
+              </div>
             `;
           })}
         </div>
       </div>
 
-      <!-- Weight input -->
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <label style=${{ fontSize: 11, fontWeight: 600, color: T.muted }}>${t('Peso')}</label>
-          <div className="flex gap-1">
-            <button onClick=${() => setWeightUnit('kg')} style=${chipStyle(weightUnit === 'kg')}>kg</button>
-            <button onClick=${() => setWeightUnit('lbs')} style=${chipStyle(weightUnit === 'lbs')}>lbs</button>
-          </div>
-        </div>
-        <input type="number" placeholder=${weightUnit === 'kg' ? '72' : '159'} value=${weightVal}
-          onInput=${e => setWeightVal(e.target.value)}
-          className="w-full text-sm font-semibold rounded-xl py-2.5 px-3 text-center"
-          style=${{ background: T.elevated, border: '1px solid ' + T.border, color: T.text }} />
-      </div>
-
       <!-- BMI bar -->
-      ${lastEntry?.kg ? (() => {
+      ${lastEntry && lastEntry.kg ? (() => {
         const bmi = lastEntry.kg / (1.74 * 1.74);
         const bmiStr = bmi.toFixed(1);
         const minBmi = 15, maxBmi = 35, range = maxBmi - minBmi;
@@ -5969,62 +6045,119 @@ function MetricsCard({ unitPref, onSaved }) {
         `;
       })() : ''}
 
-      <!-- Selected body part input -->
-      ${selectedPart && html`
-        <div className="mb-3 slide-down">
-          <div className="flex items-center justify-between mb-1">
-            <label style=${{ fontSize: 11, fontWeight: 600, color: T.accent }}>
-              ${LANG === 'en' ? BODY_PARTS.find(b => b.key === selectedPart).labelEn : BODY_PARTS.find(b => b.key === selectedPart).label}
-            </label>
-            <div className="flex gap-1">
+      <!-- Update measurements button / form -->
+      ${!editing ? html`
+        <button onClick=${() => setEditing(true)} className="w-full press-scale"
+          style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '12px 0', borderRadius: 12, background: T.accent, border: 'none', color: '#fff', cursor: 'pointer' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 800 }}>${LANG === 'en' ? 'Update measurements' : 'Actualizar medidas'}</span>
+        </button>
+      ` : html`
+        <div className="slide-down" style=${{ padding: '14px', borderRadius: 14, background: T.elevated, border: '1px solid ' + T.border, marginBottom: 10 }}>
+          <!-- Unit toggles -->
+          <div className="flex items-center gap-3 mb-3" style=${{ paddingBottom: 10, borderBottom: '1px solid ' + T.border }}>
+            <div className="flex items-center gap-1">
+              <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, marginRight: 4 }}>${t('Peso')}</span>
+              <button onClick=${() => setWeightUnit('kg')} style=${chipStyle(weightUnit === 'kg')}>kg</button>
+              <button onClick=${() => setWeightUnit('lbs')} style=${chipStyle(weightUnit === 'lbs')}>lbs</button>
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <span style=${{ fontSize: 10, fontWeight: 700, color: T.muted, marginRight: 4 }}>${LANG === 'en' ? 'Size' : 'Medida'}</span>
               <button onClick=${() => setMeasureUnit('cm')} style=${chipStyle(measureUnit === 'cm')}>cm</button>
               <button onClick=${() => setMeasureUnit('in')} style=${chipStyle(measureUnit === 'in')}>in</button>
             </div>
           </div>
-          <input type="number" placeholder=${measureUnit === 'cm' ? String(BODY_PARTS.find(b => b.key === selectedPart).placeholder) : String(cmToIn(BODY_PARTS.find(b => b.key === selectedPart).placeholder))} value=${inputVal}
-            onInput=${e => setInputVal(e.target.value)}
-            className="w-full text-sm font-semibold rounded-xl py-2.5 px-3 text-center"
-            style=${{ background: T.elevated, border: '1px solid ' + T.accent + '30', color: T.text }} />
-        </div>
-      `}
 
-      <!-- Body Composition toggle -->
-      <button onClick=${() => setShowBodyComp(!showBodyComp)} className="w-full press-scale mb-3"
-        style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: '10px 0', borderRadius: 12, background: T.accentDim,
-          border: '1px solid ' + T.accent + '25' }}>
-        <span style=${{ fontSize: 14 }}>${'\uD83D\uDCCA'}</span>
-        <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: T.accent }}>
-          ${LANG === 'en' ? 'Update composition' : 'Actualizar composición'}
-        </span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke=${T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showBodyComp ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
+          <!-- Weight -->
+          ${inputField(
+            t('Peso'),
+            LANG === 'en' ? 'Barefoot, empty stomach, same time of day' : 'Descalzo, en ayunas, misma hora',
+            weightVal, setWeightVal,
+            weightUnit === 'kg' ? '72' : '159',
+            weightUnit
+          )}
 
-      ${showBodyComp && html`
-        <div className="mb-3 slide-down" style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          ${[
-            { label: 'Body Fat (%)', val: bodyFatVal, set: setBodyFatVal, ph: '17.3' },
-            { label: 'Muscle Mass (' + weightUnit + ')', val: muscleMassVal, set: setMuscleMassVal, ph: weightUnit === 'lbs' ? '126.8' : '57.5' },
-            { label: 'Visceral Fat', val: visceralFatVal, set: setVisceralFatVal, ph: '7' },
-            { label: 'BMR (kcal)', val: bmrVal, set: setBmrVal, ph: '1665' },
-            { label: LANG === 'en' ? 'Metabolic Age' : 'Edad Metabólica', val: metAgeVal, set: setMetAgeVal, ph: '32' },
-          ].map((field, fi) => html`
-            <div key=${fi} style=${fi === 4 ? { gridColumn: '1 / -1' } : {}}>
-              <label style=${{ fontSize: 9, fontWeight: 600, color: T.muted, display: 'block', marginBottom: 2 }}>${field.label}</label>
-              <input type="number" placeholder=${field.ph} value=${field.val}
-                onInput=${e => field.set(e.target.value)}
-                className="w-full text-sm font-semibold rounded-xl py-2 px-3 text-center"
-                style=${{ background: T.elevated, border: '1px solid ' + T.accent + '20', color: T.text, fontSize: 13 }} />
+          <!-- Body parts -->
+          <div style=${{ marginTop: 6, marginBottom: 4 }}>
+            <div style=${{ fontSize: 10, fontWeight: 800, color: T.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+              ${LANG === 'en' ? 'Body measurements' : 'Medidas corporales'}
             </div>
-          `)}
+          </div>
+          ${BODY_PARTS.map(bp => {
+            const placeholder = measureUnit === 'cm' ? String(bp.placeholder) : String(cmToIn(bp.placeholder));
+            const prev = lastEntry && lastEntry[bp.key];
+            const helperWithPrev = (LANG === 'en' ? bp.helperEn : bp.helper)
+              + (prev ? ' · ' + (LANG === 'en' ? 'last' : 'última') + ': ' + dispMeasure(prev) + (measureUnit === 'in' ? '"' : ' cm') : '');
+            return inputField(
+              LANG === 'en' ? bp.labelEn : bp.label,
+              helperWithPrev,
+              partVals[bp.key], (v) => setPart(bp.key, v),
+              placeholder,
+              measureUnit
+            );
+          })}
+
+          <!-- Body composition toggle -->
+          <button onClick=${() => setShowBodyComp(!showBodyComp)} className="w-full press-scale"
+            style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '8px 10px', borderRadius: 10, background: T.card,
+              border: '1px solid ' + T.border, cursor: 'pointer', marginTop: 8, marginBottom: showBodyComp ? 10 : 0 }}>
+            <span style=${{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: T.text }}>
+              ${LANG === 'en' ? 'Body composition (InBody scale)' : 'Composición corporal (báscula InBody)'}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke=${T.muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style=${{ transition: 'transform 0.2s', transform: showBodyComp ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          ${showBodyComp && html`
+            <div className="slide-down">
+              ${inputField(
+                'Body Fat',
+                LANG === 'en' ? '% body fat from InBody scale' : '% grasa corporal de báscula InBody',
+                bodyFatVal, setBodyFatVal, '17.3', '%'
+              )}
+              ${inputField(
+                LANG === 'en' ? 'Muscle Mass' : 'Masa muscular',
+                LANG === 'en' ? 'Total muscle mass (same unit as weight)' : 'Masa muscular total (misma unidad que peso)',
+                muscleMassVal, setMuscleMassVal,
+                weightUnit === 'lbs' ? '126.8' : '57.5', weightUnit
+              )}
+              ${inputField(
+                LANG === 'en' ? 'Visceral Fat' : 'Grasa visceral',
+                LANG === 'en' ? 'Scale rating (1-59)' : 'Valor de báscula (1-59)',
+                visceralFatVal, setVisceralFatVal, '7', ''
+              )}
+              ${inputField(
+                'BMR',
+                LANG === 'en' ? 'Basal metabolic rate' : 'Metabolismo basal',
+                bmrVal, setBmrVal, '1665', 'kcal'
+              )}
+              ${inputField(
+                LANG === 'en' ? 'Metabolic Age' : 'Edad metabólica',
+                LANG === 'en' ? 'Scale-estimated biological age' : 'Edad biológica estimada por báscula',
+                metAgeVal, setMetAgeVal, '32',
+                LANG === 'en' ? 'years' : 'años'
+              )}
+            </div>
+          `}
+
+          <!-- Action buttons -->
+          <div className="flex gap-2" style=${{ marginTop: 14 }}>
+            <button onClick=${() => { resetForm(); setEditing(false); }}
+              className="press-scale"
+              style=${{ flex: '0 0 auto', padding: '10px 18px', borderRadius: 11, background: T.card, border: '1px solid ' + T.border, color: T.sub, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              ${t('Cerrar')}
+            </button>
+            <button onClick=${handleSave} disabled=${!hasAnyInput}
+              className="press-scale"
+              style=${{ flex: 1, padding: '10px 0', borderRadius: 11,
+                background: hasAnyInput ? T.accent : T.muted, color: '#fff', opacity: hasAnyInput ? 1 : 0.4,
+                border: 'none', fontSize: 13, fontWeight: 800, cursor: hasAnyInput ? 'pointer' : 'not-allowed' }}>
+              ${t('Guardar medición')}
+            </button>
+          </div>
         </div>
       `}
-
-      <button onClick=${handleSave} disabled=${!weightVal && !inputVal && !bodyFatVal && !muscleMassVal && !visceralFatVal && !bmrVal && !metAgeVal}
-        className="w-full py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.97]"
-        style=${{ background: (weightVal || inputVal || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal) ? T.accent : T.muted, color: '#fff', opacity: (weightVal || inputVal || bodyFatVal || muscleMassVal || visceralFatVal || bmrVal || metAgeVal) ? 1 : 0.4 }}>
-        ${t('Guardar medición')}
-      </button>
 
       <!-- Next measurement date -->
       ${(() => {
@@ -6092,7 +6225,7 @@ function MetricsCard({ unitPref, onSaved }) {
             return html`
               <div className="px-3 pb-2 text-center">
                 <span style=${{ fontSize: 11, fontWeight: 700, color: diff < 0 ? T.green : diff > 0 ? T.amber : T.muted }}>
-                  ${diff < 0 ? '\u2193 -' + diffDisp : diff > 0 ? '\u2191 +' + diffDisp : '\u2194 0'} ${measureUnit}
+                  ${diff < 0 ? '↓ -' + diffDisp : diff > 0 ? '↑ +' + diffDisp : '↔ 0'} ${measureUnit}
                 </span>
               </div>
             `;
@@ -6104,7 +6237,7 @@ function MetricsCard({ unitPref, onSaved }) {
 }
 
 function WeightChart() {
-  const log = getWeightLog();
+  const log = getWeightLog().filter(e => e.kg != null);
   const recent = log.slice(-8);
 
   if (recent.length < 2) {
@@ -6277,140 +6410,196 @@ function RecordsCard({ unitPref }) {
 // Rich text for each badge — long descriptions, unlock criteria, congratulation messages
 const BADGE_META = {
   first: {
-    longDesc: 'Completaste tu primer entrenamiento. Este es el trofeo que menos se celebra pero el que más importa — 99% de la gente nunca llega aquí. Empezar es la parte difícil. Todo lo demás se construye sobre esto.',
-    longDescEn: 'You completed your first workout. This trophy gets celebrated the least but matters the most — 99% of people never make it here. Starting is the hard part. Everything else builds on top of this.',
+    longDesc: 'Completaste tu primer entrenamiento. Este es el trofeo que menos se celebra pero el que más importa — 99% de la gente que se inscribe al gym nunca llega al día uno. Empezar es la parte difícil porque rompe la inercia; todo lo demás se construye sobre esta sesión. Ya tienes algo que perder, y eso cambia la forma en que decides mañana.',
+    longDescEn: 'You completed your first workout. This trophy gets celebrated the least but matters the most — 99% of people who sign up for a gym never make it to day one. Starting is the hard part because it breaks inertia; everything else builds on this single session. You now have something to lose, and that changes how you decide tomorrow.',
     criteria: 'Completa tu primer entrenamiento marcando todos los ejercicios como hechos.',
     criteriaEn: 'Complete your first workout by marking all exercises as done.',
     congrats: 'Estás dentro. Ahora viene lo divertido.',
     congratsEn: "You're in. Now the fun part begins.",
   },
+  protein1: {
+    longDesc: 'Cumpliste 150g de proteína por primera vez. Parece sencillo pero la mayoría de gente come la mitad sin darse cuenta — un desayuno ligero, un almuerzo sin carne, y se acabó el día. Una o dos comidas bien planeadas (whey post-gym, pollo, huevos, lácteos) y llegas. Ahora sabes que es posible y tienes la referencia para repetirlo.',
+    longDescEn: "You hit 150g of protein for the first time. Sounds simple but most people eat half without realizing — a light breakfast, a meatless lunch, and the day is over. One or two well-planned meals (post-gym whey, chicken, eggs, dairy) and you're there. Now you know it's doable and you have the baseline to repeat it.",
+    criteria: 'Alcanza 150g de proteína (o tu meta actual) en un solo día.',
+    criteriaEn: 'Hit 150g of protein (or your current goal) in a single day.',
+    congrats: 'Primer día en verde. El músculo ya tiene materia prima.',
+    congratsEn: "First day in the green. Muscle now has raw material.",
+  },
+  water1: {
+    longDesc: 'Cumpliste tus 2,250 ml de agua en un día. Nueve vasos. La botella de 40 oz que tienes en la oficina la vacías y ya llevas 3 del total; dos botellas de gym más y completas. Fácil cuando lo cuentas, casi imposible si no le pones atención. La app ahora te da los presets correctos para que no adivines.',
+    longDescEn: 'You hit your 2,250 ml water goal in a day. Nine glasses. The 40 oz bottle you have at the office, drain it once and you\'re already at 3 of your total; two more gym bottles and you\'re done. Easy when you count, nearly impossible without paying attention. The app now gives you the correct presets so you don\'t guess.',
+    criteria: 'Alcanza 2,250 ml de agua (o tu meta actual) en un solo día.',
+    criteriaEn: 'Hit 2,250 ml of water (or your current goal) in a single day.',
+    congrats: 'Cuerpo hidratado. Rendimiento en verde.',
+    congratsEn: "Body hydrated. Performance in the green.",
+  },
+  supps1: {
+    longDesc: 'Marcaste creatina, whey y omega 3 en el mismo día. Los tres trabajan distinto: la creatina da fuerza explosiva y mejora la recuperación entre sets, el whey cubre el pico proteico post-gym cuando el músculo está más receptivo, y el omega 3 reduce inflamación y protege las articulaciones a largo plazo. Juntos son tu stack base — ni caro ni complicado, pero solo rinde si es consistente.',
+    longDescEn: 'You marked creatine, whey, and omega 3 on the same day. All three work differently: creatine gives explosive strength and improves between-set recovery, whey covers the post-gym protein spike when muscle is most receptive, and omega 3 reduces inflammation and protects joints long-term. Together they\'re your base stack — not expensive or complicated, but only pays off if consistent.',
+    criteria: 'Marca los tres suplementos (creatina, whey, omega 3) en un mismo día.',
+    criteriaEn: 'Mark all three supplements (creatine, whey, omega 3) on the same day.',
+    congrats: 'Stack completo. Todo el sistema en línea.',
+    congratsEn: "Full stack. Whole system online.",
+  },
   week1: {
-    longDesc: '5 entrenamientos registrados. Pasaste de "voy a probar esto" a tener un patrón. La disciplina no se hereda, se construye una sesión a la vez — y tú ya llevas cinco.',
-    longDescEn: '5 workouts logged. You went from "let me try this" to having a pattern. Discipline isn\'t inherited, it\'s built one session at a time — and you already have five.',
+    longDesc: '5 entrenamientos registrados. Pasaste de "voy a probar esto" a tener un patrón reconocible. La disciplina no se hereda, se construye una sesión a la vez — y tú ya llevas cinco. A este punto el gym ya no te genera ansiedad de principiante, conoces la secuencia de warmup, sabes dónde están las máquinas, y tu cuerpo empieza a esperar el estímulo.',
+    longDescEn: '5 workouts logged. You went from "let me try this" to having a recognizable pattern. Discipline isn\'t inherited, it\'s built one session at a time — and you already have five. By now the gym doesn\'t give you beginner anxiety, you know the warmup sequence, you know where the machines are, and your body starts expecting the stimulus.',
     criteria: 'Completa 5 entrenamientos en total.',
     criteriaEn: 'Complete 5 total workouts.',
     congrats: 'La base está puesta. Ahora no la sueltes.',
     congratsEn: "Foundation laid. Don't let it go.",
   },
   streak3: {
-    longDesc: '3 días seguidos entrenando. Esto es donde la mayoría se quiebra — el día 2 el cuerpo duele, el día 3 la cama jala. Tú llegaste igual. Cuando el hábito pesa más que la excusa, pasa lo que te está pasando ahora.',
-    longDescEn: "3 days in a row. This is where most people break — day 2 the body hurts, day 3 the bed pulls. You showed up anyway. When the habit outweighs the excuse, this is exactly what happens.",
+    longDesc: '3 días seguidos entrenando. Esto es donde la mayoría se quiebra — el día 2 el cuerpo duele, el día 3 la cama jala con más fuerza. Tú llegaste igual. Cuando el hábito pesa más que la excusa, pasa exactamente lo que te está pasando ahora: el cuerpo se adapta, el DOMS se reduce, y cada sesión cuesta un poquito menos.',
+    longDescEn: "3 days in a row. This is where most people break — day 2 the body hurts, day 3 the bed pulls harder. You showed up anyway. When habit outweighs excuse, exactly what's happening now happens: the body adapts, DOMS fades, and each session costs a little less.",
     criteria: 'Entrena 3 días consecutivos sin romper la racha.',
     criteriaEn: 'Train 3 consecutive days without breaking the streak.',
     congrats: 'Esto ya no es suerte. Es hábito.',
     congratsEn: "This isn't luck anymore. It's a habit.",
   },
-  streak7: {
-    longDesc: '7 días seguidos. Una semana completa sin romper la cadena. A partir de aquí el gym deja de ser algo que haces y empieza a ser algo que eres. Pocos llegan a esta marca — y los que llegan rara vez vuelven atrás.',
-    longDescEn: "7 days straight. A full week without breaking the chain. From here the gym stops being something you do and starts being something you are. Few reach this mark — and those who do rarely go back.",
-    criteria: 'Mantén una racha de 7 días seguidos entrenando.',
-    criteriaEn: 'Keep a 7-day consecutive training streak.',
-    congrats: 'Semana completa. Imparable no es el nombre, es el diagnóstico.',
-    congratsEn: "Full week done. Unstoppable isn't the name, it's the diagnosis.",
+  protein3: {
+    longDesc: '3 días seguidos cumpliendo meta de proteína. Ya dejó de ser suerte — estás planeando las comidas en vez de improvisarlas. Este es el primer paso hacia una racha larga; el siguiente fin de semana es el verdadero filtro porque sales de la rutina oficina/casa. Si pasas ese, el hábito ya quedó.',
+    longDescEn: '3 days in a row hitting protein goal. Stopped being luck — you\'re planning meals instead of improvising. This is the first step toward a long streak; the upcoming weekend is the real filter because you step outside the office/home routine. If you pass that, the habit is locked in.',
+    criteria: 'Cumple tu meta de proteína 3 días consecutivos.',
+    criteriaEn: 'Hit protein goal 3 days in a row.',
+    congrats: 'Tres días en fila. La cocina está rindiendo.',
+    congratsEn: "Three in a row. The kitchen is delivering.",
   },
-  streak30: {
-    longDesc: '30 días seguidos. Un mes entero sin saltarte un día. Esto no es motivación, esto es carácter. El tipo que se reporta al gym 30 días seguidos es el mismo que termina proyectos, cumple promesas y construye la vida que decide construir.',
-    longDescEn: "30 days in a row. An entire month without skipping a day. This isn't motivation, this is character. The person who shows up 30 days straight is the same one who finishes projects, keeps promises, and builds the life they decide to build.",
-    criteria: 'Mantén una racha ininterrumpida de 30 días entrenando.',
-    criteriaEn: 'Keep an unbroken 30-day training streak.',
-    congrats: 'Disciplina nivel hierro — ya ni te cuestionas si ir.',
-    congratsEn: "Iron-level discipline — you don't even question going anymore.",
+  water3: {
+    longDesc: '3 días seguidos tomando los 2,250 ml. El cuerpo responde de formas que no se ven en el espejo: mejor energía en el gym, piel más limpia, articulaciones lubricadas, recuperación más rápida entre sesiones. Es de los cambios que no se notan hasta el tercer día — justo donde estás ahora.',
+    longDescEn: "3 days straight hitting 2,250 ml. The body responds in ways you don't see in the mirror: better gym energy, clearer skin, lubricated joints, faster recovery between sessions. One of those changes you don't notice until day three — right where you are now.",
+    criteria: 'Cumple tu meta de agua 3 días consecutivos.',
+    criteriaEn: 'Hit water goal 3 days in a row.',
+    congrats: 'Tres días seguidos hidratado. El efecto ya se nota.',
+    congratsEn: "Three days hydrated in a row. The effect is already showing.",
   },
   pr1: {
-    longDesc: 'Registraste tu primer récord personal. Movíste más peso o hiciste más reps que nunca antes en ese ejercicio. Esa es la prueba numérica de que tu cuerpo está cambiando — y ahora hay un número que superar.',
-    longDescEn: "You set your first personal record. You moved more weight or hit more reps than ever before on that exercise. That's numerical proof your body is changing — and now there's a number to beat.",
+    longDesc: 'Registraste tu primer récord personal. Movíste más peso o hiciste más reps que nunca antes en ese ejercicio específico. Esa es la prueba numérica — no la estética, no la sensación — de que tu cuerpo está cambiando. Y ahora hay un número en el marcador que tienes que superar la próxima vez. El juego acaba de empezar.',
+    longDescEn: "You set your first personal record. You moved more weight or hit more reps than ever before on that specific exercise. That's the numerical proof — not aesthetic, not feeling — that your body is changing. And now there's a number on the board to beat next time. The game just started.",
     criteria: 'Registra tu primer récord personal. Se desbloquea automáticamente cuando el sistema detecta que superaste un peso o repeticiones previas.',
     criteriaEn: 'Log your first personal record. Unlocks automatically when the system detects you beat a previous weight or rep count.',
     congrats: 'Primer número en el marcador. Ahora solo sube.',
     congratsEn: "First number on the board. Now it only goes up.",
   },
+  streak7: {
+    longDesc: '7 días seguidos. Una semana completa sin romper la cadena. A partir de aquí el gym deja de ser algo que haces y empieza a ser algo que eres. Pocos llegan a esta marca, y los que llegan rara vez vuelven atrás porque el costo psicológico de romper una racha de 7 días pesa más que la pereza de ir un día más.',
+    longDescEn: "7 days straight. A full week without breaking the chain. From here the gym stops being something you do and starts being something you are. Few reach this mark, and those who do rarely go back — the psychological cost of breaking a 7-day streak outweighs the laziness of one more session.",
+    criteria: 'Mantén una racha de 7 días seguidos entrenando.',
+    criteriaEn: 'Keep a 7-day consecutive training streak.',
+    congrats: 'Semana completa. Imparable no es el nombre, es el diagnóstico.',
+    congratsEn: "Full week done. Unstoppable isn't the name, it's the diagnosis.",
+  },
+  fullweek: {
+    longDesc: 'Completaste los 4 días de entrenamiento en una sola semana: Upper A, Lower A, Upper B, Lower B. La rutina cuatro-veces-por-semana funciona porque cubre cada grupo muscular dos veces al mes con intensidad suficiente para crecer. Haberla cerrado sin saltarte un día es exactamente el volumen que tu cuerpo necesita para cambiar — no es menos, no es más.',
+    longDescEn: 'You completed all 4 training days in a single week: Upper A, Lower A, Upper B, Lower B. The 4x-per-week routine works because it hits every muscle group twice a month with enough intensity to grow. Closing it without skipping a day is exactly the volume your body needs to change — not less, not more.',
+    criteria: 'Completa Upper A, Lower A, Upper B y Lower B en una misma semana de lunes a domingo.',
+    criteriaEn: 'Complete Upper A, Lower A, Upper B, and Lower B in the same Mon–Sun week.',
+    congrats: 'Cuatro de cuatro. El plan cumplido.',
+    congratsEn: "Four of four. Plan cleared.",
+  },
   pr5: {
-    longDesc: '5 récords personales registrados. Ya no es casualidad — estás entrenando con intención, midiendo cada ejercicio, empujando el número. Esto es exactamente lo que separa al que va al gym del que entrena.',
-    longDescEn: "5 personal records logged. Not a fluke anymore — you're training with intent, measuring each exercise, pushing the number. This is exactly what separates people who go to the gym from people who train.",
+    longDesc: '5 récords personales registrados. Ya no es casualidad — estás entrenando con intención, midiendo cada ejercicio, empujando el número. Esto es exactamente lo que separa al que va al gym del que entrena: el primero cuenta repeticiones, el segundo cuenta progresión. Tú estás del lado correcto.',
+    longDescEn: "5 personal records logged. Not a fluke anymore — you're training with intent, measuring each exercise, pushing the number. This is exactly what separates people who go to the gym from people who train: the first counts reps, the second counts progression. You're on the right side.",
     criteria: 'Acumula 5 récords personales en ejercicios distintos.',
     criteriaEn: 'Accumulate 5 personal records across different exercises.',
     congrats: 'Cinco marcas nuevas. El gym te está rindiendo.',
     congratsEn: "Five new marks. The gym is paying off.",
   },
-  pr10: {
-    longDesc: '10 récords personales. Estás progresando en 10 ejercicios distintos — pecho, espalda, piernas, brazos. Esto es desarrollo balanceado, no solo volumen vanidoso. El cuerpo completo está subiendo.',
-    longDescEn: "10 personal records. You're progressing on 10 different exercises — chest, back, legs, arms. This is balanced development, not just vanity volume. The whole body is going up.",
-    criteria: 'Registra 10 récords personales distintos.',
-    criteriaEn: 'Log 10 distinct personal records.',
-    congrats: 'Doble dígito de PRs. Máquina es poco.',
-    congratsEn: "Double-digit PRs. 'Machine' is an understatement.",
-  },
   days10: {
-    longDesc: '10 entrenamientos completados. Ya no cuentan los días — cuentan las sesiones. 10 veces que elegiste el gym en vez del sofá, el café en vez de la alarma pospuesta. Cada una suma.',
-    longDescEn: "10 workouts completed. Days don't count anymore — sessions do. 10 times you chose the gym over the couch, the coffee over the snoozed alarm. Each one adds up.",
+    longDesc: '10 entrenamientos completados. Ya no cuentan los días — cuentan las sesiones. 10 veces que elegiste el gym en vez del sofá, la alarma de las 6 AM en vez del snooze, la ropa de gym colgada la noche anterior en vez del "mañana sí". Cada una suma. Cada una fue una decisión consciente.',
+    longDescEn: "10 workouts completed. Days don't count anymore — sessions do. 10 times you chose the gym over the couch, the 6 AM alarm over snooze, the gym clothes laid out the night before over \"tomorrow for sure.\" Each one adds up. Each one was a conscious decision.",
     criteria: 'Completa 10 entrenamientos en total.',
     criteriaEn: 'Complete 10 total workouts.',
     congrats: 'Diez sesiones en el banco. Esto ya es serio.',
     congratsEn: "Ten sessions banked. This is serious now.",
   },
-  days25: {
-    longDesc: '25 entrenamientos. Si entrenas 4 veces por semana, acabas de cumplir ~6 semanas. Ya sabes cómo se siente el gym vacío a las 6:10 AM, ya tienes tus ejercicios favoritos, ya conoces tus debilidades. Eso es veteranía real.',
-    longDescEn: "25 workouts. If you train 4 times a week, you just hit ~6 weeks. You know what the empty gym feels like at 6:10 AM, you have your favorite exercises, you know your weaknesses. That's real veteran status.",
-    criteria: 'Completa 25 entrenamientos.',
-    criteriaEn: 'Complete 25 workouts.',
-    congrats: 'Veterano oficial del gym del edificio.',
-    congratsEn: "Official veteran of the building gym.",
-  },
-  days50: {
-    longDesc: '50 entrenamientos. Medio centenar de sesiones. A este punto tu cuerpo ya cambió visiblemente, tu fuerza ya subió medible, y tu rutina matinal ya no requiere fuerza de voluntad — requiere solo ponerte los tenis. Eso es la transformación completa.',
-    longDescEn: "50 workouts. Half a hundred sessions. At this point your body has visibly changed, your strength has measurably gone up, and your morning routine no longer requires willpower — it just requires putting the shoes on. That's full transformation.",
-    criteria: 'Alcanza 50 entrenamientos totales.',
-    criteriaEn: 'Reach 50 total workouts.',
-    congrats: 'Leyenda. El Felipe de hace 50 sesiones no te reconocería.',
-    congratsEn: "Legend. The Felipe from 50 sessions ago wouldn't recognize you.",
-  },
-  pr20: {
-    longDesc: '20 récords personales. Dominaste cada grupo muscular con progresión medible. A este nivel ya no estás aprendiendo los ejercicios, los estás perfeccionando. Eres el tipo que otros miran de reojo cuando entra al gym.',
-    longDescEn: "20 personal records. You've dominated every muscle group with measurable progression. At this level you're not learning exercises anymore, you're perfecting them. You're the guy other people side-eye when he walks in.",
-    criteria: 'Registra 20 récords personales distintos.',
-    criteriaEn: 'Log 20 distinct personal records.',
-    congrats: 'Veinte PRs. El gym es tu reino.',
-    congratsEn: "Twenty PRs. The gym is your kingdom.",
-  },
-  month1: {
-    longDesc: '30 días desde tu primer entrenamiento. Este trofeo mide tiempo, no sesiones — estuviste con este hábito un mes completo. Los primeros 30 días son el filtro que elimina al 90% de la gente. Tú pasaste.',
-    longDescEn: "30 days since your first workout. This trophy measures time, not sessions — you stuck with this habit a full month. The first 30 days are the filter that eliminates 90% of people. You passed.",
-    criteria: 'Cumple 30 días desde tu primer entrenamiento registrado.',
-    criteriaEn: 'Complete 30 days since your first logged workout.',
-    congrats: 'Un mes adentro. Ya estás del otro lado del filtro.',
-    congratsEn: "A month in. You're on the other side of the filter.",
+  volume5k: {
+    longDesc: '5,000 de volumen en una semana. Medio camino hacia Constructor. Esto ya representa trabajo real — entrenaste los 4 días con peso decente y completaste la mayoría de los sets. El número sube solo si cada semana lo empujas un poco más: agregar 5 lbs a un ejercicio, o una rep extra en el set tope. Progresión lineal en estado puro.',
+    longDescEn: '5,000 volume in a week. Halfway to Builder. This is real work — you trained all 4 days with decent weight and completed most sets. The number only goes up if you push it a little more each week: add 5 lbs to an exercise, or one extra rep on the top set. Pure linear progression.',
+    criteria: 'Acumula 5,000 o más de volumen total (peso × reps × sets) en una semana.',
+    criteriaEn: 'Accumulate 5,000 or more total volume (weight × reps × sets) in a week.',
+    congrats: 'Cinco mil de volumen. La base ya está puesta.',
+    congratsEn: "Five thousand volume. Foundation laid.",
   },
   protein7: {
-    longDesc: '7 días seguidos cumpliendo tu meta de 150g de proteína. El músculo se construye en la cocina — y tú te estás alimentando para construirlo. Sin esto, el gym es solo cardio disfrazado.',
-    longDescEn: "7 days straight hitting your 150g protein goal. Muscle is built in the kitchen — and you're feeding it to build. Without this, the gym is just cardio in disguise.",
+    longDesc: '7 días seguidos cumpliendo tu meta de 150g de proteína. El músculo se construye en la cocina — y tú te estás alimentando para construirlo. Sin esto, el gym es solo cardio disfrazado. Mantener este ritmo una semana entera implica que ya tienes una estrategia alimentaria (no una dieta) que funciona con tu día a día.',
+    longDescEn: '7 days straight hitting your 150g protein goal. Muscle is built in the kitchen — and you\'re feeding it to build. Without this, the gym is just cardio in disguise. Keeping this pace a full week means you already have a food strategy (not a diet) that fits your day-to-day.',
     criteria: 'Alcanza tu meta diaria de proteína durante 7 días consecutivos.',
     criteriaEn: 'Hit your daily protein goal for 7 consecutive days.',
     congrats: 'Semana perfecta de proteína. Los músculos están comiendo bien.',
     congratsEn: "Perfect protein week. The muscles are eating well.",
   },
   water7: {
-    longDesc: '7 días seguidos tomando tus 2,250 ml de agua. Parece simple pero casi nadie lo hace consistentemente. Bien hidratado rindes más en el gym, recuperas mejor, y el cuerpo transporta nutrientes sin fricción.',
-    longDescEn: "7 days straight hitting your 2,250 ml water goal. Sounds simple but almost nobody does it consistently. Well hydrated you perform better in the gym, recover better, and the body moves nutrients without friction.",
+    longDesc: '7 días seguidos tomando tus 2,250 ml de agua. Parece simple pero casi nadie lo hace consistentemente — empieza bien el lunes y para el jueves ya olvidó la botella en el carro. Bien hidratado rindes más en el gym, recuperas mejor, el cuerpo transporta nutrientes sin fricción, y hasta la concentración mental sube. Semana completa = cuerpo en modo óptimo.',
+    longDescEn: "7 days straight hitting your 2,250 ml water goal. Sounds simple but almost nobody does it consistently — starts great on Monday and by Thursday the bottle's forgotten in the car. Well hydrated you perform better in the gym, recover better, the body moves nutrients without friction, and even mental focus goes up. Full week = body in optimal mode.",
     criteria: 'Cumple tu meta de agua durante 7 días consecutivos.',
     criteriaEn: 'Hit your water goal for 7 consecutive days.',
     congrats: 'Semana entera hidratado. El cuerpo te lo agradece.',
     congratsEn: "Full week hydrated. The body thanks you.",
   },
   volume10k: {
-    longDesc: '10,000+ de volumen en una sola semana. Esto es trabajo duro medible — suma de peso × reps × sets a través de Upper A, Lower A, Upper B, Lower B. No llegaste aquí flojeando entre sets.',
-    longDescEn: "10,000+ volume in a single week. This is measurable hard work — sum of weight × reps × sets across Upper A, Lower A, Upper B, Lower B. You didn't get here slacking between sets.",
+    longDesc: '10,000+ de volumen en una sola semana. Esto es trabajo duro medible — suma de peso × reps × sets a través de Upper A, Lower A, Upper B, Lower B. No llegaste aquí flojeando entre sets ni saltándote el último ejercicio cuando el reloj apretaba. Este número es la firma física de una semana bien ejecutada.',
+    longDescEn: "10,000+ volume in a single week. This is measurable hard work — sum of weight × reps × sets across Upper A, Lower A, Upper B, Lower B. You didn't get here slacking between sets or skipping the last exercise when the clock got tight. This number is the physical signature of a well-executed week.",
     criteria: 'Acumula 10,000 o más de volumen total (peso × reps × sets) en una semana.',
     criteriaEn: 'Accumulate 10,000 or more total volume (weight × reps × sets) in a week.',
     congrats: 'Diez mil de volumen en 7 días. Se nota quién vino a trabajar.',
     congratsEn: "Ten thousand volume in 7 days. It shows who came to work.",
   },
   earlybird: {
-    longDesc: 'Entrenaste antes de las 7 AM. Mientras la mayoría de Utah todavía duerme, tú ya estás sumando reps. El gym del edificio te da esa ventana de 6:05 — aprovecharla consistentemente es un superpoder invisible.',
-    longDescEn: "You trained before 7 AM. While most of Utah still sleeps, you're already banking reps. The building gym gives you that 6:05 window — using it consistently is an invisible superpower.",
+    longDesc: 'Entrenaste antes de las 7 AM. Mientras la mayoría de Utah todavía duerme, tú ya estás sumando reps. El gym del edificio te da esa ventana privada de 6:05 — casi vacío, sin esperar máquinas, con el día entero todavía por delante. Aprovechar esa ventana consistentemente es un superpoder invisible que el resto no ve pero tú compuestas cada semana.',
+    longDescEn: "You trained before 7 AM. While most of Utah still sleeps, you're already banking reps. The building gym gives you that private 6:05 window — nearly empty, no waiting for machines, with the whole day still ahead. Using that window consistently is an invisible superpower the rest don't see but you compound weekly.",
     criteria: 'Inicia un entrenamiento cualquier día antes de las 7:00 AM (hora local).',
     criteriaEn: 'Start a workout any day before 7:00 AM (local time).',
-    congrats: '6 AM squad. El día ya lo ganaste antes del café.',
-    congratsEn: "6 AM squad. You already won the day before coffee.",
+    congrats: '6 AM squad. El día ya lo ganaste antes de que empiece.',
+    congratsEn: "6 AM squad. You already won the day before it starts.",
+  },
+  pr10: {
+    longDesc: '10 récords personales. Estás progresando en 10 ejercicios distintos — pecho, espalda, piernas, brazos. Esto es desarrollo balanceado, no solo volumen vanidoso en un grupo favorito. El cuerpo completo está subiendo de forma simétrica, que es exactamente lo que pide la recomposición corporal sana.',
+    longDescEn: "10 personal records. You're progressing on 10 different exercises — chest, back, legs, arms. This is balanced development, not just vanity volume on a favorite group. The whole body is going up symmetrically, which is exactly what healthy body recomposition asks for.",
+    criteria: 'Registra 10 récords personales distintos.',
+    criteriaEn: 'Log 10 distinct personal records.',
+    congrats: 'Doble dígito de PRs. Máquina es poco.',
+    congratsEn: "Double-digit PRs. 'Machine' is an understatement.",
+  },
+  days25: {
+    longDesc: '25 entrenamientos. Si entrenas 4 veces por semana, acabas de cumplir ~6 semanas de rutina estricta. Ya sabes cómo se siente el gym del edificio vacío a las 6:10 AM, ya tienes tus ejercicios favoritos y los que odias, ya conoces tus puntos débiles y qué empujar más. Eso es veteranía real, no tiempo en la app.',
+    longDescEn: "25 workouts. If you train 4 times a week, you just hit ~6 weeks of strict routine. You know what the building gym feels like empty at 6:10 AM, you have your favorite exercises and the ones you hate, you know your weak points and what to push harder. That's real veteran status, not app time.",
+    criteria: 'Completa 25 entrenamientos.',
+    criteriaEn: 'Complete 25 workouts.',
+    congrats: 'Veterano oficial del gym del edificio.',
+    congratsEn: "Official veteran of the building gym.",
+  },
+  month1: {
+    longDesc: '30 días desde tu primer entrenamiento. Este trofeo mide tiempo, no sesiones — estuviste con este hábito un mes completo. Los primeros 30 días son el filtro que elimina al 90% de la gente que se inscribe en enero y desaparece en febrero. Tú pasaste ese filtro, y pasarlo es estadísticamente más difícil que todo lo que viene después.',
+    longDescEn: "30 days since your first workout. This trophy measures time, not sessions — you stuck with this habit a full month. The first 30 days are the filter that eliminates 90% of people who sign up in January and disappear in February. You passed that filter, and passing it is statistically harder than everything that comes after.",
+    criteria: 'Cumple 30 días desde tu primer entrenamiento registrado.',
+    criteriaEn: 'Complete 30 days since your first logged workout.',
+    congrats: 'Un mes adentro. Ya estás del otro lado del filtro.',
+    congratsEn: "A month in. You're on the other side of the filter.",
+  },
+  streak30: {
+    longDesc: '30 días seguidos. Un mes entero sin saltarte un día. Esto no es motivación, esto es carácter. El tipo que se reporta al gym 30 días seguidos es el mismo que termina proyectos, cumple promesas y construye la vida que decide construir — porque la misma maquinaria mental que te hace ir al gym sin fallar aplica a todo lo demás.',
+    longDescEn: "30 days in a row. An entire month without skipping a day. This isn't motivation, this is character. The person who shows up 30 days straight is the same one who finishes projects, keeps promises, and builds the life they decide to build — because the same mental machinery that gets you to the gym without fail applies to everything else.",
+    criteria: 'Mantén una racha ininterrumpida de 30 días entrenando.',
+    criteriaEn: 'Keep an unbroken 30-day training streak.',
+    congrats: 'Disciplina nivel hierro — ya ni te cuestionas si ir.',
+    congratsEn: "Iron-level discipline — you don't even question going anymore.",
+  },
+  pr20: {
+    longDesc: '20 récords personales. Dominaste cada grupo muscular con progresión medible. A este nivel ya no estás aprendiendo los ejercicios, los estás perfeccionando — ajustando rangos, cadencia, conexión mente-músculo. Eres el tipo que otros en el gym del edificio miran de reojo cuando entra, aunque nadie lo admita.',
+    longDescEn: "20 personal records. You've dominated every muscle group with measurable progression. At this level you're not learning exercises anymore, you're perfecting them — adjusting ranges, tempo, mind-muscle connection. You're the guy other people at the building gym side-eye when he walks in, even if nobody admits it.",
+    criteria: 'Registra 20 récords personales distintos.',
+    criteriaEn: 'Log 20 distinct personal records.',
+    congrats: 'Veinte PRs. El gym es tu reino.',
+    congratsEn: "Twenty PRs. The gym is your kingdom.",
+  },
+  days50: {
+    longDesc: '50 entrenamientos. Medio centenar de sesiones. A este punto tu cuerpo ya cambió visiblemente (los demás lo notan antes que tú), tu fuerza subió medible en cada PR, y tu rutina matinal ya no requiere fuerza de voluntad — requiere solo ponerte los tenis porque el resto ya está automatizado. Eso es la transformación completa: no el espejo, sino el sistema.',
+    longDescEn: "50 workouts. Half a hundred sessions. At this point your body has visibly changed (others notice before you), your strength went up measurably on every PR, and your morning routine no longer requires willpower — it just requires putting the shoes on because everything else is automated. That's full transformation: not the mirror, the system.",
+    criteria: 'Alcanza 50 entrenamientos totales.',
+    criteriaEn: 'Reach 50 total workouts.',
+    congrats: 'Leyenda. El Felipe de hace 50 sesiones no te reconocería.',
+    congratsEn: "Legend. The Felipe from 50 sessions ago wouldn't recognize you.",
   },
 };
 
@@ -6434,6 +6623,13 @@ function getBadgeProgress(id, ctx) {
     case 'water7':     return { current: ctx.waterStreak, target: 7 };
     case 'volume10k':  return { current: Math.round(ctx.weeklyVol), target: 10000 };
     case 'earlybird':  return { current: ctx.hasEarlyWorkout ? 1 : 0, target: 1 };
+    case 'protein1':   return { current: ctx.hasProteinDay ? 1 : 0, target: 1 };
+    case 'water1':     return { current: ctx.hasWaterDay ? 1 : 0, target: 1 };
+    case 'supps1':     return { current: ctx.hasSuppsDay ? 1 : 0, target: 1 };
+    case 'protein3':   return { current: ctx.proteinStreak, target: 3 };
+    case 'water3':     return { current: ctx.waterStreak, target: 3 };
+    case 'fullweek':   return { current: ctx.hasFullWeek ? 1 : 0, target: 1 };
+    case 'volume5k':   return { current: Math.round(ctx.weeklyVol), target: 5000 };
     default:           return null;
   }
 }
@@ -6504,26 +6700,82 @@ function Achievements() {
       }
     } catch {}
 
+    let hasProteinDay = false, hasWaterDay = false, hasSuppsDay = false;
+    for (let d = 0; d < 30; d++) {
+      const ds = localDate(new Date(Date.now() - d * 86400000));
+      if (!hasProteinDay) {
+        try {
+          const ml = JSON.parse(localStorage.getItem('ds_meals_' + ds) || '[]');
+          const prot = ml.filter(m => m.confirmed).reduce((s, m) => s + m.items.reduce((a, it) => a + (it.protein || 0), 0), 0);
+          if (prot >= PROTEIN_GOAL) hasProteinDay = true;
+        } catch {}
+      }
+      if (!hasWaterDay) {
+        const w = Number(localStorage.getItem('ds_water_' + ds)) || 0;
+        if (w >= WATER_GOAL_ML) hasWaterDay = true;
+      }
+      if (!hasSuppsDay) {
+        try {
+          const c = localStorage.getItem('ds_creatine_' + ds) === 'true';
+          const wh = localStorage.getItem('ds_whey_' + ds) === 'true';
+          const o3 = localStorage.getItem('ds_omega3_' + ds) === 'true';
+          if (c && wh && o3) hasSuppsDay = true;
+        } catch {}
+      }
+      if (hasProteinDay && hasWaterDay && hasSuppsDay) break;
+    }
+
+    let hasFullWeek = false;
+    try {
+      const TRAINING_OFFSETS = [{ key: 'monday', off: 0 }, { key: 'tuesday', off: 1 }, { key: 'thursday', off: 3 }, { key: 'friday', off: 4 }];
+      for (let weekBack = 0; weekBack < 8; weekBack++) {
+        const now = new Date();
+        const nowDow = now.getDay() || 7;
+        const mondayThisWeek = new Date(now.getTime() - (nowDow - 1) * 86400000);
+        const monday = new Date(mondayThisWeek.getTime() - weekBack * 7 * 86400000);
+        let allDone = true;
+        for (const td of TRAINING_OFFSETS) {
+          const d = new Date(monday.getTime() + td.off * 86400000);
+          if (d.getTime() > Date.now()) { allDone = false; break; }
+          const ds = localDate(d);
+          const saved = localStorage.getItem('ds_workout_' + td.key + '_' + ds);
+          if (!saved) { allDone = false; break; }
+          try {
+            const states = JSON.parse(saved);
+            if (!Array.isArray(states) || !states.some(st => st && st.sets && st.sets.some(s => s.done))) { allDone = false; break; }
+          } catch { allDone = false; break; }
+        }
+        if (allDone) { hasFullWeek = true; break; }
+      }
+    } catch {}
+
     const maxStreak = stats.maxStreak || 0;
-    const ctx = { streak, maxStreak, prCount, totalDays, daysSinceStart, proteinStreak, waterStreak, weeklyVol, hasEarlyWorkout };
+    const ctx = { streak, maxStreak, prCount, totalDays, daysSinceStart, proteinStreak, waterStreak, weeklyVol, hasEarlyWorkout, hasProteinDay, hasWaterDay, hasSuppsDay, hasFullWeek };
     const badges = [
       { id: 'first', icon: '\uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F', name: t('Primera sesi\u00F3n'), desc: t('Completar tu primer entrenamiento'), unlocked: totalDays >= 1 },
-      { id: 'week1', icon: '\uD83D\uDCC5', name: t('Primera semana'), desc: t('5 d\u00EDas de entrenamiento'), unlocked: totalDays >= 5 },
+      { id: 'protein1', icon: '\uD83C\uDF57', name: t('Prote\u00EDna alcanzada'), desc: t('Cumplir meta de prote\u00EDna en un d\u00EDa'), unlocked: hasProteinDay },
+      { id: 'water1', icon: '\uD83E\uDD64', name: t('Hidratado'), desc: t('Cumplir meta de agua en un d\u00EDa'), unlocked: hasWaterDay },
+      { id: 'supps1', icon: '\uD83D\uDC8A', name: t('Tr\u00EDo completo'), desc: t('Creatina + whey + omega 3 mismo d\u00EDa'), unlocked: hasSuppsDay },
       { id: 'streak3', icon: '\uD83D\uDD25', name: t('En racha'), desc: t('3 d\u00EDas seguidos'), unlocked: streak >= 3 || (stats.maxStreak && stats.maxStreak >= 3) },
-      { id: 'streak7', icon: '\u26A1', name: t('Imparable'), desc: t('7 d\u00EDas seguidos'), unlocked: streak >= 7 || (stats.maxStreak && stats.maxStreak >= 7) },
-      { id: 'streak30', icon: '\uD83D\uDC8E', name: t('Disciplina de hierro'), desc: t('30 d\u00EDas seguidos'), unlocked: streak >= 30 || (stats.maxStreak && stats.maxStreak >= 30) },
+      { id: 'week1', icon: '\uD83D\uDCC5', name: t('Primera semana'), desc: t('5 d\u00EDas de entrenamiento'), unlocked: totalDays >= 5 },
       { id: 'pr1', icon: '\uD83C\uDFC6', name: t('Primer PR'), desc: t('Registrar tu primer r\u00E9cord personal'), unlocked: prCount >= 1 },
-      { id: 'pr5', icon: '\uD83E\uDD47', name: t('Caza-r\u00E9cords'), desc: t('5 r\u00E9cords personales'), unlocked: prCount >= 5 },
-      { id: 'pr10', icon: '\uD83D\uDCAA\uD83C\uDFFC', name: t('M\u00E1quina de PRs'), desc: t('10 r\u00E9cords personales'), unlocked: prCount >= 10 },
+      { id: 'protein3', icon: '\uD83E\uDD5B', name: t('3 d\u00EDas proteicos'), desc: t('3 d\u00EDas seguidos cumpliendo prote\u00EDna'), unlocked: proteinStreak >= 3 },
+      { id: 'water3', icon: '\uD83D\uDCA6', name: t('3 d\u00EDas hidratado'), desc: t('3 d\u00EDas seguidos cumpliendo agua'), unlocked: waterStreak >= 3 },
+      { id: 'streak7', icon: '\u26A1', name: t('Imparable'), desc: t('7 d\u00EDas seguidos'), unlocked: streak >= 7 || (stats.maxStreak && stats.maxStreak >= 7) },
+      { id: 'fullweek', icon: '\uD83D\uDCCB', name: t('Semana completa'), desc: t('Upper A + Lower A + Upper B + Lower B'), unlocked: hasFullWeek },
       { id: 'days10', icon: '\uD83C\uDF1F', name: t('Comprometido'), desc: t('10 entrenamientos'), unlocked: totalDays >= 10 },
-      { id: 'days25', icon: '\uD83C\uDF96\uFE0F', name: t('Veterano'), desc: t('25 entrenamientos'), unlocked: totalDays >= 25 },
-      { id: 'days50', icon: '\uD83D\uDE80', name: t('Leyenda'), desc: t('50 entrenamientos'), unlocked: totalDays >= 50 },
-      { id: 'pr20', icon: '\uD83D\uDC51', name: t('Rey del gym'), desc: t('20 r\u00E9cords personales'), unlocked: prCount >= 20 },
-      { id: 'month1', icon: '\uD83D\uDCC6', name: t('Primer mes'), desc: t('30 d\u00EDas desde tu primer entrenamiento'), unlocked: daysSinceStart >= 30 },
+      { id: 'pr5', icon: '\uD83E\uDD47', name: t('Caza-r\u00E9cords'), desc: t('5 r\u00E9cords personales'), unlocked: prCount >= 5 },
+      { id: 'volume5k', icon: '\uD83E\uDDF1', name: t('Volumen base'), desc: t('5,000 de volumen en una semana'), unlocked: weeklyVol >= 5000 },
+      { id: 'earlybird', icon: '\uD83C\uDF05', name: t('Madrugador'), desc: t('Entrenar antes de las 7am'), unlocked: hasEarlyWorkout },
       { id: 'protein7', icon: '\uD83E\uDD69', name: t('Prote\u00EDna perfecta'), desc: t('7 d\u00EDas seguidos cumpliendo meta de prote\u00EDna'), unlocked: proteinStreak >= 7 },
       { id: 'water7', icon: '\uD83D\uDCA7', name: t('Hidrataci\u00F3n total'), desc: t('7 d\u00EDas seguidos cumpliendo meta de agua'), unlocked: waterStreak >= 7 },
       { id: 'volume10k', icon: '\uD83C\uDFD7\uFE0F', name: t('Constructor'), desc: t('10,000+ de volumen en una semana'), unlocked: weeklyVol >= 10000 },
-      { id: 'earlybird', icon: '\uD83C\uDF05', name: t('Madrugador'), desc: t('Entrenar antes de las 7am'), unlocked: hasEarlyWorkout },
+      { id: 'pr10', icon: '\uD83D\uDCAA\uD83C\uDFFC', name: t('M\u00E1quina de PRs'), desc: t('10 r\u00E9cords personales'), unlocked: prCount >= 10 },
+      { id: 'days25', icon: '\uD83C\uDF96\uFE0F', name: t('Veterano'), desc: t('25 entrenamientos'), unlocked: totalDays >= 25 },
+      { id: 'month1', icon: '\uD83D\uDCC6', name: t('Primer mes'), desc: t('30 d\u00EDas desde tu primer entrenamiento'), unlocked: daysSinceStart >= 30 },
+      { id: 'pr20', icon: '\uD83D\uDC51', name: t('Rey del gym'), desc: t('20 r\u00E9cords personales'), unlocked: prCount >= 20 },
+      { id: 'streak30', icon: '\uD83D\uDC8E', name: t('Disciplina de hierro'), desc: t('30 d\u00EDas seguidos'), unlocked: streak >= 30 || (stats.maxStreak && stats.maxStreak >= 30) },
+      { id: 'days50', icon: '\uD83D\uDE80', name: t('Leyenda'), desc: t('50 entrenamientos'), unlocked: totalDays >= 50 },
     ];
     return { badges, ctx };
   }, []);
